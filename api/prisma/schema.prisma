@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Perfil {
+  TECNICO
+  PROFESSOR
+  ALUNO
+}
+
+model Usuario {
+  id           String                @id @default(uuid())
+  nome         String
+  email        String                @unique
+  perfil       Perfil
+  created_at   DateTime              @default(now())
+  reservas     ReservaEspaco[]
+  solicitacoes SolicitacaoMaterial[]
+  avarias      AvariaReportada[]
+}
+
+model ReservaEspaco {
+  id           String   @id @default(uuid())
+  professor_id String
+  professor    Usuario  @relation(fields: [professor_id], references: [id])
+  data_inicio  DateTime
+  data_fim     DateTime
+  prioridade   Int
+  status       String
+  created_at   DateTime @default(now())
+}
+
+model InsumoVidraria {
+  id                String                @id @default(uuid())
+  nome              String
+  tipo              String
+  quantidade_saldo  Int
+  quantidade_minima Int
+  created_at        DateTime              @default(now())
+  solicitacoes      SolicitacaoMaterial[]
+  avarias           AvariaReportada[]
+}
+
+model SolicitacaoMaterial {
+  id             String                  @id @default(uuid())
+  solicitante_id String
+  solicitante    Usuario                 @relation(fields: [solicitante_id], references: [id])
+  insumo_id      String
+  insumo         InsumoVidraria          @relation(fields: [insumo_id], references: [id])
+  quantidade     Int
+  data_retirada  DateTime
+  data_limite    DateTime
+  status         String
+  historicos     HistoricoMovimentacao[]
+}
+
+model AvariaReportada {
+  id           String         @id @default(uuid())
+  usuario_id   String
+  usuario      Usuario        @relation(fields: [usuario_id], references: [id])
+  insumo_id    String
+  insumo       InsumoVidraria @relation(fields: [insumo_id], references: [id])
+  descricao    String
+  data_reporte DateTime       @default(now())
+}
+
+model HistoricoMovimentacao {
+  id             String              @id @default(uuid())
+  solicitacao_id String
+  solicitacao    SolicitacaoMaterial @relation(fields: [solicitacao_id], references: [id])
+  acao           String
+  data_evento    DateTime            @default(now())
+  observacao     String?
+}

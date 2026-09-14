@@ -1,0 +1,14 @@
+# NestJS e Node
+node_modules/
+dist/
+
+# Prisma
+# Não ignore a pasta /prisma, mas ignore o banco local se usar SQLite para testes rápidos
+*.db
+*.db-journal
+
+# Variáveis de Ambiente
+.env
+.env.test
+.env.production
+/generated/prisma

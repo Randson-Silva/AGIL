@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "docker:up": "docker compose --env-file .env.docker up -d",
+    "docker:down": "docker compose --env-file .env.docker down",
+    "docker:logs": "docker compose --env-file .env.docker logs -f",
+    "docker:ps": "docker compose --env-file .env.docker ps"
+  }
+}
