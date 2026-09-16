@@ -6,9 +6,9 @@ dist/
 # Não ignore a pasta /prisma, mas ignore o banco local se usar SQLite para testes rápidos
 *.db
 *.db-journal
+**/generated/prisma
 
 # Variáveis de Ambiente
 .env
 .env.test
 .env.production
-/generated/prisma
