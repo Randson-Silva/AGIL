@@ -570,6 +570,8 @@ lsof -ti:5432 | xargs kill -9
 # Windows
 netstat -ano | findstr :5432
 taskkill /PID <PID> /F
+
+# Ou verifique nos arquivos de env
 ```
 
 ### Problema: `DATABASE_URL` inválida
@@ -661,20 +663,3 @@ Se encontrar problemas:
 2. Procure em issues abertas: [GitHub Issues](https://github.com/Randson-Silva/AGIL/issues)
 3. Abra uma nova issue com detalhes do problema
 
----
-
-## 📄 Licença
-
-Este projeto é propriedade do Instituto Federal do Ceará (IFCE) e foi desenvolvido como parte da disciplina Projeto Integrado 3.
-
----
-
-## 👥 Autores
-
-- **Randson Silva** - Desenvolvedor principal
-
----
-
-## 🎉 Obrigado por Contribuir!
-
-Sua colaboração é valiosa para melhorar o AGIL e beneficiar toda a comunidade acadêmica do IFCE. Boa sorte! 🚀
