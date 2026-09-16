@@ -281,6 +281,24 @@ cd api
 npx prisma generate
 ```
 
+##### 🔄 Diferença entre `prisma migrate` e `prisma generate`
+
+* **`prisma migrate` (modifica o banco de dados)**
+  * Cria e aplica alterações estruturais no banco (tabelas, colunas, chaves, índices).
+  * Gera arquivos de histórico em SQL (`.sql`).
+  * **Quando usar:** Sempre que você alterar a estrutura do banco no `schema.prisma`.
+  * **Comando de desenvolvimento:** `npx prisma migrate dev --name nome_da_alteracao`
+
+* **`prisma generate` (gera o código TypeScript/Client)**
+  * Gera ou atualiza o **Prisma Client** (tipos e métodos de consulta da aplicação).
+  * **Não altera** nada no banco de dados.
+  * **Quando usar:** Após clonar o projeto, rodar instalações ou após migrações para atualizar os tipos no código.
+  * **Comando:** `npx prisma generate`
+
+> **Resumo rápido:**  
+> `migrate` atualiza o **banco de dados**; `generate` atualiza o **código/tipos** do projeto.
+``` [[CLI generate](https://www.prisma.io/docs/cli/v7/generate); [Hassle-Free Migrations](https://www.prisma.io/blog/prisma-migrate-ga-b5eno5g08d0b#how-does-prisma-migrate-work)] ```
+
 ---
 
 ## ⚙️ Configuração de Lint e Padronização
