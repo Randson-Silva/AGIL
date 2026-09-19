@@ -12,6 +12,12 @@ enum Perfil {
   PROFESSOR
   ALUNO
 }
+enum CategoriaInsumo {
+  EQUIPAMENTO
+  VIDRARIA
+  SOLUCAO
+  REAGENTE
+}
 
 model Usuario {
   id           String                @id @default(uuid())
@@ -35,15 +41,67 @@ model ReservaEspaco {
   created_at   DateTime @default(now())
 }
 
-model InsumoVidraria {
+model Insumo {
   id                String                @id @default(uuid())
   nome              String
-  tipo              String
+  categoria         CategoriaInsumo
   quantidade_saldo  Int
-  quantidade_minima Int
+  localizacao       String?
+  quantidade_minima Int?
+  status            String                @default("Disponível")
   created_at        DateTime              @default(now())
+
   solicitacoes      SolicitacaoMaterial[]
   avarias           AvariaReportada[]
+
+  reagenteInfo      Reagente?
+  solucaoInfo       Solucao?
+  equipamentoInfo   Equipamento?
+  vidrariaInfo      Vidraria?
+}
+
+model Reagente {
+  id         String  @id @default(uuid())
+
+  insumo_id  String  @unique
+  insumo     Insumo  @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
+
+  formula    String?
+  cas        String?
+  marca      String?
+  observacao String?
+}
+
+model Solucao {
+  id         String  @id @default(uuid())
+
+  insumo_id  String  @unique
+  insumo     Insumo  @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
+
+  formula    String?
+  cas        String?
+  observacao String?
+}
+
+model Equipamento {
+  id         String  @id @default(uuid())
+
+  insumo_id  String  @unique
+  insumo     Insumo  @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
+
+  marca      String?
+  modelo     String?
+  voltagem   String?
+}
+
+model Vidraria {
+  id         String  @id @default(uuid())
+
+  insumo_id  String  @unique
+  insumo     Insumo  @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
+
+  marca      String?
+  capacidade String?
 }
 
 model SolicitacaoMaterial {
@@ -51,7 +109,7 @@ model SolicitacaoMaterial {
   solicitante_id String
   solicitante    Usuario                 @relation(fields: [solicitante_id], references: [id])
   insumo_id      String
-  insumo         InsumoVidraria          @relation(fields: [insumo_id], references: [id])
+  insumo         Insumo                  @relation(fields: [insumo_id], references: [id])
   quantidade     Int
   data_retirada  DateTime
   data_limite    DateTime
@@ -64,7 +122,7 @@ model AvariaReportada {
   usuario_id   String
   usuario      Usuario        @relation(fields: [usuario_id], references: [id])
   insumo_id    String
-  insumo       InsumoVidraria @relation(fields: [insumo_id], references: [id])
+  insumo       Insumo         @relation(fields: [insumo_id], references: [id])
   descricao    String
   data_reporte DateTime       @default(now())
 }
