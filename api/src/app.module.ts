@@ -6,6 +6,8 @@ import { PrismaService } from './db/prisma/prisma.service.js';
 import { InventoryModule } from './inventory/inventory.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { ReservationsModule } from './reservations/reservations.module.js';
+import { InventoryController } from './inventory/inventory.controller.js';
+import { InventoryService } from './inventory/services/create-insumo.service.js';
 
 @Module({
   imports: [
@@ -17,7 +19,7 @@ import { ReservationsModule } from './reservations/reservations.module.js';
     InventoryModule,
     NotificationsModule,
   ],
-  controllers: [AppController],
-  providers: [PrismaService],
+  controllers: [AppController, InventoryController],
+  providers: [InventoryService, PrismaService],
 })
 export class AppModule {}
