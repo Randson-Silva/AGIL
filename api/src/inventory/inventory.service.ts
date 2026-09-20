@@ -1,10 +1,24 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PrismaService } from '../../db/prisma/prisma.service.js';
-import { CreateInsumoDto } from '../dtos/create-insumo.dto.js';
+import { PrismaService } from '../db/prisma/prisma.service.js';
+import { CreateInsumoDto } from './dtos/create-insumo.dto.js';
 
 @Injectable()
 export class InventoryService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async listarInsumos() {
+    return this.prisma.insumo.findMany({
+      orderBy: {
+        created_at: 'desc',
+      },
+      include: {
+        reagenteInfo: true,
+        solucaoInfo: true,
+        equipamentoInfo: true,
+        vidrariaInfo: true,
+      },
+    });
+  }
 
   async criarInsumo(data: CreateInsumoDto) {
     const dadosBase = {

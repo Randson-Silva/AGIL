@@ -7,7 +7,7 @@ import { InventoryModule } from './inventory/inventory.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { ReservationsModule } from './reservations/reservations.module.js';
 import { InventoryController } from './inventory/inventory.controller.js';
-import { InventoryService } from './inventory/services/create-insumo.service.js';
+import { InventoryService } from './inventory/inventory.service.js';
 
 @Module({
   imports: [
