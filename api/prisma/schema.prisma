@@ -12,11 +12,21 @@ enum Perfil {
   PROFESSOR
   ALUNO
 }
+
 enum CategoriaInsumo {
   EQUIPAMENTO
   VIDRARIA
   SOLUCAO
   REAGENTE
+}
+
+enum MedidasEntidades {
+  MG  // Miligrama
+  G   // Grama
+  KG  // Quilograma
+  ML  // Mililitro
+  L   // Litro
+  UN  // Unidade
 }
 
 model Usuario {
@@ -42,29 +52,32 @@ model ReservaEspaco {
 }
 
 model Insumo {
-  id                String                @id @default(uuid())
+  id                String           @id @default(uuid())
   nome              String
   categoria         CategoriaInsumo
   quantidade_saldo  Int
   localizacao       String?
   quantidade_minima Int?
-  status            String                @default("Disponível")
-  created_at        DateTime              @default(now())
+  status            String           @default("Disponível")
+  created_at        DateTime         @default(now())
+  updated_at        DateTime         @updatedAt @default(now())
+  tipo_medida       MedidasEntidades
+  data_validade     DateTime
 
-  solicitacoes      SolicitacaoMaterial[]
-  avarias           AvariaReportada[]
+  solicitacoes SolicitacaoMaterial[]
+  avarias      AvariaReportada[]
 
-  reagenteInfo      Reagente?
-  solucaoInfo       Solucao?
-  equipamentoInfo   Equipamento?
-  vidrariaInfo      Vidraria?
+  reagenteInfo    Reagente?
+  solucaoInfo     Solucao?
+  equipamentoInfo Equipamento?
+  vidrariaInfo    Vidraria?
 }
 
 model Reagente {
-  id         String  @id @default(uuid())
+  id String @id @default(uuid())
 
-  insumo_id  String  @unique
-  insumo     Insumo  @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
+  insumo_id String @unique
+  insumo    Insumo @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
 
   formula    String?
   cas        String?
@@ -73,10 +86,10 @@ model Reagente {
 }
 
 model Solucao {
-  id         String  @id @default(uuid())
+  id String @id @default(uuid())
 
-  insumo_id  String  @unique
-  insumo     Insumo  @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
+  insumo_id String @unique
+  insumo    Insumo @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
 
   formula    String?
   cas        String?
@@ -84,21 +97,21 @@ model Solucao {
 }
 
 model Equipamento {
-  id         String  @id @default(uuid())
+  id String @id @default(uuid())
 
-  insumo_id  String  @unique
-  insumo     Insumo  @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
+  insumo_id String @unique
+  insumo    Insumo @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
 
-  marca      String?
-  modelo     String?
-  voltagem   String?
+  marca    String?
+  modelo   String?
+  voltagem String?
 }
 
 model Vidraria {
-  id         String  @id @default(uuid())
+  id String @id @default(uuid())
 
-  insumo_id  String  @unique
-  insumo     Insumo  @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
+  insumo_id String @unique
+  insumo    Insumo @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
 
   marca      String?
   capacidade String?
@@ -118,13 +131,13 @@ model SolicitacaoMaterial {
 }
 
 model AvariaReportada {
-  id           String         @id @default(uuid())
+  id           String   @id @default(uuid())
   usuario_id   String
-  usuario      Usuario        @relation(fields: [usuario_id], references: [id])
+  usuario      Usuario  @relation(fields: [usuario_id], references: [id])
   insumo_id    String
-  insumo       Insumo         @relation(fields: [insumo_id], references: [id])
+  insumo       Insumo   @relation(fields: [insumo_id], references: [id])
   descricao    String
-  data_reporte DateTime       @default(now())
+  data_reporte DateTime @default(now())
 }
 
 model HistoricoMovimentacao {

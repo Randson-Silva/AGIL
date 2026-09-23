@@ -28,6 +28,7 @@ export class InventoryService {
       localizacao: data.localizacao,
       quantidade_minima: data.quantidade_minima,
       status: 'Disponível',
+      tipo_medida: data.tipo_medida,
     };
 
     switch (data.categoria) {
