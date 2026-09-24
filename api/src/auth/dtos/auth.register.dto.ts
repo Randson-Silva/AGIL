@@ -4,6 +4,7 @@ import {
   IsString,
   IsStrongPassword,
 } from 'class-validator';
+import { type Role } from '../../authz/roles.js';
 
 export class AuthRegisterDto {
   @IsNotEmpty({ message: 'O nome é obrigatório' })
@@ -23,5 +24,5 @@ export class AuthRegisterDto {
 
   @IsNotEmpty()
   @IsString()
-  profile: 'ALUNO' | 'TECNICO' | 'PROFESSOR';
+  profile: Role;
 }
