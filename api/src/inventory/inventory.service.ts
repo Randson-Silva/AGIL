@@ -13,6 +13,7 @@ import {
   UpdateGlasswareDto,
 } from './dtos/update.input.dto.js';
 
+
 @Injectable()
 export class InventoryService {
   constructor(private readonly prisma: PrismaService) {}
@@ -205,6 +206,52 @@ export class InventoryService {
         }),
       },
       include: { vidrariaInfo: true },
+    });
+  }
+
+
+  async darBaixaEstoque(itens: { insumo_id: string; quantidade: number }[], tecnicoId: string, solicitacaoId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      for (const item of itens) {
+        const insumo = await tx.insumo.findUnique({
+          where: { id: item.insumo_id },
+        });
+
+        if (!insumo) {
+          throw new BadRequestException(`Insumo ID ${item.insumo_id} não encontrado.`);
+        }
+
+        const saldoAnterior = Number(insumo.quantidade_saldo);
+        const qtdSolicitada = Number(item.quantidade);
+
+        if (saldoAnterior < qtdSolicitada) {
+          throw new BadRequestException(
+            `Estoque insuficiente para o item '${insumo.nome}'. Disponível: ${saldoAnterior}, Solicitado: ${qtdSolicitada}.`
+          );
+        }
+
+        const saldoPosterior = saldoAnterior - qtdSolicitada;
+
+        // 1. Atualiza o saldo do insumo
+        await tx.insumo.update({
+          where: { id: item.insumo_id },
+          data: { quantidade_saldo: saldoPosterior },
+        });
+
+        // 2. Registra o histórico de movimentação
+        await tx.historicoMovimentacao.create({
+          data: {
+            solicitacao_id: solicitacaoId,
+            insumo_id: item.insumo_id,
+            acao: 'SAIDA', // TipoMovimentacao Enum
+            quantidade: qtdSolicitada,
+            saldo_anterior: saldoAnterior,
+            saldo_posterior: saldoPosterior,
+            usuarioId: tecnicoId,
+            observacao: 'Baixa gerada por aprovação de solicitação',
+          },
+        });
+      }
     });
   }
 }

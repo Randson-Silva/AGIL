@@ -2,7 +2,7 @@ import {
   Body,
   Controller,
   Get,
-  Post,
+  Post, Req, UseGuards,
   Patch,
   Delete,
   Param,
@@ -20,11 +20,16 @@ import {
   UpdateEquipmentDto,
   UpdateGlasswareDto,
 } from './dtos/update.input.dto.js';
+import { Roles } from '../authz/roles.decorator.js';
+import { RolesGuard } from '../authz/roles.guard.js';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('inventory')
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
 
+  @Roles('TECNICO')
   @Get('inputs')
   async listInputs() {
     return this.inventoryService.listInputs();
