@@ -1,6 +1,25 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post, Req, UseGuards,
+  Patch,
+  Delete,
+  Param,
+} from '@nestjs/common';
 import { InventoryService } from './inventory.service.js';
-import { CreateInsumoDto } from './dtos/create-insumo.dto.js';
+import {
+  CreateReagentDto,
+  CreateSolutionDto,
+  CreateEquipmentDto,
+  CreateGlasswareDto,
+} from './dtos/base-input.dto.js';
+import {
+  UpdateReagentDto,
+  UpdateSolutionDto,
+  UpdateEquipmentDto,
+  UpdateGlasswareDto,
+} from './dtos/update.input.dto.js';
 import { Roles } from '../authz/roles.decorator.js';
 import { RolesGuard } from '../authz/roles.guard.js';
 import { AuthGuard } from '@nestjs/passport';
@@ -11,13 +30,61 @@ export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
 
   @Roles('TECNICO')
-  @Post('insumos')
-  async criarInsumo(@Body() data: CreateInsumoDto) {
-    return this.inventoryService.criarInsumo(data);
+  @Get('inputs')
+  async listInputs() {
+    return this.inventoryService.listInputs();
   }
 
-  @Get('insumos')
-  async listarInsumos() {
-    return this.inventoryService.listarInsumos();
+  @Post('reagent')
+  async createReagent(@Body() data: CreateReagentDto) {
+    return this.inventoryService.createReagent(data);
+  }
+
+  @Post('solution')
+  async createSolution(@Body() data: CreateSolutionDto) {
+    return this.inventoryService.createSolution(data);
+  }
+
+  @Post('equipment')
+  async createEquipment(@Body() data: CreateEquipmentDto) {
+    return this.inventoryService.createEquipment(data);
+  }
+
+  @Post('glassware')
+  async createGlassware(@Body() data: CreateGlasswareDto) {
+    return this.inventoryService.createGlassware(data);
+  }
+  @Patch('reagent/:id')
+  async updateReagent(@Param('id') id: string, @Body() data: UpdateReagentDto) {
+    return this.inventoryService.updateReagent(id, data);
+  }
+
+  @Patch('solution/:id')
+  async updateSolution(
+    @Param('id') id: string,
+    @Body() data: UpdateSolutionDto,
+  ) {
+    return this.inventoryService.updateSolution(id, data);
+  }
+
+  @Patch('equipment/:id')
+  async updateEquipment(
+    @Param('id') id: string,
+    @Body() data: UpdateEquipmentDto,
+  ) {
+    return this.inventoryService.updateEquipment(id, data);
+  }
+
+  @Patch('glassware/:id')
+  async updateGlassware(
+    @Param('id') id: string,
+    @Body() data: UpdateGlasswareDto,
+  ) {
+    return this.inventoryService.updateGlassware(id, data);
+  }
+
+  @Delete(':id')
+  async deleteInput(@Param('id') id: string) {
+    return this.inventoryService.deleteInput(id);
   }
 }
