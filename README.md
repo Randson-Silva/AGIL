@@ -1,3 +1,11 @@
+Compreendido! O problema ocorreu porque o próprio README tem blocos de código dentro dele, o que acaba "quebrando" a caixa de formatação aqui no chat.
+
+Para não bugar de forma alguma, vou colocar o texto exato abaixo, **sem nenhuma caixa ao redor**. Você pode simplesmente selecionar tudo a partir do título abaixo, copiar e colar no seu arquivo `README.md` (ou diretamente num Google Docs, já que ele vai renderizar a formatação bonitinha).
+
+Aqui está:
+
+---
+
 # 📱 AGIL - Aplicativo de Gerência de Insumos e Laboratórios
 
 **AGIL** é uma aplicação desenvolvida para facilitar o agendamento e gestão dos insumos e laboratório de química do Instituto Federal do Ceará (IFCE), beneficiando alunos, técnicos e professores da comunidade acadêmica.
@@ -24,7 +32,7 @@
 
 Este é um **monorepo** com a seguinte estrutura:
 
-```
+```text
 AGIL/
 ├── api/                       # Backend - NestJS API
 │   ├── src/                  # Código-fonte da API
@@ -43,6 +51,7 @@ AGIL/
 ├── .editorconfig              # EditorConfig para padronização de indentação
 ├── .env.docker.example        # Exemplo de variáveis de ambiente para Docker
 └── package.json               # Scripts root para Docker e outros utilitários
+
 ```
 
 ---
@@ -51,16 +60,18 @@ AGIL/
 
 Certifique-se de ter instalado em sua máquina:
 
-- **Node.js** (v18+ recomendado)
-- **npm** ou **yarn**
-- **Docker** e **Docker Compose** (para rodar o PostgreSQL)
-- **Git** (para versionamento)
+* **Node.js** (v18+ recomendado)
+* **npm** ou **yarn**
+* **Docker** e **Docker Compose** (para rodar o PostgreSQL)
+* **Git** (para versionamento)
 
 ### Verificar instalações:
+
 ```bash
 node --version
 npm --version
 docker --version
+
 ```
 
 ---
@@ -72,12 +83,14 @@ docker --version
 ```bash
 git clone https://github.com/Randson-Silva/AGIL.git
 cd AGIL
+
 ```
 
 ### 2. Instalar Dependências da Raiz
 
 ```bash
 npm install
+
 ```
 
 ### 3. Instalar Dependências da API
@@ -86,6 +99,7 @@ npm install
 cd api
 npm install
 cd ..
+
 ```
 
 ### 4. Instalar Dependências do Mobile
@@ -94,6 +108,7 @@ cd ..
 cd mobile
 npm install
 cd ..
+
 ```
 
 ### 5. Configurar Variáveis de Ambiente
@@ -102,6 +117,7 @@ cd ..
 
 ```bash
 cp .env.docker.example .env.docker
+
 ```
 
 Edite o arquivo `.env.docker` com suas credenciais:
@@ -114,21 +130,44 @@ POSTGRES_DB=db_name
 PGADMIN_PORT=5050
 PGADMIN_DEFAULT_EMAIL=default@email.com
 PGADMIN_DEFAULT_PASSWORD=anotherPassword
+
 ```
 
-#### Para API:
+#### Para API (Backend):
 
 ```bash
 cd api
 cp .env.example .env
+
 ```
 
-Edite o arquivo `api/.env` com a URL do banco de dados:
+Edite o arquivo `api/.env` com a URL do banco de dados e o host (IP da sua máquina na rede local):
 
 ```env
 PORT=3000
 DATABASE_URL="postgresql://user:password@localhost:5432/db_name?schema=public"
+API_HOST="xxx.xxx.x.x" # Altere para o seu IP IPv4 local
+
 ```
+
+#### Para Mobile (Frontend):
+
+Para que o aplicativo conecte na API de forma segura sem expor o seu IP fixo no código-fonte, crie um arquivo `.env` dentro da pasta `mobile`:
+
+```bash
+cd mobile
+touch .env
+
+```
+
+Adicione a seguinte variável (substituindo pelo mesmo IP da máquina configurado na API):
+
+```env
+EXPO_PUBLIC_API_URL=http://xxx.xxx.x.x:3000
+
+```
+
+*(Nota: O prefixo `EXPO_PUBLIC_` é obrigatório para que o Expo consiga ler a variável).*
 
 ---
 
@@ -142,18 +181,23 @@ Na raiz do projeto:
 
 ```bash
 npm run docker:up
+
 ```
 
 Isso inicia o PostgreSQL e PgAdmin em containers Docker.
 
 **Verificar status:**
+
 ```bash
 npm run docker:ps
+
 ```
 
 **Ver logs:**
+
 ```bash
 npm run docker:logs
+
 ```
 
 #### 2. Rodar Migrations do Prisma
@@ -161,6 +205,7 @@ npm run docker:logs
 ```bash
 cd api
 npm run db:migrate
+
 ```
 
 #### 3. Iniciar a API em Desenvolvimento
@@ -168,9 +213,10 @@ npm run db:migrate
 ```bash
 cd api
 npm run start:dev
+
 ```
 
-A API estará disponível em: `http://localhost:3000`
+A API estará disponível na porta definida (`http://localhost:3000`).
 
 #### Outras opções:
 
@@ -180,6 +226,7 @@ npm run start:prod
 
 # Modo debug
 npm run start:debug
+
 ```
 
 #### Acessar Prisma Studio (GUI para o banco):
@@ -187,6 +234,7 @@ npm run start:debug
 ```bash
 cd api
 npm run db:studio
+
 ```
 
 ### Mobile (Frontend)
@@ -196,12 +244,14 @@ npm run db:studio
 ```bash
 cd mobile
 npm install
+
 ```
 
 #### Iniciar a Aplicação
 
 ```bash
 npm start
+
 ```
 
 #### Opções de Execução:
@@ -218,13 +268,14 @@ npm run web
 
 # Modo Tunnel (para testar em dispositivo real)
 npm run tunnel
+
 ```
 
 #### Após rodar `npm start`, você verá um QR Code
 
-- **Expo Go**: Escaneie o QR Code com o app Expo Go (disponível em App Store e Google Play)
-- **Emulador**: Pressione `a` para Android ou `i` para iOS
-- **Web**: Pressione `w` para abrir no navegador
+* **Expo Go**: Escaneie o QR Code com o app Expo Go (disponível em App Store e Google Play)
+* **Emulador**: Pressione `a` para Android ou `i` para iOS
+* **Web**: Pressione `w` para abrir no navegador
 
 ### Docker
 
@@ -242,13 +293,14 @@ npm run docker:logs
 
 # Ver status dos containers
 npm run docker:ps
+
 ```
 
 #### Acessar PgAdmin:
 
-- URL: `http://localhost:5050`
-- Email: (conforme configurado em `.env.docker`)
-- Senha: (conforme configurado em `.env.docker`)
+* URL: `http://localhost:5050`
+* Email: (conforme configurado em `.env.docker`)
+* Senha: (conforme configurado em `.env.docker`)
 
 ### Prisma
 
@@ -258,6 +310,7 @@ npm run docker:ps
 cd api
 npm run db:migrate
 # Nome da migration será solicitado no prompt
+
 ```
 
 #### Executar Migrations Pendentes
@@ -265,6 +318,7 @@ npm run db:migrate
 ```bash
 cd api
 npm run db:migrate
+
 ```
 
 #### Abrir Prisma Studio (GUI)
@@ -272,6 +326,7 @@ npm run db:migrate
 ```bash
 cd api
 npm run db:studio
+
 ```
 
 #### Gerar Cliente Prisma (após mudanças no schema)
@@ -279,25 +334,30 @@ npm run db:studio
 ```bash
 cd api
 npx prisma generate
+
 ```
 
 ##### 🔄 Diferença entre `prisma migrate` e `prisma generate`
 
 * **`prisma migrate` (modifica o banco de dados)**
-  * Cria e aplica alterações estruturais no banco (tabelas, colunas, chaves, índices).
-  * Gera arquivos de histórico em SQL (`.sql`).
-  * **Quando usar:** Sempre que você alterar a estrutura do banco no `schema.prisma`.
-  * **Comando de desenvolvimento:** `npx prisma migrate dev --name nome_da_alteracao`
+* Cria e aplica alterações estruturais no banco (tabelas, colunas, chaves, índices).
+* Gera arquivos de histórico em SQL (`.sql`).
+* **Quando usar:** Sempre que você alterar a estrutura do banco no `schema.prisma`.
+* **Comando de desenvolvimento:** `npx prisma migrate dev --name nome_da_alteracao`
+
 
 * **`prisma generate` (gera o código TypeScript/Client)**
-  * Gera ou atualiza o **Prisma Client** (tipos e métodos de consulta da aplicação).
-  * **Não altera** nada no banco de dados.
-  * **Quando usar:** Após clonar o projeto, rodar instalações ou após migrações para atualizar os tipos no código.
-  * **Comando:** `npx prisma generate`
+* Gera ou atualiza o **Prisma Client** (tipos e métodos de consulta da aplicação).
+* **Não altera** nada no banco de dados.
+* **Quando usar:** Após clonar o projeto, rodar instalações ou após migrações para atualizar os tipos no código.
+* **Comando:** `npx prisma generate`
 
-> **Resumo rápido:**  
+
+
+> **Resumo rápido:**
 > `migrate` atualiza o **banco de dados**; `generate` atualiza o **código/tipos** do projeto.
-``` [[CLI generate](https://www.prisma.io/docs/cli/v7/generate); [Hassle-Free Migrations](https://www.prisma.io/blog/prisma-migrate-ga-b5eno5g08d0b#how-does-prisma-migrate-work)] ```
+
+*Leitura adicional:* [CLI generate](https://www.prisma.io/docs/cli/v7/generate?utm_source=gemini) | [Hassle-Free Migrations](https://www.prisma.io/blog/prisma-migrate-ga-b5eno5g08d0b?utm_source=gemini#how-does-prisma-migrate-work)
 
 ---
 
@@ -311,11 +371,11 @@ O projeto usa as seguintes ferramentas para padronização:
 
 Garante indentação e formatação consistentes entre diferentes editores:
 
-- **Indent Style**: Espaços (2 espaços)
-- **End of Line**: LF (Unix)
-- **Charset**: UTF-8
-- **Trim Trailing Whitespace**: Habilitado
-- **Insert Final Newline**: Habilitado
+* **Indent Style**: Espaços (2 espaços)
+* **End of Line**: LF (Unix)
+* **Charset**: UTF-8
+* **Trim Trailing Whitespace**: Habilitado
+* **Insert Final Newline**: Habilitado
 
 A maioria dos editores (VSCode, WebStorm, etc.) respeita automaticamente. Se não, instale a extensão EditorConfig.
 
@@ -334,6 +394,7 @@ Configuração global (`.prettierrc`):
   "arrowParens": "always",
   "endOfLine": "lf"
 }
+
 ```
 
 **Prettier na API** (`api/.prettierrc`):
@@ -343,6 +404,7 @@ Configuração global (`.prettierrc`):
   "singleQuote": true,
   "trailingComma": "all"
 }
+
 ```
 
 **Prettier no Mobile**: Usa a config global
@@ -357,6 +419,7 @@ npm run format
 # Mobile - Formatar com Prettier
 cd mobile
 npx prettier --write "app/**/*.{ts,tsx,js,jsx}"
+
 ```
 
 #### **ESLint** (Linting)
@@ -371,6 +434,7 @@ module.exports = {
     'prettier/prettier': 'error',
   },
 };
+
 ```
 
 **API**: Usa `oxlint` (mais rápido e moderno)
@@ -385,6 +449,7 @@ npm run lint
 # API com Oxlint
 cd api
 npm run lint
+
 ```
 
 ### Configurar no Visual Studio Code
@@ -413,6 +478,7 @@ Para melhor experiência de desenvolvimento, instale essas extensões:
   },
   "eslint.validate": ["javascript", "typescript", "javascriptreact", "typescriptreact"]
 }
+
 ```
 
 ---
@@ -426,6 +492,7 @@ Para melhor experiência de desenvolvimento, instale essas extensões:
 # Clone sua fork
 git clone https://github.com/SEU_USUARIO/AGIL.git
 cd AGIL
+
 ```
 
 ### Passo 2: Criar uma Branch de Feature
@@ -441,12 +508,15 @@ git checkout -b fix/nome-da-correcao
 
 # Para documentação
 git checkout -b docs/nome-da-documentacao
+
 ```
 
 Exemplo:
+
 ```bash
 git checkout -b feature/adicionar-autenticacao
 git checkout -b fix/corrigir-validacao-email
+
 ```
 
 ### Passo 3: Fazer Alterações e Commitar
@@ -454,39 +524,43 @@ git checkout -b fix/corrigir-validacao-email
 #### Antes de Commitar:
 
 1. **Executar Linting**:
+```bash
+# Se modificou API
+cd api
+npm run lint
 
-   ```bash
-   # Se modificou API
-   cd api
-   npm run lint
+# Se modificou Mobile
+cd mobile
+npm run lint
 
-   # Se modificou Mobile
-   cd mobile
-   npm run lint
-   ```
+```
+
 
 2. **Formatar Código**:
+```bash
+# Se modificou API
+cd api
+npm run format
 
-   ```bash
-   # Se modificou API
-   cd api
-   npm run format
+# Se modificou Mobile
+cd mobile
+npx prettier --write "app/**/*.{ts,tsx,js,jsx}"
 
-   # Se modificou Mobile
-   cd mobile
-   npx prettier --write "app/**/*.{ts,tsx,js,jsx}"
-   ```
+```
+
 
 3. **Executar Testes**:
+```bash
+# API
+cd api
+npm run test
 
-   ```bash
-   # API
-   cd api
-   npm run test
+# Para coverage
+npm run test:cov
 
-   # Para coverage
-   npm run test:cov
-   ```
+```
+
+
 
 #### Fazer Commit:
 
@@ -507,13 +581,16 @@ git commit -m "docs: descrição da documentação"
 
 # Tests
 git commit -m "test: descrição do teste"
+
 ```
 
 Exemplo:
+
 ```bash
 git commit -m "feat: adicionar endpoint de login"
 git commit -m "fix: corrigir validação de email no formulário"
 git commit -m "docs: atualizar seção de instalação no README"
+
 ```
 
 ### Passo 4: Push e Pull Request
@@ -523,23 +600,26 @@ git commit -m "docs: atualizar seção de instalação no README"
 git push origin feature/nome-da-feature
 
 # Abra um Pull Request no GitHub
+
 ```
 
 #### No PR, inclua:
 
-- **Descrição**: O que foi mudado e por quê
-- **Type**: `feat`, `fix`, `refactor`, `docs`, `test`
-- **Checklist**:
-  - [ ] Código segue as regras de lint
-  - [ ] Prettier foi executado
-  - [ ] Testes foram criados/atualizados
-  - [ ] Documentação foi atualizada
+* **Descrição**: O que foi mudado e por quê
+* **Type**: `feat`, `fix`, `refactor`, `docs`, `test`
+* **Checklist**:
+* [ ] Código segue as regras de lint
+* [ ] Prettier foi executado
+* [ ] Testes foram criados/atualizados
+* [ ] Documentação foi atualizada
+
+
 
 ### Passo 5: Code Review
 
-- Aguarde feedback dos mantenedores
-- Faça as alterações solicitadas
-- Push as novas alterações (o PR se atualiza automaticamente)
+* Aguarde feedback dos mantenedores
+* Faça as alterações solicitadas
+* Push as novas alterações (o PR se atualiza automaticamente)
 
 ### Passo 6: Merge
 
@@ -551,16 +631,16 @@ Após aprovação, o PR será merged para a branch principal.
 
 Antes de abrir um PR, certifique-se de:
 
-- [ ] Clonou o repositório corretamente
-- [ ] Criou uma branch com nome descritivo
-- [ ] Instalou todas as dependências (`npm install`)
-- [ ] Configurou variáveis de ambiente (`.env` e `.env.docker`)
-- [ ] Rodou linting sem erros (`npm run lint`)
-- [ ] Rodou Prettier para formatar código (`npm run format`)
-- [ ] Testes passam (`npm run test`)
-- [ ] Código segue as convenções do projeto
-- [ ] Mensagens de commit são claras e descritivas
-- [ ] PR tem descrição detalhada
+* [ ] Clonou o repositório corretamente
+* [ ] Criou uma branch com nome descritivo
+* [ ] Instalou todas as dependências (`npm install`)
+* [ ] Configurou variáveis de ambiente (`.env` e `.env.docker`)
+* [ ] Rodou linting sem erros (`npm run lint`)
+* [ ] Rodou Prettier para formatar código (`npm run format`)
+* [ ] Testes passam (`npm run test`)
+* [ ] Código segue as convenções do projeto
+* [ ] Mensagens de commit são claras e descritivas
+* [ ] PR tem descrição detalhada
 
 ---
 
@@ -569,17 +649,20 @@ Antes de abrir um PR, certifique-se de:
 ### Problema: `npm install` falha
 
 **Solução:**
+
 ```bash
 # Limpar cache do npm
 npm cache clean --force
 
 # Tentar novamente
 npm install
+
 ```
 
 ### Problema: Porta PostgreSQL já está em uso
 
 **Solução:**
+
 ```bash
 # Matar processo na porta 5432
 # Linux/Mac
@@ -590,11 +673,13 @@ netstat -ano | findstr :5432
 taskkill /PID <PID> /F
 
 # Ou verifique nos arquivos de env
+
 ```
 
 ### Problema: `DATABASE_URL` inválida
 
 **Verificar:**
+
 ```bash
 # Certifique-se de que .env.docker está configurado
 cat .env.docker
@@ -604,11 +689,13 @@ docker ps
 
 # Verifique a URL em api/.env
 # Format: postgresql://user:password@host:port/database?schema=public
+
 ```
 
 ### Problema: Prisma migration falha
 
 **Solução:**
+
 ```bash
 cd api
 
@@ -617,11 +704,13 @@ npx prisma migrate reset
 
 # Ou, criar nova migration
 npm run db:migrate
+
 ```
 
 ### Problema: Prettier não formata automaticamente
 
 **Verificar:**
+
 ```bash
 # Se a extensão está instalada no VSCode
 # Abra a paleta de comando (Ctrl+Shift+P)
@@ -630,11 +719,13 @@ npm run db:migrate
 # Ou, formatar manualmente
 npm run format  # API
 npx prettier --write "app/**/*.{ts,tsx,js,jsx}"  # Mobile
+
 ```
 
 ### Problema: ESLint mostra erros que Prettier não corrige
 
 **Solução:**
+
 ```bash
 # Prettier primeiro, depois ESLint
 npm run format      # Formata código
@@ -642,11 +733,13 @@ npm run lint        # Verifica erros de lint
 
 # Se ainda houver conflitos, configure o ESLint com Prettier
 npm install -D eslint-config-prettier
+
 ```
 
 ### Problema: Porta 3000 já está em uso (API)
 
 **Solução:**
+
 ```bash
 # Matar processo na porta 3000
 # Linux/Mac
@@ -658,18 +751,19 @@ taskkill /PID <PID> /F
 
 # Ou, mudar porta em api/.env
 # PORT=3001
+
 ```
 
 ---
 
 ## 📚 Documentação Adicional
 
-- [NestJS Docs](https://docs.nestjs.com/)
-- [Expo Docs](https://docs.expo.dev/)
-- [React Native Docs](https://reactnative.dev/)
-- [Prisma Docs](https://www.prisma.io/docs/)
-- [TypeScript Docs](https://www.typescriptlang.org/docs/)
-- [Docker Docs](https://docs.docker.com/)
+* [NestJS Docs](https://docs.nestjs.com/?utm_source=gemini)
+* [Expo Docs](https://docs.expo.dev/?utm_source=gemini)
+* [React Native Docs](https://reactnative.dev/?utm_source=gemini)
+* [Prisma Docs](https://www.prisma.io/docs/?utm_source=gemini)
+* [TypeScript Docs](https://www.typescriptlang.org/docs/?utm_source=gemini)
+* [Docker Docs](https://docs.docker.com/?utm_source=gemini)
 
 ---
 
@@ -677,7 +771,6 @@ taskkill /PID <PID> /F
 
 Se encontrar problemas:
 
-1. Verifique o [Troubleshooting](#troubleshooting)
-2. Procure em issues abertas: [GitHub Issues](https://github.com/Randson-Silva/AGIL/issues)
+1. Verifique o [Troubleshooting](https://www.google.com/search?q=%2523troubleshooting&utm_source=gemini)
+2. Procure em issues abertas: [GitHub Issues](https://github.com/Randson-Silva/AGIL/issues?utm_source=gemini)
 3. Abra uma nova issue com detalhes do problema
-
