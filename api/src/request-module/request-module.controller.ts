@@ -19,23 +19,23 @@ import { RolesGuard } from '../authz/roles.guard.js';
 import { Roles } from '../authz/roles.decorator.js';
 import { AuthGuard } from '@nestjs/passport';
 
-@Controller('request-module')
-@UseGuards(RolesGuard, AuthGuard)
+@Controller('request')
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 @Roles('PROFESSOR', 'TECNICO')
 export class RequestModuleController {
   constructor(private readonly requestModuleService: RequestModuleService) {}
 
-  @Post()
+  @Post('solicitacao')
   @Roles('PROFESSOR', 'ALUNO')
   create(@Body() createRequestDto: CreateRequestDto, @Req() req: any) {
     const solicitanteId = req.user.id;
     return this.requestModuleService.create(solicitanteId, createRequestDto);
   }
 
-  @Get()
+  @Get('solicitacoes')
   @Roles('PROFESSOR', 'ALUNO', 'TECNICO')
   findAll(@Query() filtros: ListRequestDto, @Req() req: any) {
-    const solicitanteId = req?.user?.id || 'id-mock-professor';
+    const solicitanteId = req.user.id;
     return this.requestModuleService.findAll(solicitanteId, filtros);
   }
 
@@ -51,14 +51,14 @@ export class RequestModuleController {
     return this.requestModuleService.update(id, updateRequestDto);
   }
 
-  @Patch(':id/approve')
+  @Patch(':id/solicitacao')
   @Roles('TECNICO')
   approve(@Param('id') id: string, @Req() req: any) {
     const tecnicoId = req.user.id;
     return this.requestModuleService.approve(id, tecnicoId);
   }
 
-  @Patch(':id/reject')
+  @Patch(':id/rejeitar')
   @Roles('TECNICO')
   reject(
     @Param('id') id: string,
