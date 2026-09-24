@@ -1,0 +1,55 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
+
+// Imports dos nossos módulos arquitetados
+import { getInventoryItems } from '../services/inventory.service';
+import { InventoryItemCard } from '../components/inventory-item-card';
+
+export default function InventoryScreen() {
+  const [items, setItems] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const router = useRouter();
+
+  const fetchInventory = async () => {
+    try {
+      const response = await getInventoryItems();
+      setItems(response.data);
+    } catch (error) {
+      Alert.alert('Error', 'Não foi possível carregar o inventário.');
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInventory();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-white">
+        <Text>A carregar inventário...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView className="flex-1 p-4 bg-white">
+      <Text className="text-2xl font-bold mb-6 text-gray-800">Inventário Mestre</Text>
+
+      <TouchableOpacity
+        onPress={() => router.push('/pages/new-item')}
+        className="bg-blue-600 rounded-lg p-4 items-center mb-6 shadow-sm"
+      >
+        <Text className="text-white font-bold text-lg">+ Novo item no inventário</Text>
+      </TouchableOpacity>
+
+      {items.map((item) => (
+        <InventoryItemCard key={item.id} item={item} />
+      ))}
+    </ScrollView>
+  );
+}

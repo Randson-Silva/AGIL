@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
-import NovoItemScreen from './novo-item';
-import InventarioScreen from './inventario';
+import NewItemScreen from './pages/new-item';
+import InventoryScreen from './pages/inventory';
 
 export default function HomeScreen() {
   return (
@@ -10,6 +10,6 @@ export default function HomeScreen() {
     //     Project Running with Native + Expo + NativeWind (tailwind)
     //   </Text>
     // </View>
-    <InventarioScreen />
+    <InventoryScreen />
   );
 }
