@@ -21,23 +21,41 @@ enum CategoriaInsumo {
 }
 
 enum MedidasEntidades {
-  MG  // Miligrama
-  G   // Grama
-  KG  // Quilograma
-  ML  // Mililitro
-  L   // Litro
-  UN  // Unidade
+  MG // Miligrama
+  G // Grama
+  KG // Quilograma
+  ML // Mililitro
+  L // Litro
+  UN // Unidade
+}
+
+enum StatusSolicitacao {
+  PENDENTE
+  APROVADA
+  REJEITADA
+  CANCELADA
+}
+
+enum TipoMovimentacao {
+  SOLICITACAO
+  SAIDA
+  ENTRADA
+  DEVOLUCAO
+  AVARIA
 }
 
 model Usuario {
-  id           String                @id @default(uuid())
-  nome         String
-  email        String                @unique
-  perfil       Perfil
-  created_at   DateTime              @default(now())
-  reservas     ReservaEspaco[]
-  solicitacoes SolicitacaoMaterial[]
-  avarias      AvariaReportada[]
+  id                   String                  @id @default(uuid())
+  nome                 String
+  email                String                  @unique
+  sennha               String
+  perfil               Perfil
+  created_at           DateTime                @default(now())
+  reservas             ReservaEspaco[]
+  solicitacoes         SolicitacaoMaterial[]   @relation("solicitante")
+  solicitacoes_tecnico SolicitacaoMaterial[]   @relation("SolicitacaoMaterial_Tecnico")
+  movimentacoes        HistoricoMovimentacao[]
+  avarias              AvariaReportada[]
 }
 
 model ReservaEspaco {
@@ -52,25 +70,31 @@ model ReservaEspaco {
 }
 
 model Insumo {
-  id                String           @id @default(uuid())
-  nome              String
-  categoria         CategoriaInsumo
-  quantidade_saldo  Int
-  localizacao       String?
-  quantidade_minima Int?
-  status            String           @default("Disponível")
-  created_at        DateTime         @default(now())
-  updated_at        DateTime         @updatedAt @default(now())
-  tipo_medida       MedidasEntidades
-  data_validade     DateTime
+  id        String          @id @default(uuid())
+  nome      String
+  categoria CategoriaInsumo
 
-  solicitacoes SolicitacaoMaterial[]
-  avarias      AvariaReportada[]
+  quantidade_saldo  Decimal @default(0) @db.Decimal(10, 3)
+  quantidade_minima Decimal @default(0) @db.Decimal(10, 3)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  tipo_medida   MedidasEntidades
+  data_validade DateTime
+
+  localizacao String?
+  status      String  @default("Disponível")
+
+  itensSolicitacao ItemSolicitacaoMaterial[]
+  avarias          AvariaReportada[]
 
   reagenteInfo    Reagente?
   solucaoInfo     Solucao?
   equipamentoInfo Equipamento?
   vidrariaInfo    Vidraria?
+
+  historicosMovimentacao HistoricoMovimentacao[]
 }
 
 model Reagente {
@@ -118,16 +142,35 @@ model Vidraria {
 }
 
 model SolicitacaoMaterial {
-  id             String                  @id @default(uuid())
+  id             String  @id @default(uuid())
   solicitante_id String
-  solicitante    Usuario                 @relation(fields: [solicitante_id], references: [id])
-  insumo_id      String
-  insumo         Insumo                  @relation(fields: [insumo_id], references: [id])
-  quantidade     Int
-  data_retirada  DateTime
-  data_limite    DateTime
-  status         String
-  historicos     HistoricoMovimentacao[]
+  solicitante    Usuario @relation("solicitante", fields: [solicitante_id], references: [id])
+  finalidade     String
+  descricao      String?
+
+  status StatusSolicitacao @default(PENDENTE)
+
+  tecnico_id    String?
+  tecnico       Usuario?                  @relation("SolicitacaoMaterial_Tecnico", fields: [tecnico_id], references: [id])
+  criada_em     DateTime                  @default(now())
+  aprovada_em   DateTime?
+  data_retirada DateTime?
+  itens         ItemSolicitacaoMaterial[]
+  historicos    HistoricoMovimentacao[]
+
+  motivo_rejeicao String?
+}
+
+model ItemSolicitacaoMaterial {
+  id String @id @default(uuid())
+
+  solicitacao_id String
+  solicitacao    SolicitacaoMaterial @relation(fields: [solicitacao_id], references: [id], onDelete: Cascade)
+
+  insumo_id String
+  insumo    Insumo @relation(fields: [insumo_id], references: [id])
+
+  quantidade Decimal @db.Decimal(10, 3)
 }
 
 model AvariaReportada {
@@ -144,7 +187,17 @@ model HistoricoMovimentacao {
   id             String              @id @default(uuid())
   solicitacao_id String
   solicitacao    SolicitacaoMaterial @relation(fields: [solicitacao_id], references: [id])
-  acao           String
-  data_evento    DateTime            @default(now())
-  observacao     String?
+  insumo_id      String
+  insumo         Insumo              @relation(fields: [insumo_id], references: [id])
+  acao           TipoMovimentacao
+  quantidade     Decimal             @db.Decimal(10, 3)
+
+  saldo_anterior  Decimal @db.Decimal(10, 3)
+  saldo_posterior Decimal @db.Decimal(10, 3)
+
+  data_evento DateTime @default(now())
+
+  observacao String?
+  usuario    Usuario? @relation(fields: [usuarioId], references: [id])
+  usuarioId  String?
 }
