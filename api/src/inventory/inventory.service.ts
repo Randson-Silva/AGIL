@@ -6,6 +6,12 @@ import {
   CreateEquipmentDto,
   CreateGlasswareDto,
 } from './dtos/base-input.dto.js';
+import {
+  UpdateReagentDto,
+  UpdateSolutionDto,
+  UpdateEquipmentDto,
+  UpdateGlasswareDto,
+} from './dtos/update.input.dto.js';
 
 @Injectable()
 export class InventoryService {
@@ -106,6 +112,97 @@ export class InventoryService {
             capacidade: data.capacidade,
           },
         },
+      },
+      include: { vidrariaInfo: true },
+    });
+  }
+
+  async deleteInput(id: string) {
+    return this.prisma.insumo.delete({
+      where: { id },
+    });
+  }
+
+  async updateReagent(id: string, data: UpdateReagentDto) {
+    const { formula, cas, marca, observacao, ...baseData } = data;
+
+    const childData = { formula, cas, marca, observacao };
+    const hasChildUpdate = Object.values(childData).some(
+      (val) => val !== undefined,
+    );
+
+    return this.prisma.insumo.update({
+      where: { id },
+      data: {
+        ...baseData,
+        ...(hasChildUpdate && {
+          reagenteInfo: {
+            update: childData,
+          },
+        }),
+      },
+      include: { reagenteInfo: true },
+    });
+  }
+
+  async updateSolution(id: string, data: UpdateSolutionDto) {
+    const { formula, cas, observacao, ...baseData } = data;
+    const childData = { formula, cas, observacao };
+    const hasChildUpdate = Object.values(childData).some(
+      (val) => val !== undefined,
+    );
+
+    return this.prisma.insumo.update({
+      where: { id },
+      data: {
+        ...baseData,
+        ...(hasChildUpdate && {
+          solucaoInfo: {
+            update: childData,
+          },
+        }),
+      },
+      include: { solucaoInfo: true },
+    });
+  }
+
+  async updateEquipment(id: string, data: UpdateEquipmentDto) {
+    const { marca, modelo, voltagem, ...baseData } = data;
+    const childData = { marca, modelo, voltagem };
+    const hasChildUpdate = Object.values(childData).some(
+      (val) => val !== undefined,
+    );
+
+    return this.prisma.insumo.update({
+      where: { id },
+      data: {
+        ...baseData,
+        ...(hasChildUpdate && {
+          equipamentoInfo: {
+            update: childData,
+          },
+        }),
+      },
+      include: { equipamentoInfo: true },
+    });
+  }
+
+  async updateGlassware(id: string, data: UpdateGlasswareDto) {
+    const { marca, capacidade, ...baseData } = data;
+    const childData = { marca, capacidade };
+    const hasChildUpdate = Object.values(childData).some(
+      (val) => val !== undefined,
+    );
+
+    return this.prisma.insumo.update({
+      where: { id },
+      data: {
+        ...baseData,
+        ...(hasChildUpdate && {
+          vidrariaInfo: {
+            update: childData,
+          },
+        }),
       },
       include: { vidrariaInfo: true },
     });
