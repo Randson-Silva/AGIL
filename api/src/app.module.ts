@@ -8,18 +8,20 @@ import { NotificationsModule } from './notifications/notifications.module.js';
 import { ReservationsModule } from './reservations/reservations.module.js';
 import { InventoryController } from './inventory/inventory.controller.js';
 import { InventoryService } from './inventory/inventory.service.js';
+import { PrismaModule } from './db/prisma/prisma.module.js';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    PrismaModule,
     AuthModule,
     ReservationsModule,
     InventoryModule,
     NotificationsModule,
   ],
   controllers: [AppController, InventoryController],
-  providers: [InventoryService, PrismaService],
+  providers: [InventoryService],
 })
 export class AppModule {}
