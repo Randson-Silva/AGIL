@@ -48,7 +48,7 @@ model Usuario {
   id                   String                  @id @default(uuid())
   nome                 String
   email                String                  @unique
-  sennha               String
+  senha               String
   perfil               Perfil
   created_at           DateTime                @default(now())
   reservas             ReservaEspaco[]
