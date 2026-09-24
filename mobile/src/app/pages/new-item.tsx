@@ -1,28 +1,22 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import axios from 'axios';
 
 import { createInventoryItem } from '../services/inventory.service';
-import { FormInput } from '../components/form-input';
-import { FormSelect } from '../components/form-select';
-import { CategorySelector } from '../components/category-selector';
-
-const MEASUREMENT_UNITS = [
-  { label: 'Miligrama (mg)', value: 'MG' },
-  { label: 'Grama (g)', value: 'G' },
-  { label: 'Quilograma (kg)', value: 'KG' },
-  { label: 'Mililitro (ml)', value: 'ML' },
-  { label: 'Litro (L)', value: 'L' },
-  { label: 'Unidade (un)', value: 'UN' },
-];
+import { CategorySelector } from '../components/input-form/category-selector';
+import { BaseForm } from '../components/input-form/base-form';
+import { ReagentForm } from '../components/input-form/reagent-form';
+import { SolutionForm } from '../components/input-form/solution-form';
+import { GlasswareForm } from '../components/input-form/glassware-form';
+import { EquipmentForm } from '../components/input-form/equipment-form';
 
 export default function NewItemScreen() {
-  const [name, setName] = useState('');
   const [category, setCategory] = useState('REAGENTE');
+
+  const [name, setName] = useState('');
   const [currentQuantity, setCurrentQuantity] = useState('');
   const [minQuantity, setMinQuantity] = useState('');
   const [location, setLocation] = useState('');
-
   const [measurementUnit, setMeasurementUnit] = useState('UN');
   const [expirationDate, setExpirationDate] = useState('');
 
@@ -37,7 +31,7 @@ export default function NewItemScreen() {
   const handleSave = async () => {
     const parsedDate = new Date(expirationDate);
     if (isNaN(parsedDate.getTime())) {
-      Alert.alert('Erro no Formulário', 'Por favor, insira uma data de validade válida (Ex: 2026-12-31).');
+      Alert.alert('Erro', 'Por favor, insira uma data válida (Ex: 2026-12-31).');
       return;
     }
 
@@ -72,36 +66,15 @@ export default function NewItemScreen() {
 
     try {
       const response = await createInventoryItem(category, payload);
-
       if (response.status === 201) {
         Alert.alert('Sucesso', 'Item cadastrado com sucesso!');
-        setName('');
-        setMeasurementUnit('');
-        setCurrentQuantity('');
-        setMinQuantity('');
-        setExpirationDate('');
-        setLocation('');
-        setBrand('');
-        setNotes('');
-        setModel('');
-        setVoltage('');
-        setCapacity('');
       }
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response && error.response.status === 400) {
-          const errorMessages = error.response.data.message;
-          if (Array.isArray(errorMessages)) {
-            Alert.alert('Erro de Validação', errorMessages.join('\n'));
-          } else {
-            Alert.alert('Erro', errorMessages);
-          }
-        } else {
-          Alert.alert('Erro', 'Ocorreu um problema no servidor.');
-        }
+      if (axios.isAxiosError(error) && error.response?.status === 400) {
+        const msgs = error.response.data.message;
+        Alert.alert('Erro de Validação', Array.isArray(msgs) ? msgs.join('\n') : msgs);
       } else {
-        Alert.alert('Erro', 'Não foi possível conectar ao servidor.');
-        console.error(error);
+        Alert.alert('Erro', 'Ocorreu um problema no servidor.');
       }
     }
   };
@@ -112,128 +85,60 @@ export default function NewItemScreen() {
 
       <CategorySelector selectedCategory={category} onSelect={setCategory} />
 
-      <FormInput
-        label="NOME DO ITEM *"
-        value={name}
-        onChangeText={setName}
-        placeholder="Ex.: Ácido Clorídrico 37%"
+      <BaseForm
+        name={name}
+        setName={setName}
+        currentQuantity={currentQuantity}
+        setCurrentQuantity={setCurrentQuantity}
+        measurementUnit={measurementUnit}
+        setMeasurementUnit={setMeasurementUnit}
+        minQuantity={minQuantity}
+        setMinQuantity={setMinQuantity}
+        expirationDate={expirationDate}
+        setExpirationDate={setExpirationDate}
+        location={location}
+        setLocation={setLocation}
       />
 
-      <View className="flex-row gap-4">
-        <View className="flex-1">
-          <FormInput
-            label="QTD ATUAL *"
-            value={currentQuantity}
-            onChangeText={setCurrentQuantity}
-            keyboardType="numeric"
-            placeholder="Ex.: 100"
-          />
-        </View>
-        <View className="flex-1">
-          <FormSelect
-            label="UNIDADE DE MEDIDA *"
-            selectedValue={measurementUnit}
-            onValueChange={setMeasurementUnit}
-            options={MEASUREMENT_UNITS}
-          />
-        </View>
-      </View>
-
-      <View className="flex-row gap-4">
-        <View className="flex-1">
-          <FormInput
-            label="QTD MÍNIMA"
-            value={minQuantity}
-            onChangeText={setMinQuantity}
-            keyboardType="numeric"
-            placeholder="Ex.: 10"
-          />
-        </View>
-        <View className="flex-1">
-          <FormInput
-            label="VALIDADE *"
-            value={expirationDate}
-            onChangeText={setExpirationDate}
-            placeholder="AAAA-MM-DD"
-          />
-        </View>
-      </View>
-
-      <FormInput
-        label="LOCALIZAÇÃO"
-        value={location}
-        onChangeText={setLocation}
-        placeholder="Ex.: Laboratório 1, Prateleira A"
-      />
-
-      {(category === 'REAGENTE' || category === 'VIDRARIA' || category === 'EQUIPAMENTO') && (
-        <FormInput
-          label="MARCA"
-          value={brand}
-          onChangeText={setBrand}
-          placeholder="Ex.: Sigma-Aldrich"
+      {category === 'REAGENTE' && (
+        <ReagentForm
+          brand={brand}
+          setBrand={setBrand}
+          formula={formula}
+          setFormula={setFormula}
+          cas={cas}
+          setCas={setCas}
+          notes={notes}
+          setNotes={setNotes}
         />
       )}
-
-      {(category === 'REAGENTE' || category === 'SOLUCAO') && (
-        <View>
-          <View className="flex-row gap-4">
-            <View className="flex-1">
-              <FormInput
-                label="FÓRMULA"
-                value={formula}
-                onChangeText={setFormula}
-                placeholder="Ex.: HCl"
-              />
-            </View>
-            <View className="flex-1">
-              <FormInput
-                label="Nº CAS"
-                value={cas}
-                onChangeText={setCas}
-                placeholder="Ex.: 7647-01-0"
-              />
-            </View>
-          </View>
-          <FormInput
-            label="OBSERVAÇÃO"
-            value={notes}
-            onChangeText={setNotes}
-            multiline
-            numberOfLines={4}
-            placeholder="Ex.: Observação sobre o item"
-          />
-        </View>
+      {category === 'SOLUCAO' && (
+        <SolutionForm
+          formula={formula}
+          setFormula={setFormula}
+          cas={cas}
+          setCas={setCas}
+          notes={notes}
+          setNotes={setNotes}
+        />
       )}
-
       {category === 'VIDRARIA' && (
-        <FormInput
-          label="CAPACIDADE"
-          value={capacity}
-          onChangeText={setCapacity}
-          placeholder="Ex.: 1000 mL"
+        <GlasswareForm
+          brand={brand}
+          setBrand={setBrand}
+          capacity={capacity}
+          setCapacity={setCapacity}
         />
       )}
-
       {category === 'EQUIPAMENTO' && (
-        <View className="flex-row gap-4">
-          <View className="flex-1">
-            <FormInput
-              label="MODELO"
-              value={model}
-              onChangeText={setModel}
-              placeholder="Ex.: Model X"
-            />
-          </View>
-          <View className="flex-1">
-            <FormInput
-              label="VOLTAGEM"
-              value={voltage}
-              onChangeText={setVoltage}
-              placeholder="Ex.: 12V"
-            />
-          </View>
-        </View>
+        <EquipmentForm
+          brand={brand}
+          setBrand={setBrand}
+          model={model}
+          setModel={setModel}
+          voltage={voltage}
+          setVoltage={setVoltage}
+        />
       )}
 
       <TouchableOpacity
