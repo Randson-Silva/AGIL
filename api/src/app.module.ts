@@ -9,6 +9,7 @@ import { ReservationsModule } from './reservations/reservations.module.js';
 import { InventoryController } from './inventory/inventory.controller.js';
 import { InventoryService } from './inventory/inventory.service.js';
 import { PrismaModule } from './db/prisma/prisma.module.js';
+import { RequestModuleModule } from './request-module/request-module.module.js';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PrismaModule } from './db/prisma/prisma.module.js';
     ReservationsModule,
     InventoryModule,
     NotificationsModule,
+    RequestModuleModule,
   ],
   controllers: [AppController, InventoryController],
   providers: [InventoryService],
