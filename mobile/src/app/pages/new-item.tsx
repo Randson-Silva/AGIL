@@ -4,7 +4,17 @@ import axios from 'axios';
 
 import { createInventoryItem } from '../services/inventory.service';
 import { FormInput } from '../components/form-input';
+import { FormSelect } from '../components/form-select';
 import { CategorySelector } from '../components/category-selector';
+
+const MEASUREMENT_UNITS = [
+  { label: 'Miligrama (mg)', value: 'MG' },
+  { label: 'Grama (g)', value: 'G' },
+  { label: 'Quilograma (kg)', value: 'KG' },
+  { label: 'Mililitro (ml)', value: 'ML' },
+  { label: 'Litro (L)', value: 'L' },
+  { label: 'Unidade (un)', value: 'UN' },
+];
 
 export default function NewItemScreen() {
   const [name, setName] = useState('');
@@ -25,29 +35,57 @@ export default function NewItemScreen() {
   const [capacity, setCapacity] = useState('');
 
   const handleSave = async () => {
-    const payload = {
+    const parsedDate = new Date(expirationDate);
+    if (isNaN(parsedDate.getTime())) {
+      Alert.alert('Erro no Formulário', 'Por favor, insira uma data de validade válida (Ex: 2026-12-31).');
+      return;
+    }
+
+    const payload: any = {
       nome: name,
       categoria: category,
       tipo_medida: measurementUnit,
-      data_validade: new Date(expirationDate).toISOString(),
+      data_validade: parsedDate.toISOString(),
       quantidade_saldo: Number(currentQuantity),
-      quantidade_minima: minQuantity ? Number(minQuantity) : null,
-      localizacao: location,
-
-      formula,
-      cas,
-      marca: brand,
-      observacao: notes,
-      modelo: model,
-      voltagem: voltage,
-      capacidade: capacity,
     };
+
+    if (minQuantity) payload.quantidade_minima = Number(minQuantity);
+    if (location) payload.localizacao = location;
+
+    if (category === 'REAGENTE') {
+      if (brand) payload.marca = brand;
+      if (formula) payload.formula = formula;
+      if (cas) payload.cas = cas;
+      if (notes) payload.observacao = notes;
+    } else if (category === 'SOLUCAO') {
+      if (formula) payload.formula = formula;
+      if (cas) payload.cas = cas;
+      if (notes) payload.observacao = notes;
+    } else if (category === 'VIDRARIA') {
+      if (brand) payload.marca = brand;
+      if (capacity) payload.capacidade = capacity;
+    } else if (category === 'EQUIPAMENTO') {
+      if (brand) payload.marca = brand;
+      if (model) payload.modelo = model;
+      if (voltage) payload.voltagem = voltage;
+    }
 
     try {
       const response = await createInventoryItem(category, payload);
 
       if (response.status === 201) {
         Alert.alert('Sucesso', 'Item cadastrado com sucesso!');
+        setName('');
+        setMeasurementUnit('');
+        setCurrentQuantity('');
+        setMinQuantity('');
+        setExpirationDate('');
+        setLocation('');
+        setBrand('');
+        setNotes('');
+        setModel('');
+        setVoltage('');
+        setCapacity('');
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -92,11 +130,11 @@ export default function NewItemScreen() {
           />
         </View>
         <View className="flex-1">
-          <FormInput
+          <FormSelect
             label="UNIDADE DE MEDIDA *"
-            value={measurementUnit}
-            onChangeText={setMeasurementUnit}
-            placeholder="Ex.: ML, L, G, UN"
+            selectedValue={measurementUnit}
+            onValueChange={setMeasurementUnit}
+            options={MEASUREMENT_UNITS}
           />
         </View>
       </View>

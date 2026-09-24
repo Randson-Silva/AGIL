@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.5:3000';
 
 export const getInventoryItems = async () => {
   return await axios.get(`${API_URL}/inventory/inputs`);
