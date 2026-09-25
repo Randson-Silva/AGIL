@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
-import { getInventoryItems } from '../services/inventory.service';
-import { InventoryItemCard } from '../components/inventory-item-card';
+import { InventoryItemCard } from '../../components/inventory-item-card';
+import { getInventoryItems } from '../../services/inventory.service';
 
 export default function InventoryScreen() {
   const [items, setItems] = useState<any[]>([]);
@@ -40,7 +40,7 @@ export default function InventoryScreen() {
       <Text className="text-2xl font-bold mb-6 text-gray-800">Inventário Mestre</Text>
 
       <TouchableOpacity
-        onPress={() => router.push('/pages/new-item')}
+        onPress={() => router.push('/new-item')}
         className="bg-green-600 rounded-lg p-4 items-center mb-6 shadow-sm"
       >
         <Text className="text-white font-bold text-lg">+ Novo item no inventário</Text>

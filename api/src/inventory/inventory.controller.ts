@@ -1,28 +1,29 @@
 import {
   Body,
   Controller,
-  Get,
-  Post, Req, UseGuards,
-  Patch,
   Delete,
+  Get,
   Param,
+  Patch,
+  Post,
+  UseGuards,
 } from '@nestjs/common';
-import { InventoryService } from './inventory.service.js';
-import {
-  CreateReagentDto,
-  CreateSolutionDto,
-  CreateEquipmentDto,
-  CreateGlasswareDto,
-} from './dtos/base-input.dto.js';
-import {
-  UpdateReagentDto,
-  UpdateSolutionDto,
-  UpdateEquipmentDto,
-  UpdateGlasswareDto,
-} from './dtos/update.input.dto.js';
+import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../authz/roles.decorator.js';
 import { RolesGuard } from '../authz/roles.guard.js';
-import { AuthGuard } from '@nestjs/passport';
+import {
+  CreateEquipmentDto,
+  CreateGlasswareDto,
+  CreateReagentDto,
+  CreateSolutionDto,
+} from './dtos/base-input.dto.js';
+import {
+  UpdateEquipmentDto,
+  UpdateGlasswareDto,
+  UpdateReagentDto,
+  UpdateSolutionDto,
+} from './dtos/update.input.dto.js';
+import { InventoryService } from './inventory.service.js';
 
 @Controller('inventory')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
