@@ -25,40 +25,41 @@ import { AuthGuard } from '@nestjs/passport';
 export class RequestModuleController {
   constructor(private readonly requestModuleService: RequestModuleService) {}
 
-  @Post('solicitacao')
+  @Post()
   @Roles('PROFESSOR', 'ALUNO')
   create(@Body() createRequestDto: CreateRequestDto, @Req() req: any) {
     const solicitanteId = req.user.id;
     return this.requestModuleService.create(solicitanteId, createRequestDto);
   }
 
-  @Get('solicitacoes')
+  @Get()
   @Roles('PROFESSOR', 'ALUNO', 'TECNICO')
   findAll(@Query() filtros: ListRequestDto, @Req() req: any) {
     const solicitanteId = req.user.id;
-    return this.requestModuleService.findAll(solicitanteId, filtros);
+    const role = req.user.roles?.[0];
+    return this.requestModuleService.findAll(solicitanteId, role, filtros);
   }
 
-  @Get(':id')
+  @Get('/:id')
   @Roles('PROFESSOR', 'ALUNO', 'TECNICO')
   findOne(@Param('id') id: string) {
     return this.requestModuleService.findOne(id);
   }
 
-  @Patch(':id')
+  @Patch('/tech/:id')
   @Roles('PROFESSOR', 'ALUNO')
   update(@Param('id') id: string, @Body() updateRequestDto: UpdateRequestDto) {
     return this.requestModuleService.update(id, updateRequestDto);
   }
 
-  @Patch(':id/solicitacao')
+  @Patch('/technician/approve/:id')
   @Roles('TECNICO')
   approve(@Param('id') id: string, @Req() req: any) {
     const tecnicoId = req.user.id;
     return this.requestModuleService.approve(id, tecnicoId);
   }
 
-  @Patch(':id/rejeitar')
+  @Patch('/:id/reject')
   @Roles('TECNICO')
   reject(
     @Param('id') id: string,

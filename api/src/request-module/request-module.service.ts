@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { CreateRequestDto } from './dto/create-request-module.dto.js';
 import { UpdateRequestDto } from './dto/update-request-module.dto.js';
 import { ListRequestDto } from './dto/list-request-module.dto.js';
@@ -9,7 +13,7 @@ import { InventoryService } from '../inventory/inventory.service.js';
 export class RequestModuleService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly inventoryService: InventoryService
+    private readonly inventoryService: InventoryService,
   ) {}
 
   async create(solicitanteId: string, dto: CreateRequestDto) {
@@ -20,24 +24,32 @@ export class RequestModuleService {
         descricao: dto.descricao,
         status: 'PENDENTE',
         itens: {
-          create: dto.itens?.map(item => ({
-            insumo_id: item.insumo_id,
-            quantidade: item.quantidade,
-          })) || []
-        }
+          create:
+            dto.itens?.map((item) => ({
+              insumo_id: item.insumo_id,
+              quantidade: item.quantidade,
+            })) || [],
+        },
       },
-      include: { itens: true }
+      include: { itens: true },
     });
   }
 
-  async findAll(solicitanteId: string, filtros: ListRequestDto) {
-    return this.prisma.solicitacaoMaterial.findMany({
-      where: {
-        solicitante_id: solicitanteId,
-        status: filtros.status,
-      },
-      orderBy: { criada_em: 'desc' },
-      include: { itens: true }
+  async findAll(solicitanteId: string, role: string, filtros: ListRequestDto) {
+    const where: any = {};
+
+    if (role !== 'TECNICO') {
+      where.solicitante_id = solicitanteId;
+    }
+
+    if (filtros.status) {
+      where.status = filtros.status;
+    }
+
+    return await this.prisma.solicitacaoMaterial.findMany({
+      where,
+      orderBy: { criada_em: filtros.ordem ?? 'desc' },
+      include: { itens: true },
     });
   }
 
@@ -58,7 +70,9 @@ export class RequestModuleService {
     const solicitacao = await this.findOne(id);
 
     if (solicitacao.status !== 'PENDENTE') {
-      throw new BadRequestException('Apenas solicitações pendentes podem ser alteradas.');
+      throw new BadRequestException(
+        'Apenas solicitações pendentes podem ser alteradas.',
+      );
     }
 
     return this.prisma.solicitacaoMaterial.update({
@@ -66,17 +80,19 @@ export class RequestModuleService {
       data: {
         finalidade: dto.finalidade,
         descricao: dto.descricao,
-        ...(dto.itens ? {
-          itens: {
-            deleteMany: {},
-            create: dto.itens.map(item => ({
-              insumo_id: item.insumo_id,
-              quantidade: item.quantidade
-            }))
-          }
-        } : {})
+        ...(dto.itens
+          ? {
+              itens: {
+                deleteMany: {},
+                create: dto.itens.map((item) => ({
+                  insumo_id: item.insumo_id,
+                  quantidade: item.quantidade,
+                })),
+              },
+            }
+          : {}),
       },
-      include: { itens: true }
+      include: { itens: true },
     });
   }
 
@@ -88,12 +104,16 @@ export class RequestModuleService {
     }
 
     if (solicitacao.itens && solicitacao.itens.length > 0) {
-      const itensFormatados = solicitacao.itens.map(item => ({
+      const itensFormatados = solicitacao.itens.map((item) => ({
         insumo_id: item.insumo_id,
-        quantidade: Number(item.quantidade)
+        quantidade: Number(item.quantidade),
       }));
 
-      await this.inventoryService.darBaixaEstoque(itensFormatados, tecnicoId, id);
+      await this.inventoryService.darBaixaEstoque(
+        itensFormatados,
+        tecnicoId,
+        id,
+      );
     }
 
     return this.prisma.solicitacaoMaterial.update({
@@ -121,5 +141,11 @@ export class RequestModuleService {
         motivo_rejeicao: motivo,
       },
     });
+  }
+
+  async aceptRequest() {}
+
+  async listResquets() {
+    return this.prisma.solicitacaoMaterial.findMany();
   }
 }
