@@ -1,11 +1,7 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { Role } from '../authz/roles.js';
 import { UsersService } from '../users/users.service.js';
 import { AuthLoginDto } from './dtos/auth.login.dto.js';
 import { AuthRegisterDto } from './dtos/auth.register.dto.js';
@@ -45,14 +41,18 @@ export class AuthService {
     return this.usersService.create(newUser);
   }
 
-  async validateUser(email: string, pass: string) {
+  async validateUser(email: string, pass: string, profile: Role) {
     const user = await this.usersService.findByEmail(email);
 
-    if (!user) throw new NotFoundException();
+    if (!user) return null;
+
+    const isProfileCorrect = user.perfil === profile;
+
+    if (!isProfileCorrect) return null;
 
     const hashComparison = await bcrypt.compare(pass, user.senha);
 
-    if (!user || !hashComparison) {
+    if (!hashComparison) {
       return null;
     }
 
@@ -61,7 +61,11 @@ export class AuthService {
   }
 
   async login(loginDto: AuthLoginDto) {
-    const user = await this.validateUser(loginDto.email, loginDto.password);
+    const user = await this.validateUser(
+      loginDto.email,
+      loginDto.password,
+      loginDto.profile,
+    );
 
     if (!user) return null;
 

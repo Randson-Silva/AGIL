@@ -1,13 +1,27 @@
-import InventoryScreen from './(tecnico)/inventory';
+import { Redirect } from 'expo-router';
+import { ActivityIndicator, View } from 'react-native';
+import { useAuth } from '../hooks/useAuth';
 
-export default function HomeScreen() {
-  return (
-    // <View className="flex-1 items-center justify-center bg-slate-900">
-    //   <Text className="text-2xl font-bold text-white">AGIL</Text>
-    //   <Text className="text-slate-400 mt-2">
-    //     Project Running with Native + Expo + NativeWind (tailwind)
-    //   </Text>
-    // </View>
-    <InventoryScreen />
-  );
+export default function IndexScreen() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-slate-900">
+        <ActivityIndicator size="large" color="#ffffff" />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return <Redirect href="/(public)/login" />;
+  }
+
+  // Redireciona o TÉCNICO direto para o inventário
+  if (user.perfil === 'TECNICO') {
+    return <Redirect href="/(protected)/(tecnico)/inventory" />;
+  }
+
+  // PROFESSOR e ALUNO vão para o dashboard padrão
+  return <Redirect href="/(protected)/dashboard" />;
 }

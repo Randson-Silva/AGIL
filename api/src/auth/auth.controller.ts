@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, NotFoundException, Post } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { AuthLoginDto } from './dtos/auth.login.dto.js';
 import { AuthRegisterDto } from './dtos/auth.register.dto.js';
@@ -9,14 +9,17 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() loginDto: AuthLoginDto) {
-    const { email, password } = loginDto;
+    const { email, password, profile } = loginDto;
 
     const response = await this.authService.login({
       email,
       password,
+      profile,
     });
 
-    return { response };
+    if (!response) throw new NotFoundException();
+
+    return response;
   }
 
   @Post('register')
