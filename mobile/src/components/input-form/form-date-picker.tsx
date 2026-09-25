@@ -37,7 +37,7 @@ export const FormDatePicker: React.FC<FormDatePickerProps> = ({ label, value, on
 
       <TouchableOpacity
         onPress={() => setShow(true)}
-        className="border border-gray-300 rounded-lg px-3 justify-center h-[50px] bg-white"
+        className="border border-gray-300 rounded-lg px-3 justify-center h-[50px] bg-#F4F7F4"
       >
         <Text className={value ? "text-gray-800 text-base" : "text-gray-400 text-base"}>
           {formatDateToBR(value)}
@@ -49,7 +49,7 @@ export const FormDatePicker: React.FC<FormDatePickerProps> = ({ label, value, on
           value={currentDate}
           mode="date"
           display="default"
-          onChange={handleChange}
+          onValueChange={handleChange}
         />
       )}
     </View>

@@ -41,7 +41,7 @@ export default function InventoryScreen() {
 
       <TouchableOpacity
         onPress={() => router.push('/new-item')}
-        className="bg-green-600 rounded-lg p-4 items-center mb-6 shadow-sm"
+        className="bg-green-700 rounded-lg p-4 items-center mb-6 shadow-sm"
       >
         <Text className="text-white font-bold text-lg">+ Novo item no inventário</Text>
       </TouchableOpacity>
