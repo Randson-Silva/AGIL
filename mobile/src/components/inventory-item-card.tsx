@@ -100,7 +100,11 @@ export const InventoryItemCard: React.FC<InventoryItemCardProps> = ({ item }) =>
           <Text className="text-gray-800 font-bold text-[14px]">Editar dados</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity className="flex-1 bg-green-700 rounded-lg py-3 items-center justify-center">
+        <TouchableOpacity
+          onPress={() =>
+            router.push({ pathname: '/adjust-inventory', params: { itemData: JSON.stringify(item) } })
+          }
+          className="flex-1 bg-green-700 rounded-lg py-3 items-center justify-center">
           <Text className="text-white font-bold text-[14px]">Ajustar estoque</Text>
         </TouchableOpacity>
       </View>

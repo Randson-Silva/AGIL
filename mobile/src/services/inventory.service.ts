@@ -30,3 +30,11 @@ export const updateInventoryItem = async (id: string, category: string, payload:
 export const deleteInventoryItem = async (id: string) => {
   return await axios.delete(`${API_URL}/inventory/${id}`);
 };
+
+export const incrementInventoryStock = async (id: string, amount: number) => {
+  return await axios.patch(`${API_URL}/inventory/stock/${id}/increment`, { amount });
+};
+
+export const decrementInventoryStock = async (id: string, amount: number) => {
+  return await axios.patch(`${API_URL}/inventory/stock/${id}/decrement`, { amount });
+};

@@ -84,6 +84,22 @@ export class InventoryController {
     return this.inventoryService.updateGlassware(id, data);
   }
 
+  @Patch('stock/:id/increment')
+  async incrementStock(
+    @Param('id') id: string,
+    @Body('amount') amount: number,
+  ) {
+    return this.inventoryService.incrementStock(id, amount);
+  }
+
+  @Patch('stock/:id/decrement')
+  async decrementStock(
+    @Param('id') id: string,
+    @Body('amount') amount: number,
+  ) {
+    return this.inventoryService.decrementStock(id, amount);
+  }
+
   @Delete(':id')
   async deleteInput(@Param('id') id: string) {
     return this.inventoryService.deleteInput(id);
