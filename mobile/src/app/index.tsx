@@ -1,6 +1,4 @@
-import { Text, View } from 'react-native';
-import NewItemScreen from './pages/new-item';
-import InventoryScreen from './pages/inventory';
+import InventoryScreen from './(tecnico)/inventory';
 
 export default function HomeScreen() {
   return (

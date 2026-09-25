@@ -1,25 +1,24 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../db/prisma/prisma.service.js';
 import {
-  CreateReagentDto,
-  CreateSolutionDto,
   CreateEquipmentDto,
   CreateGlasswareDto,
+  CreateReagentDto,
+  CreateSolutionDto,
 } from './dtos/base-input.dto.js';
 import {
-  UpdateReagentDto,
-  UpdateSolutionDto,
   UpdateEquipmentDto,
   UpdateGlasswareDto,
+  UpdateReagentDto,
+  UpdateSolutionDto,
 } from './dtos/update.input.dto.js';
-
 
 @Injectable()
 export class InventoryService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listInputs() {
-    return this.prisma.insumo.findMany({
+    const inputs = await this.prisma.insumo.findMany({
       orderBy: { created_at: 'desc' },
       include: {
         reagenteInfo: true,
@@ -28,6 +27,8 @@ export class InventoryService {
         vidrariaInfo: true,
       },
     });
+
+    return inputs ?? [];
   }
 
   async createReagent(data: CreateReagentDto) {
@@ -209,8 +210,11 @@ export class InventoryService {
     });
   }
 
-
-  async darBaixaEstoque(itens: { insumo_id: string; quantidade: number }[], tecnicoId: string, solicitacaoId: string) {
+  async darBaixaEstoque(
+    itens: { insumo_id: string; quantidade: number }[],
+    tecnicoId: string,
+    solicitacaoId: string,
+  ) {
     return this.prisma.$transaction(async (tx) => {
       for (const item of itens) {
         const insumo = await tx.insumo.findUnique({
@@ -218,7 +222,9 @@ export class InventoryService {
         });
 
         if (!insumo) {
-          throw new BadRequestException(`Insumo ID ${item.insumo_id} não encontrado.`);
+          throw new BadRequestException(
+            `Insumo ID ${item.insumo_id} não encontrado.`,
+          );
         }
 
         const saldoAnterior = Number(insumo.quantidade_saldo);
@@ -226,7 +232,7 @@ export class InventoryService {
 
         if (saldoAnterior < qtdSolicitada) {
           throw new BadRequestException(
-            `Estoque insuficiente para o item '${insumo.nome}'. Disponível: ${saldoAnterior}, Solicitado: ${qtdSolicitada}.`
+            `Estoque insuficiente para o item '${insumo.nome}'. Disponível: ${saldoAnterior}, Solicitado: ${qtdSolicitada}.`,
           );
         }
 
