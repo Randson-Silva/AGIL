@@ -1,14 +1,16 @@
 import axios from 'axios';
 import { useState } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity } from 'react-native';
+import { Platform, Text, TouchableOpacity } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import Toast from 'react-native-toast-message'; // Novo import!
 
-import { BaseForm } from '../../components/input-form/base-form';
-import { CategorySelector } from '../../components/input-form/category-selector';
-import { EquipmentForm } from '../../components/input-form/equipment-form';
-import { GlasswareForm } from '../../components/input-form/glassware-form';
-import { ReagentForm } from '../../components/input-form/reagent-form';
-import { SolutionForm } from '../../components/input-form/solution-form';
-import { createInventoryItem } from '../../services/inventory.service';
+import { BaseForm } from '../../../components/input-form/base-form';
+import { CategorySelector } from '../../../components/input-form/category-selector';
+import { EquipmentForm } from '../../../components/input-form/equipment-form';
+import { GlasswareForm } from '../../../components/input-form/glassware-form';
+import { ReagentForm } from '../../../components/input-form/reagent-form';
+import { SolutionForm } from '../../../components/input-form/solution-form';
+import { createInventoryItem } from '../../../services/inventory.service';
 
 export default function NewItemScreen() {
   const [category, setCategory] = useState('REAGENTE');
@@ -31,7 +33,11 @@ export default function NewItemScreen() {
   const handleSave = async () => {
     const parsedDate = new Date(expirationDate);
     if (isNaN(parsedDate.getTime())) {
-      Alert.alert('Erro', 'Por favor, insira uma data válida (Ex: 2026-12-31).');
+      Toast.show({
+        type: 'error',
+        text1: 'Erro de Data',
+        text2: 'Por favor, insira uma data válida.',
+      });
       return;
     }
 
@@ -67,21 +73,52 @@ export default function NewItemScreen() {
     try {
       const response = await createInventoryItem(category, payload);
       if (response.status === 201) {
-        Alert.alert('Sucesso', 'Item cadastrado com sucesso!');
+        Toast.show({
+          type: 'success',
+          text1: 'Sucesso!',
+          text2: 'Item cadastrado no inventário com sucesso.',
+        });
+        setName('');
+        setCurrentQuantity('');
+        setMinQuantity('');
+        setExpirationDate('');
+        setLocation('');
+        setFormula('');
+        setCas('');
+        setBrand('');
+        setNotes('');
+        setModel('');
+        setVoltage('');
+        setCapacity('');
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 400) {
         const msgs = error.response.data.message;
-        Alert.alert('Erro de Validação', Array.isArray(msgs) ? msgs.join('\n') : msgs);
+        Toast.show({
+          type: 'error',
+          text1: 'Erro de Validação',
+          text2: Array.isArray(msgs) ? msgs.join('\n') : msgs,
+        });
       } else {
-        Alert.alert('Erro', 'Ocorreu um problema no servidor.');
+        Toast.show({
+          type: 'error',
+          text1: 'Erro',
+          text2: 'Ocorreu um problema no servidor.',
+        });
       }
     }
   };
 
   return (
-    <ScrollView className="flex-1 p-4 bg-white">
-      <Text className="text-2xl font-bold mb-6 text-gray-800">Novo Item</Text>
+    <KeyboardAwareScrollView
+      style={{ backgroundColor: '#F4F7F4' }}
+      contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+      keyboardShouldPersistTaps="handled"
+      enableOnAndroid={true}
+      extraScrollHeight={Platform.OS === 'ios' ? 20 : 220}
+      enableAutomaticScroll={true}
+    >
+      <Text className="text-2xl font-bold mt-2 mb-6 text-gray-800">Novo Item</Text>
 
       <CategorySelector selectedCategory={category} onSelect={setCategory} />
 
@@ -143,10 +180,10 @@ export default function NewItemScreen() {
 
       <TouchableOpacity
         onPress={handleSave}
-        className="bg-green-600 rounded-lg p-4 items-center justify-center mt-4 mb-8"
+        className="bg-green-700 rounded-lg p-4 items-center justify-center mt-6 mb-8 shadow-sm"
       >
         <Text className="text-white font-bold text-lg">Cadastrar Item</Text>
       </TouchableOpacity>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }

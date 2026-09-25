@@ -23,7 +23,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
   return (
     <View className="mb-4">
       <Text className="text-sm font-semibold mb-1 text-gray-600">{label}</Text>
-      <View className="border border-gray-300 rounded-lg bg-white overflow-hidden">
+      <View className="border border-gray-300 rounded-lg bg-#F4F7F4 overflow-hidden h-[50px]">
         <Picker selectedValue={selectedValue} onValueChange={onValueChange} style={{ height: 50 }}>
           {options.map((option) => (
             <Picker.Item

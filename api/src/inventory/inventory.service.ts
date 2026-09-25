@@ -28,7 +28,7 @@ export class InventoryService {
       },
     });
 
-    return inputs ?? [];
+    return inputs || [];
   }
 
   async createReagent(data: CreateReagentDto) {
@@ -238,18 +238,16 @@ export class InventoryService {
 
         const saldoPosterior = saldoAnterior - qtdSolicitada;
 
-        // 1. Atualiza o saldo do insumo
         await tx.insumo.update({
           where: { id: item.insumo_id },
           data: { quantidade_saldo: saldoPosterior },
         });
 
-        // 2. Registra o histórico de movimentação
         await tx.historicoMovimentacao.create({
           data: {
             solicitacao_id: solicitacaoId,
             insumo_id: item.insumo_id,
-            acao: 'SAIDA', // TipoMovimentacao Enum
+            acao: 'SAIDA',
             quantidade: qtdSolicitada,
             saldo_anterior: saldoAnterior,
             saldo_posterior: saldoPosterior,
@@ -258,6 +256,35 @@ export class InventoryService {
           },
         });
       }
+    });
+  }
+
+  async incrementStock(id: string, amount: number) {
+    return this.prisma.insumo.update({
+      where: { id },
+      data: {
+        quantidade_saldo: {
+          increment: amount,
+        },
+      },
+    });
+  }
+
+  async decrementStock(id: string, amount: number) {
+    const item = await this.prisma.insumo.findUnique({ where: { id } });
+    if (!item) throw new BadRequestException('Item não encontrado');
+
+    if (item.quantidade_saldo.lessThan(amount)) {
+      throw new BadRequestException(`Estoque insuficiente. Tem apenas ${item.quantidade_saldo} unidades.`);
+    }
+
+    return this.prisma.insumo.update({
+      where: { id },
+      data: {
+        quantidade_saldo: {
+          decrement: amount,
+        },
+      },
     });
   }
 }

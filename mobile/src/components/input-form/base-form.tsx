@@ -2,6 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { FormInput } from './form-input';
 import { FormSelect } from './form-select';
+import { FormDatePicker } from './form-date-picker';
 
 const MEASUREMENT_UNITS = [
   { label: 'Miligrama (mg)', value: 'MG' },
@@ -13,6 +14,7 @@ const MEASUREMENT_UNITS = [
 ];
 
 interface BaseFormProps {
+  isEditing?: boolean;
   name: string;
   setName: (val: string) => void;
   currentQuantity: string;
@@ -28,6 +30,7 @@ interface BaseFormProps {
 }
 
 export const BaseForm: React.FC<BaseFormProps> = ({
+  isEditing = false,
   name,
   setName,
   currentQuantity,
@@ -51,15 +54,17 @@ export const BaseForm: React.FC<BaseFormProps> = ({
       />
 
       <View className="flex-row gap-4">
-        <View className="flex-1">
-          <FormInput
-            label="QTD ATUAL *"
-            value={currentQuantity}
-            onChangeText={setCurrentQuantity}
-            keyboardType="numeric"
-            placeholder="Ex.: 100"
-          />
-        </View>
+        {!isEditing && (
+          <View className="flex-1">
+            <FormInput
+              label="QTD ATUAL *"
+              value={currentQuantity}
+              onChangeText={setCurrentQuantity}
+              keyboardType="numeric"
+              placeholder="Ex.: 100"
+            />
+          </View>
+        )}
         <View className="flex-1">
           <FormSelect
             label="UNIDADE DE MEDIDA *"
@@ -81,12 +86,7 @@ export const BaseForm: React.FC<BaseFormProps> = ({
           />
         </View>
         <View className="flex-1">
-          <FormInput
-            label="VALIDADE *"
-            value={expirationDate}
-            onChangeText={setExpirationDate}
-            placeholder="AAAA-MM-DD"
-          />
+          <FormDatePicker label="VALIDADE *" value={expirationDate} onChange={setExpirationDate} />
         </View>
       </View>
 

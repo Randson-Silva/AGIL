@@ -1,10 +1,15 @@
-import { Stack } from 'expo-router';
+import { Slot } from 'expo-router';
+import { AuthProvider } from '../contexts/AuthContext';
+import Toast from 'react-native-toast-message';
 import '../global.css';
 
 export default function RootLayout() {
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{ title: 'Início', headerShown: false }} />
-    </Stack>
+    <>
+      <AuthProvider>
+        <Slot />
+      </AuthProvider>
+      <Toast />
+    </>
   );
 }

@@ -14,26 +14,26 @@ import {
 } from '../../generated/prisma/enums.js';
 
 export class BaseInputDto {
-  @IsNotEmpty({ message: 'Name is required' })
+  @IsNotEmpty({ message: 'Nome é obrigatório' })
   @IsString()
   nome: string;
 
-  @IsNotEmpty({ message: 'Category is required' })
-  @IsEnum(CategoriaInsumo, { message: 'Invalid category' })
+  @IsNotEmpty({ message: 'Categoria é obrigatória' })
+  @IsEnum(CategoriaInsumo, { message: 'Categoria inválida' })
   categoria: CategoriaInsumo;
 
-  @IsNotEmpty({ message: 'Measurement unit is required' })
-  @IsEnum(MedidasEntidades, { message: 'Invalid measurement unit' })
+  @IsNotEmpty({ message: 'Tipo de medida é obrigatório' })
+  @IsEnum(MedidasEntidades, { message: 'Tipo de medida inválido' })
   tipo_medida: MedidasEntidades;
 
-  @IsNotEmpty({ message: 'Quantity is required' })
+  @IsNotEmpty({ message: 'Quantidade em saldo é obrigatória' })
   @IsNumber()
-  @Min(1, { message: 'Quantity must be greater than zero' })
+  @Min(1, { message: 'Quantidade em saldo deve ser maior que zero' })
   quantidade_saldo: number;
 
-  @IsNotEmpty({ message: 'Expiration date is required' })
+  @IsNotEmpty({ message: 'Data de validade é obrigatória' })
   @Type(() => Date)
-  @IsDate({ message: 'Must be a valid date' })
+  @IsDate({ message: 'Deve ser uma data válida' })
   data_validade: Date;
 
   @IsOptional()
@@ -42,7 +42,7 @@ export class BaseInputDto {
 
   @IsOptional()
   @IsNumber()
-  @Min(0, { message: 'Min quantity cannot be negative' })
+  @Min(0, { message: 'Quantidade mínima não pode ser negativa' })
   quantidade_minima?: number;
 }
 
