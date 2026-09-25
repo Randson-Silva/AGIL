@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import axios from 'axios';
+import { useState } from 'react';
+import { Alert, ScrollView, Text, TouchableOpacity } from 'react-native';
 
-import { createInventoryItem } from '../services/inventory.service';
-import { CategorySelector } from '../components/input-form/category-selector';
-import { BaseForm } from '../components/input-form/base-form';
-import { ReagentForm } from '../components/input-form/reagent-form';
-import { SolutionForm } from '../components/input-form/solution-form';
-import { GlasswareForm } from '../components/input-form/glassware-form';
-import { EquipmentForm } from '../components/input-form/equipment-form';
+import { BaseForm } from '../../components/input-form/base-form';
+import { CategorySelector } from '../../components/input-form/category-selector';
+import { EquipmentForm } from '../../components/input-form/equipment-form';
+import { GlasswareForm } from '../../components/input-form/glassware-form';
+import { ReagentForm } from '../../components/input-form/reagent-form';
+import { SolutionForm } from '../../components/input-form/solution-form';
+import { createInventoryItem } from '../../services/inventory.service';
 
 export default function NewItemScreen() {
   const [category, setCategory] = useState('REAGENTE');
