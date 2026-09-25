@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useState } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity } from 'react-native';
+import { Alert, Text, TouchableOpacity, Platform } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 import { BaseForm } from '../../components/input-form/base-form';
 import { CategorySelector } from '../../components/input-form/category-selector';
@@ -80,8 +81,15 @@ export default function NewItemScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 p-4 bg-white">
-      <Text className="text-2xl font-bold mb-6 text-gray-800">Novo Item</Text>
+    <KeyboardAwareScrollView
+      className="flex-1 bg-white"
+      contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+      keyboardShouldPersistTaps="handled"
+      enableOnAndroid={true}
+      extraScrollHeight={Platform.OS === 'ios' ? 20 : 240}
+      enableAutomaticScroll={true}
+    >
+      <Text className="text-2xl font-bold mt-2 mb-6 text-gray-800">Novo Item</Text>
 
       <CategorySelector selectedCategory={category} onSelect={setCategory} />
 
@@ -147,6 +155,6 @@ export default function NewItemScreen() {
       >
         <Text className="text-white font-bold text-lg">Cadastrar Item</Text>
       </TouchableOpacity>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }

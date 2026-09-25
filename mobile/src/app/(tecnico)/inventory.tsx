@@ -37,7 +37,7 @@ export default function InventoryScreen() {
 
   return (
     <ScrollView className="flex-1 p-4 bg-white">
-      <Text className="text-2xl font-bold mb-6 text-gray-800">Inventário Mestre</Text>
+      <Text className="text-2xl font-bold mt-6 mb-6 text-gray-800">Inventário Mestre</Text>
 
       <TouchableOpacity
         onPress={() => router.push('/new-item')}
