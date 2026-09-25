@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useState } from 'react';
-import { Text, TouchableOpacity, Platform } from 'react-native';
+import { Platform, Text, TouchableOpacity } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Toast from 'react-native-toast-message'; // Novo import!
 

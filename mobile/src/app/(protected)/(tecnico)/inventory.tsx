@@ -1,9 +1,9 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, Alert, TouchableOpacity } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
-import { getInventoryItems } from '../../../services/inventory.service';
 import { InventoryItemCard } from '../../../components/inventory-item-card';
+import { getInventoryItems } from '../../../services/inventory.service';
 
 export default function InventoryScreen() {
   const [items, setItems] = useState<any[]>([]);
@@ -46,9 +46,13 @@ export default function InventoryScreen() {
       >
         <Text className="text-2xl font-bold mt-6 mb-6 text-gray-900">Inventário Mestre</Text>
 
-        {items.map((item) => (
-          <InventoryItemCard key={item.id} item={item} />
-        ))}
+        {items.length > 0 ? (
+          items.map((item) => <InventoryItemCard key={item.id} item={item} />)
+        ) : (
+          <Text className="text-2xl font-bold text-center mt-10 mb-10 text-gray-500">
+            Nenhum item no inventário para exibir
+          </Text>
+        )}
       </ScrollView>
 
       <View className="absolute bottom-0 w-full bg-white border-t border-gray-200 px-4 py-4 pb-8">

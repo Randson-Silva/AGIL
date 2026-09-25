@@ -28,7 +28,7 @@ export class InventoryService {
       },
     });
 
-    return inputs ?? [];
+    return inputs || [];
   }
 
   async createReagent(data: CreateReagentDto) {

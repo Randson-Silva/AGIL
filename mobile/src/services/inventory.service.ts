@@ -1,8 +1,9 @@
-import axios from 'axios';
+import { api } from './api';
 
 export const getInventoryItems = async () => {
-  console.log(`/inventory/inputs`);
-  return await axios.get(`/inventory/inputs`);
+  const inputs = await api.get(`/inventory/inputs`);
+
+  return inputs;
 };
 
 export const createInventoryItem = async (category: string, payload: any) => {
@@ -12,7 +13,7 @@ export const createInventoryItem = async (category: string, payload: any) => {
   else if (category === 'EQUIPAMENTO') endpoint = 'equipment';
   else if (category === 'VIDRARIA') endpoint = 'glassware';
 
-  return await axios.post(`/inventory/${endpoint}`, payload);
+  return await api.post(`/inventory/${endpoint}`, payload);
 };
 
 export const updateInventoryItem = async (id: string, category: string, payload: any) => {
@@ -22,17 +23,17 @@ export const updateInventoryItem = async (id: string, category: string, payload:
   else if (category === 'EQUIPAMENTO') endpoint = 'equipment';
   else if (category === 'VIDRARIA') endpoint = 'glassware';
 
-  return await axios.patch(`/inventory/${endpoint}/${id}`, payload);
+  return await api.patch(`/inventory/${endpoint}/${id}`, payload);
 };
 
 export const deleteInventoryItem = async (id: string) => {
-  return await axios.delete(`/inventory/${id}`);
+  return await api.delete(`/inventory/${id}`);
 };
 
 export const incrementInventoryStock = async (id: string, amount: number) => {
-  return await axios.patch(`/inventory/stock/${id}/increment`, { amount });
+  return await api.patch(`/inventory/stock/${id}/increment`, { amount });
 };
 
 export const decrementInventoryStock = async (id: string, amount: number) => {
-  return await axios.patch(`/inventory/stock/${id}/decrement`, { amount });
+  return await api.patch(`/inventory/stock/${id}/decrement`, { amount });
 };

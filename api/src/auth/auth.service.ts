@@ -69,14 +69,14 @@ export class AuthService {
 
     if (!user) return null;
 
-    const payload = { email: user.email, sub: user.id, roles: [user.perfil] };
+    const payload = { email: user.email, sub: user.id, role: user.perfil };
 
     return {
       access_token: this.jwtService.sign(payload),
       user: {
         id: user.id,
         email: user.email,
-        roles: [user.perfil],
+        profile: user.perfil,
       },
     };
   }

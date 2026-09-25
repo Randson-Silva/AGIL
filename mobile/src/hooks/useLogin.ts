@@ -1,10 +1,13 @@
 import { RoleType } from '@/components/auth/RoleSelect';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert } from 'react-native';
 import { useAuth } from './useAuth';
 
 export function useLogin() {
   const { signIn } = useAuth();
+
+  const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,6 +22,8 @@ export function useLogin() {
     try {
       setIsLoading(true);
       await signIn({ email, password, profile });
+
+      router.replace('/');
     } catch (error) {
       console.error(error);
       Alert.alert('Erro no Login', 'Verifique suas credenciais e tente novamente.');
@@ -28,7 +33,7 @@ export function useLogin() {
   };
 
   const handleGoogleLogin = () => {
-    Alert.alert('Google OAuth', 'Iniciando autenticação institucional via Google...');
+    Alert.alert('Google OAuth', 'Não implementado...');
   };
 
   return {
