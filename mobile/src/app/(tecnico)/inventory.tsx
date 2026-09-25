@@ -44,7 +44,7 @@ export default function InventoryScreen() {
         className="flex-1"
         contentContainerStyle={{ padding: 16, paddingBottom: 100, paddingTop: 20 }}
       >
-        <Text className="text-2xl font-bold mb-6 text-gray-900">Inventário Mestre</Text>
+        <Text className="text-2xl font-bold mt-6 mb-6 text-gray-900">Inventário Mestre</Text>
 
         {items.map((item) => (
           <InventoryItemCard key={item.id} item={item} />
@@ -54,7 +54,7 @@ export default function InventoryScreen() {
       <View className="absolute bottom-0 w-full bg-white border-t border-gray-200 px-4 py-4 pb-8">
         <TouchableOpacity
           onPress={() => router.push('/new-item')}
-          className="bg-[#047857] rounded-lg p-4 items-center shadow-sm"
+          className="bg-green-700 rounded-lg p-4 items-center shadow-sm"
         >
           <Text className="text-white font-bold text-[16px]">Novo item no inventário</Text>
         </TouchableOpacity>
