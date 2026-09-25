@@ -2,8 +2,8 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
-import { InventoryItemCard } from '../../components/inventory-item-card';
-import { getInventoryItems } from '../../services/inventory.service';
+import { InventoryItemCard } from '../../../components/inventory-item-card';
+import { getInventoryItems } from '../../../services/inventory.service';
 
 export default function InventoryScreen() {
   const [items, setItems] = useState<any[]>([]);
