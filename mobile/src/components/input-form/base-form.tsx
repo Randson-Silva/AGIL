@@ -2,6 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { FormInput } from './form-input';
 import { FormSelect } from './form-select';
+import { FormDatePicker } from './form-date-picker'; // Novo import
 
 const MEASUREMENT_UNITS = [
   { label: 'Miligrama (mg)', value: 'MG' },
@@ -81,11 +82,10 @@ export const BaseForm: React.FC<BaseFormProps> = ({
           />
         </View>
         <View className="flex-1">
-          <FormInput
+          <FormDatePicker
             label="VALIDADE *"
             value={expirationDate}
-            onChangeText={setExpirationDate}
-            placeholder="AAAA-MM-DD"
+            onChange={setExpirationDate}
           />
         </View>
       </View>
