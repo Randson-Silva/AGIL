@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 
 interface InventoryItemCardProps {
   item: any;
@@ -16,6 +17,8 @@ const UNIT_LABELS: Record<string, string> = {
 
 export const InventoryItemCard: React.FC<InventoryItemCardProps> = ({ item }) => {
   const isCritical = item.quantidade_saldo <= (item.quantidade_minima || 0);
+
+  const router = useRouter();
 
   const formatDateToBR = (dateString?: string) => {
     if (!dateString) return 'Sem validade';
@@ -88,7 +91,12 @@ export const InventoryItemCard: React.FC<InventoryItemCardProps> = ({ item }) =>
       </Text>
 
       <View className="flex-row gap-3">
-        <TouchableOpacity className="flex-1 border border-gray-300 rounded-lg py-3 items-center justify-center">
+        <TouchableOpacity
+          onPress={() =>
+            router.push({ pathname: '/edit-item', params: { itemData: JSON.stringify(item) } })
+          }
+          className="flex-1 border border-gray-300 rounded-lg py-3 items-center justify-center"
+        >
           <Text className="text-gray-800 font-bold text-[14px]">Editar dados</Text>
         </TouchableOpacity>
 
