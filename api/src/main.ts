@@ -1,6 +1,8 @@
+import 'reflect-metadata';
+
+import { ValidationPipe } from '@nestjs/common/pipes/index.js';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
-import { ValidationPipe } from '@nestjs/common/pipes/index.js';
 
 async function bootstrap() {
   const PORT = process.env.PORT ?? 3000;
@@ -11,9 +13,11 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
-      transform: true, 
+      transform: true,
     }),
   );
+
+  app.enableCors();
 
   await app.listen(PORT);
 
