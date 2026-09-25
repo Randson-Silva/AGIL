@@ -1,12 +1,5 @@
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 import { RoleSelector } from '@/components/auth/RoleSelect';
 import { Button } from '@/components/ui/Button';
@@ -24,12 +17,11 @@ export default function LoginScreen() {
     isLoading,
     handleLogin,
     handleGoogleLogin,
+    handlePressRegister,
   } = useLogin();
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1 bg-emerald-50/30"
-    >
+    <KeyboardAvoidingView className="flex-1 bg-emerald-50/30">
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 20 }}>
         {/* Cabeçalho */}
         <View className="items-center mb-8 mt-6">
@@ -67,6 +59,7 @@ export default function LoginScreen() {
             secureTextEntry
             value={password}
             onChangeText={setPassword}
+            isPassword
           />
 
           <TouchableOpacity className="mb-6 ml-1">
@@ -94,7 +87,7 @@ export default function LoginScreen() {
           {/* Cadastre-se */}
           <View className="flex-row justify-center mt-2">
             <Text className="text-gray-500 text-sm">Ainda não possui cadastro? </Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={handlePressRegister}>
               <Text className="text-[#00623B] text-sm font-semibold">Cadastre-se aqui</Text>
             </TouchableOpacity>
           </View>

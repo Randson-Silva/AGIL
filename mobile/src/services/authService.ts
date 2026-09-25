@@ -1,3 +1,4 @@
+import { RoleType } from '@/components/auth/RoleSelect';
 import { api } from './api';
 
 export interface LoginCredentials {
@@ -14,5 +15,11 @@ export const authService = {
 
   async loginWithGoogle() {
     throw new Error('Not implemented.');
+  },
+
+  async register(name: string, email: string, password: string, profile: RoleType) {
+    const response = await api.post('/auth/register', { name, email, password, profile });
+
+    return response.data;
   },
 };

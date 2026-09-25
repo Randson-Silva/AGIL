@@ -32,6 +32,10 @@ export function useLogin() {
     }
   };
 
+  const handlePressRegister = () => {
+    router.navigate('/(public)/register');
+  };
+
   const handleGoogleLogin = () => {
     Alert.alert('Google OAuth', 'Não implementado...');
   };
@@ -46,5 +50,6 @@ export function useLogin() {
     isLoading,
     handleLogin,
     handleGoogleLogin,
+    handlePressRegister,
   };
 }
