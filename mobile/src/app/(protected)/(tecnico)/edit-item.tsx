@@ -5,12 +5,12 @@ import Toast from 'react-native-toast-message';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
 
-import { BaseForm } from '../../components/input-form/base-form';
-import { EquipmentForm } from '../../components/input-form/equipment-form';
-import { GlasswareForm } from '../../components/input-form/glassware-form';
-import { ReagentForm } from '../../components/input-form/reagent-form';
-import { SolutionForm } from '../../components/input-form/solution-form';
-import { updateInventoryItem, deleteInventoryItem } from '../../services/inventory.service';
+import { BaseForm } from '../../../components/input-form/base-form';
+import { EquipmentForm } from '../../../components/input-form/equipment-form';
+import { GlasswareForm } from '../../../components/input-form/glassware-form';
+import { ReagentForm } from '../../../components/input-form/reagent-form';
+import { SolutionForm } from '../../../components/input-form/solution-form';
+import { updateInventoryItem, deleteInventoryItem } from '../../../services/inventory.service';
 
 export default function EditItemScreen() {
   const router = useRouter();

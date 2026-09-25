@@ -4,13 +4,13 @@ import { Text, TouchableOpacity, Platform } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Toast from 'react-native-toast-message'; // Novo import!
 
-import { BaseForm } from '../../components/input-form/base-form';
-import { CategorySelector } from '../../components/input-form/category-selector';
-import { EquipmentForm } from '../../components/input-form/equipment-form';
-import { GlasswareForm } from '../../components/input-form/glassware-form';
-import { ReagentForm } from '../../components/input-form/reagent-form';
-import { SolutionForm } from '../../components/input-form/solution-form';
-import { createInventoryItem } from '../../services/inventory.service';
+import { BaseForm } from '../../../components/input-form/base-form';
+import { CategorySelector } from '../../../components/input-form/category-selector';
+import { EquipmentForm } from '../../../components/input-form/equipment-form';
+import { GlasswareForm } from '../../../components/input-form/glassware-form';
+import { ReagentForm } from '../../../components/input-form/reagent-form';
+import { SolutionForm } from '../../../components/input-form/solution-form';
+import { createInventoryItem } from '../../../services/inventory.service';
 
 export default function NewItemScreen() {
   const [category, setCategory] = useState('REAGENTE');

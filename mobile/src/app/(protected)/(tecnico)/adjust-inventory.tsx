@@ -5,13 +5,15 @@ import Toast from 'react-native-toast-message';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
 
-import { incrementInventoryStock, decrementInventoryStock } from '../../services/inventory.service';
+import { incrementInventoryStock, decrementInventoryStock } from '../../../services/inventory.service';
+import { useAuth } from '@/hooks/useAuth';
 
 const UNIT_LABELS: Record<string, string> = {
   MG: 'mg', G: 'g', KG: 'kg', ML: 'ml', L: 'L', UN: 'unidades',
 };
 
 export default function AdjustStockScreen() {
+  const {user} = useAuth();
   const router = useRouter();
   const { itemData } = useLocalSearchParams();
 
