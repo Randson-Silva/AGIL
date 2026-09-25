@@ -1,9 +1,9 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
-import { InventoryItemCard } from '../../components/inventory-item-card';
 import { getInventoryItems } from '../../services/inventory.service';
+import { InventoryItemCard } from '../../components/inventory-item-card';
 
 export default function InventoryScreen() {
   const [items, setItems] = useState<any[]>([]);
@@ -16,7 +16,7 @@ export default function InventoryScreen() {
       const response = await getInventoryItems();
       setItems(response.data);
     } catch (error) {
-      Alert.alert('Error', 'Não foi possível carregar o inventário.');
+      Alert.alert('Erro', 'Não foi possível carregar o inventário.');
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -29,26 +29,33 @@ export default function InventoryScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <Text>A carregar inventário...</Text>
+      <View className="flex-1 justify-center items-center bg-[#F4F7F4]">
+        <Text className="text-gray-500 font-semibold">A carregar inventário...</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView className="flex-1 p-4 bg-white">
-      <Text className="text-2xl font-bold mt-6 mb-6 text-gray-800">Inventário Mestre</Text>
-
-      <TouchableOpacity
-        onPress={() => router.push('/new-item')}
-        className="bg-green-700 rounded-lg p-4 items-center mb-6 shadow-sm"
+    <View className="flex-1 bg-[#F4F7F4]">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 16, paddingBottom: 100, paddingTop: 20 }}
       >
-        <Text className="text-white font-bold text-lg">+ Novo item no inventário</Text>
-      </TouchableOpacity>
+        <Text className="text-2xl font-bold mt-6 mb-6 text-gray-900">Inventário Mestre</Text>
 
-      {items.map((item) => (
-        <InventoryItemCard key={item.id} item={item} />
-      ))}
-    </ScrollView>
+        {items.map((item) => (
+          <InventoryItemCard key={item.id} item={item} />
+        ))}
+      </ScrollView>
+
+      <View className="absolute bottom-0 w-full bg-white border-t border-gray-200 px-4 py-4 pb-8">
+        <TouchableOpacity
+          onPress={() => router.push('/new-item')}
+          className="bg-[#047857] rounded-lg p-4 items-center shadow-sm"
+        >
+          <Text className="text-white font-bold text-[16px]">Novo item no inventário</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
