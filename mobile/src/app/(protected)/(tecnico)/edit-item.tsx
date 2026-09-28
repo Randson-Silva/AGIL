@@ -11,6 +11,8 @@ import { GlasswareForm } from '../../../components/input-form/glassware-form';
 import { ReagentForm } from '../../../components/input-form/reagent-form';
 import { SolutionForm } from '../../../components/input-form/solution-form';
 import { updateInventoryItem, deleteInventoryItem } from '../../../services/inventory.service';
+import { BackButton } from '../../../components/ui/Back-button';
+import { PageWrapper } from '../../../components/ui/page-wrapper';
 
 export default function EditItemScreen() {
   const router = useRouter();
@@ -115,8 +117,8 @@ export default function EditItemScreen() {
       `Tem a certeza que deseja excluir "${name}" do inventário? Esta ação não pode ser desfeita.`,
       [
         { text: 'Cancelar', style: 'cancel' },
-        { text: 'Excluir', style: 'destructive', onPress: handleDelete }
-      ]
+        { text: 'Excluir', style: 'destructive', onPress: handleDelete },
+      ],
     );
   };
 
@@ -131,53 +133,96 @@ export default function EditItemScreen() {
   };
 
   return (
-    <KeyboardAwareScrollView
-      style={{ backgroundColor: '#F4F7F4' }}
-      contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-      keyboardShouldPersistTaps="handled"
-      enableOnAndroid={true}
-      extraScrollHeight={Platform.OS === 'ios' ? 20 : 120}
-    >
-      <View className="flex-row justify-between items-center mt-2 mb-6">
-        <Text className="text-2xl font-bold text-gray-800">Editar Item</Text>
+    <PageWrapper>
+      <KeyboardAwareScrollView
+        style={{ backgroundColor: '#F4F7F4' }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
+        extraScrollHeight={Platform.OS === 'ios' ? 20 : 120}
+      >
+        <View className="flex-row justify-between items-center mt-2 mb-6">
+          <BackButton />
+          <Text className="text-2xl font-bold text-gray-800">Editar Item</Text>
 
-        <View className="bg-gray-200 px-3 py-1 rounded-full">
-          <Text className="text-gray-600 font-bold text-xs">{category}</Text>
+          <View className="bg-gray-200 px-3 py-1 rounded-full">
+            <Text className="text-gray-600 font-bold text-xs">{category}</Text>
+          </View>
         </View>
-      </View>
 
-      <BaseForm
-        isEditing={true}
-        name={name} setName={setName}
-        currentQuantity="" setCurrentQuantity={() => {}}
-        measurementUnit={measurementUnit} setMeasurementUnit={setMeasurementUnit}
-        minQuantity={minQuantity} setMinQuantity={setMinQuantity}
-        expirationDate={expirationDate} setExpirationDate={setExpirationDate}
-        location={location} setLocation={setLocation}
-      />
+        <BaseForm
+          isEditing={true}
+          name={name}
+          setName={setName}
+          currentQuantity=""
+          setCurrentQuantity={() => {}}
+          measurementUnit={measurementUnit}
+          setMeasurementUnit={setMeasurementUnit}
+          minQuantity={minQuantity}
+          setMinQuantity={setMinQuantity}
+          expirationDate={expirationDate}
+          setExpirationDate={setExpirationDate}
+          location={location}
+          setLocation={setLocation}
+        />
 
-      {category === 'REAGENTE' && (
-        <ReagentForm brand={brand} setBrand={setBrand} formula={formula} setFormula={setFormula} cas={cas} setCas={setCas} notes={notes} setNotes={setNotes} />
-      )}
-      {category === 'SOLUCAO' && (
-        <SolutionForm formula={formula} setFormula={setFormula} cas={cas} setCas={setCas} notes={notes} setNotes={setNotes} />
-      )}
-      {category === 'VIDRARIA' && (
-        <GlasswareForm brand={brand} setBrand={setBrand} capacity={capacity} setCapacity={setCapacity} />
-      )}
-      {category === 'EQUIPAMENTO' && (
-        <EquipmentForm brand={brand} setBrand={setBrand} model={model} setModel={setModel} voltage={voltage} setVoltage={setVoltage} />
-      )}
+        {category === 'REAGENTE' && (
+          <ReagentForm
+            brand={brand}
+            setBrand={setBrand}
+            formula={formula}
+            setFormula={setFormula}
+            cas={cas}
+            setCas={setCas}
+            notes={notes}
+            setNotes={setNotes}
+          />
+        )}
+        {category === 'SOLUCAO' && (
+          <SolutionForm
+            formula={formula}
+            setFormula={setFormula}
+            cas={cas}
+            setCas={setCas}
+            notes={notes}
+            setNotes={setNotes}
+          />
+        )}
+        {category === 'VIDRARIA' && (
+          <GlasswareForm
+            brand={brand}
+            setBrand={setBrand}
+            capacity={capacity}
+            setCapacity={setCapacity}
+          />
+        )}
+        {category === 'EQUIPAMENTO' && (
+          <EquipmentForm
+            brand={brand}
+            setBrand={setBrand}
+            model={model}
+            setModel={setModel}
+            voltage={voltage}
+            setVoltage={setVoltage}
+          />
+        )}
 
-      <View className="mt-8 gap-3">
-        <TouchableOpacity onPress={handleUpdate} className="bg-green-700 rounded-lg p-4 items-center shadow-sm">
-          <Text className="text-white font-bold text-lg">Salvar Alterações</Text>
-        </TouchableOpacity>
+        <View className="mt-8 gap-3">
+          <TouchableOpacity
+            onPress={handleUpdate}
+            className="bg-green-700 rounded-lg p-4 items-center shadow-sm"
+          >
+            <Text className="text-white font-bold text-lg">Salvar Alterações</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity onPress={confirmDelete} className="bg-red-500 border border-red-500 rounded-lg p-4 items-center shadow-sm">
-          <Text className="text-white font-bold text-lg">Excluir Item</Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAwareScrollView>
+          <TouchableOpacity
+            onPress={confirmDelete}
+            className="bg-red-500 border border-red-500 rounded-lg p-4 items-center shadow-sm"
+          >
+            <Text className="text-white font-bold text-lg">Excluir Item</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAwareScrollView>
+    </PageWrapper>
   );
 }

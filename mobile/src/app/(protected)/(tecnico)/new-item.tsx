@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useState } from 'react';
-import { Platform, Text, TouchableOpacity } from 'react-native';
+import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Toast from 'react-native-toast-message'; // Novo import!
 
@@ -11,6 +11,8 @@ import { GlasswareForm } from '../../../components/input-form/glassware-form';
 import { ReagentForm } from '../../../components/input-form/reagent-form';
 import { SolutionForm } from '../../../components/input-form/solution-form';
 import { createInventoryItem } from '../../../services/inventory.service';
+import { BackButton } from '../../../components/ui/Back-button';
+import { PageWrapper } from '../../../components/ui/page-wrapper';
 
 export default function NewItemScreen() {
   const [category, setCategory] = useState('REAGENTE');
@@ -110,80 +112,84 @@ export default function NewItemScreen() {
   };
 
   return (
-    <KeyboardAwareScrollView
-      style={{ backgroundColor: '#F4F7F4' }}
-      contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-      keyboardShouldPersistTaps="handled"
-      enableOnAndroid={true}
-      extraScrollHeight={Platform.OS === 'ios' ? 20 : 220}
-      enableAutomaticScroll={true}
-    >
-      <Text className="text-2xl font-bold mt-2 mb-6 text-gray-800">Novo Item</Text>
-
-      <CategorySelector selectedCategory={category} onSelect={setCategory} />
-
-      <BaseForm
-        name={name}
-        setName={setName}
-        currentQuantity={currentQuantity}
-        setCurrentQuantity={setCurrentQuantity}
-        measurementUnit={measurementUnit}
-        setMeasurementUnit={setMeasurementUnit}
-        minQuantity={minQuantity}
-        setMinQuantity={setMinQuantity}
-        expirationDate={expirationDate}
-        setExpirationDate={setExpirationDate}
-        location={location}
-        setLocation={setLocation}
-      />
-
-      {category === 'REAGENTE' && (
-        <ReagentForm
-          brand={brand}
-          setBrand={setBrand}
-          formula={formula}
-          setFormula={setFormula}
-          cas={cas}
-          setCas={setCas}
-          notes={notes}
-          setNotes={setNotes}
-        />
-      )}
-      {category === 'SOLUCAO' && (
-        <SolutionForm
-          formula={formula}
-          setFormula={setFormula}
-          cas={cas}
-          setCas={setCas}
-          notes={notes}
-          setNotes={setNotes}
-        />
-      )}
-      {category === 'VIDRARIA' && (
-        <GlasswareForm
-          brand={brand}
-          setBrand={setBrand}
-          capacity={capacity}
-          setCapacity={setCapacity}
-        />
-      )}
-      {category === 'EQUIPAMENTO' && (
-        <EquipmentForm
-          brand={brand}
-          setBrand={setBrand}
-          model={model}
-          setModel={setModel}
-          voltage={voltage}
-          setVoltage={setVoltage}
-        />
-      )}
-
-      <TouchableOpacity
-        onPress={handleSave}
-        className="bg-green-700 rounded-lg p-4 items-center justify-center mt-6 mb-8 shadow-sm"
+    <PageWrapper style={{ backgroundColor: '#F4F7F4' }}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
+        extraScrollHeight={Platform.OS === 'ios' ? 20 : 220}
+        enableAutomaticScroll={true}
       >
-        <Text className="text-white font-bold text-lg">Cadastrar Item</Text>
-      </TouchableOpacity>
-    </KeyboardAwareScrollView>
+        <View className="flex-row items-center gap-4 mt-2 mb-6">
+          <BackButton />
+          <Text className="text-2xl font-bold text-gray-800">Novo Item</Text>
+        </View>
+
+        <CategorySelector selectedCategory={category} onSelect={setCategory} />
+
+        <BaseForm
+          name={name}
+          setName={setName}
+          currentQuantity={currentQuantity}
+          setCurrentQuantity={setCurrentQuantity}
+          measurementUnit={measurementUnit}
+          setMeasurementUnit={setMeasurementUnit}
+          minQuantity={minQuantity}
+          setMinQuantity={setMinQuantity}
+          expirationDate={expirationDate}
+          setExpirationDate={setExpirationDate}
+          location={location}
+          setLocation={setLocation}
+        />
+
+        {category === 'REAGENTE' && (
+          <ReagentForm
+            brand={brand}
+            setBrand={setBrand}
+            formula={formula}
+            setFormula={setFormula}
+            cas={cas}
+            setCas={setCas}
+            notes={notes}
+            setNotes={setNotes}
+          />
+        )}
+        {category === 'SOLUCAO' && (
+          <SolutionForm
+            formula={formula}
+            setFormula={setFormula}
+            cas={cas}
+            setCas={setCas}
+            notes={notes}
+            setNotes={setNotes}
+          />
+        )}
+        {category === 'VIDRARIA' && (
+          <GlasswareForm
+            brand={brand}
+            setBrand={setBrand}
+            capacity={capacity}
+            setCapacity={setCapacity}
+          />
+        )}
+        {category === 'EQUIPAMENTO' && (
+          <EquipmentForm
+            brand={brand}
+            setBrand={setBrand}
+            model={model}
+            setModel={setModel}
+            voltage={voltage}
+            setVoltage={setVoltage}
+          />
+        )}
+
+        <TouchableOpacity
+          onPress={handleSave}
+          className="bg-green-700 rounded-lg p-4 items-center justify-center mt-6 mb-8 shadow-sm"
+        >
+          <Text className="text-white font-bold text-lg">Cadastrar Item</Text>
+        </TouchableOpacity>
+      </KeyboardAwareScrollView>
+    </PageWrapper>
   );
 }

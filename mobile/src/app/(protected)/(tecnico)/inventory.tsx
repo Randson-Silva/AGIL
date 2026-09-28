@@ -4,6 +4,7 @@ import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 import { InventoryItemCard } from '../../../components/inventory-item-card';
 import { getInventoryItems } from '../../../services/inventory.service';
+import { PageWrapper } from '../../../components/ui/page-wrapper';
 
 export default function InventoryScreen() {
   const [items, setItems] = useState<any[]>([]);
@@ -39,30 +40,32 @@ export default function InventoryScreen() {
   }
 
   return (
-    <View className="flex-1 bg-[#F4F7F4]">
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ padding: 16, paddingBottom: 100, paddingTop: 20 }}
-      >
-        <Text className="text-2xl font-bold mt-6 mb-6 text-gray-900">Inventário Mestre</Text>
-
-        {items.length > 0 ? (
-          items.map((item) => <InventoryItemCard key={item.id} item={item} />)
-        ) : (
-          <Text className="text-2xl font-bold text-center mt-10 mb-10 text-gray-500">
-            Nenhum item no inventário para exibir
-          </Text>
-        )}
-      </ScrollView>
-
-      <View className="absolute bottom-0 w-full bg-white border-t border-gray-200 px-4 py-4 pb-8">
-        <TouchableOpacity
-          onPress={() => router.push('/new-item')}
-          className="bg-green-700 rounded-lg p-4 items-center shadow-sm"
+    <PageWrapper>
+      <View className="flex-1 bg-[#F4F7F4]">
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ padding: 16, paddingBottom: 100, paddingTop: 20 }}
         >
-          <Text className="text-white font-bold text-[16px]">Novo item no inventário</Text>
-        </TouchableOpacity>
+          <Text className="text-2xl font-bold mb-6 text-gray-900">Inventário Mestre</Text>
+
+          {items.length > 0 ? (
+            items.map((item) => <InventoryItemCard key={item.id} item={item} />)
+          ) : (
+            <Text className="text-2xl font-bold text-center mt-10 mb-10 text-gray-500">
+              Nenhum item no inventário para exibir
+            </Text>
+          )}
+        </ScrollView>
+
+        <View className="absolute bottom-0 w-full bg-white border-t border-gray-200 px-4 py-4 pb-8">
+          <TouchableOpacity
+            onPress={() => router.push('/new-item')}
+            className="bg-green-700 rounded-lg p-4 items-center shadow-sm"
+          >
+            <Text className="text-white font-bold text-[16px]">Novo item no inventário</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </PageWrapper>
   );
 }
