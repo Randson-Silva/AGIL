@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { FormInput } from './form-input';
 import { FormSelect } from './form-select';
@@ -22,9 +22,8 @@ const CATEGORIES = [
 
 interface BaseFormProps {
   isEditing?: boolean;
-  category?: string;
+  category: string;
   setCategory?: (val: string) => void;
-
   name: string;
   setName: (val: string) => void;
   currentQuantity: string;
@@ -56,9 +55,19 @@ export const BaseForm: React.FC<BaseFormProps> = ({
   location,
   setLocation,
 }) => {
+  const isEquipmentOrGlassware = category === 'EQUIPAMENTO' || category === 'VIDRARIA';
+  const isUnit = measurementUnit === 'UN';
+  const qtyPlaceholder = isUnit ? '0' : '0.0';
+
+  useEffect(() => {
+    if (isEquipmentOrGlassware) {
+      setMeasurementUnit('UN');
+    }
+  }, [category]);
+
   return (
     <View>
-      {!isEditing && category !== undefined && setCategory && (
+      {!isEditing && setCategory && (
         <FormSelect
           label="CATEGORIA *"
           selectedValue={category}
@@ -81,8 +90,8 @@ export const BaseForm: React.FC<BaseFormProps> = ({
               label="QTD ATUAL *"
               value={currentQuantity}
               onChangeText={setCurrentQuantity}
-              keyboardType="numeric"
-              placeholder="Ex.: 100"
+              keyboardType={isUnit ? 'number-pad' : 'decimal-pad'}
+              placeholder={`Ex.: ${qtyPlaceholder}`}
             />
           </View>
         )}
@@ -92,6 +101,7 @@ export const BaseForm: React.FC<BaseFormProps> = ({
             selectedValue={measurementUnit}
             onValueChange={setMeasurementUnit}
             options={MEASUREMENT_UNITS}
+            disabled={isEquipmentOrGlassware}
           />
         </View>
       </View>
@@ -102,13 +112,19 @@ export const BaseForm: React.FC<BaseFormProps> = ({
             label="QTD MÍNIMA"
             value={minQuantity}
             onChangeText={setMinQuantity}
-            keyboardType="numeric"
-            placeholder="Ex.: 10"
+            keyboardType={isUnit ? 'number-pad' : 'decimal-pad'}
+            placeholder={`Ex.: ${qtyPlaceholder}`}
           />
         </View>
-        <View className="flex-1">
-          <FormDatePicker label="VALIDADE *" value={expirationDate} onChange={setExpirationDate} />
-        </View>
+        {!isEquipmentOrGlassware && (
+          <View className="flex-1">
+            <FormDatePicker
+              label="VALIDADE *"
+              value={expirationDate}
+              onChange={setExpirationDate}
+            />
+          </View>
+        )}
       </View>
 
       <FormInput

@@ -70,17 +70,31 @@ export default function EditItemScreen() {
   }, [itemData]);
 
   const handleUpdate = async () => {
-    const parsedDate = new Date(expirationDate);
-    if (isNaN(parsedDate.getTime())) {
-      Toast.show({ type: 'error', text1: 'Erro', text2: 'Insira uma data válida.' });
-      return;
+    const isEquipmentOrGlassware = category === 'EQUIPAMENTO' || category === 'VIDRARIA';
+    const isUnit = measurementUnit === 'UN' || measurementUnit === 'unidades';
+
+    const parsedMinQuantity = minQuantity
+      ? isUnit
+        ? parseInt(minQuantity, 10)
+        : parseFloat(minQuantity.replace(',', '.'))
+      : null;
+
+    let finalExpirationDate = null;
+
+    if (!isEquipmentOrGlassware && expirationDate && expirationDate.trim() !== '') {
+      const parsedDate = new Date(expirationDate);
+      if (isNaN(parsedDate.getTime())) {
+        Toast.show({ type: 'error', text1: 'Erro', text2: 'Insira uma data válida.' });
+        return;
+      }
+      finalExpirationDate = parsedDate.toISOString();
     }
 
     const payload: any = {
       nome: name,
       tipo_medida: measurementUnit,
-      data_validade: parsedDate.toISOString(),
-      quantidade_minima: minQuantity ? Number(minQuantity) : null,
+      data_validade: finalExpirationDate,
+      quantidade_minima: parsedMinQuantity,
       localizacao: location || null,
     };
 
@@ -154,6 +168,8 @@ export default function EditItemScreen() {
           isEditing={true}
           name={name}
           setName={setName}
+          category={category}
+          setCategory={setCategory}
           currentQuantity=""
           setCurrentQuantity={() => {}}
           measurementUnit={measurementUnit}

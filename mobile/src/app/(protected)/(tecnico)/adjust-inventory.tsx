@@ -32,6 +32,8 @@ export default function AdjustStockScreen() {
   const [currentQuantity, setCurrentQuantity] = useState(0);
   const [minQuantity, setMinQuantity] = useState<number | null>(null);
   const [measurementUnit, setMeasurementUnit] = useState('UN');
+  const isUnit = measurementUnit === 'UN' || measurementUnit === 'unidades';
+  const qtyPlaceholder = isUnit ? '0' : '0.0';
 
   const [adjustmentValue, setAdjustmentValue] = useState('');
 
@@ -47,7 +49,9 @@ export default function AdjustStockScreen() {
   }, [itemData]);
 
   const handleIncrement = async () => {
-    const amount = Number(adjustmentValue);
+    const amount = isUnit
+      ? parseInt(adjustmentValue, 10)
+      : parseFloat(adjustmentValue.replace(',', '.'));
     if (!amount || amount <= 0) {
       Toast.show({
         type: 'error',
@@ -67,7 +71,9 @@ export default function AdjustStockScreen() {
   };
 
   const handleDecrement = async () => {
-    const amount = Number(adjustmentValue);
+    const amount = isUnit
+      ? parseInt(adjustmentValue, 10)
+      : parseFloat(adjustmentValue.replace(',', '.'));
     if (!amount || amount <= 0) {
       Toast.show({
         type: 'error',
@@ -139,8 +145,8 @@ export default function AdjustStockScreen() {
           <TextInput
             value={adjustmentValue}
             onChangeText={setAdjustmentValue}
-            keyboardType="numeric"
-            placeholder="0"
+            keyboardType={isUnit ? 'number-pad' : 'decimal-pad'}
+            placeholder={qtyPlaceholder}
             className="text-center text-4xl font-extrabold text-gray-900 w-32 h-20 border-b-2 border-gray-300"
             maxLength={5}
           />

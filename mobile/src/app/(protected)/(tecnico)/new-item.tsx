@@ -32,22 +32,40 @@ export default function NewItemScreen() {
   const [capacity, setCapacity] = useState('');
 
   const handleSave = async () => {
-    const parsedDate = new Date(expirationDate);
-    if (isNaN(parsedDate.getTime())) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro de Data',
-        text2: 'Por favor, insira uma data válida.',
-      });
-      return;
+    const isEquipmentOrGlassware = category === 'EQUIPAMENTO' || category === 'VIDRARIA';
+    const isUnit = measurementUnit === 'UN';
+
+    const parsedCurrentQuantity = isUnit
+      ? parseInt(currentQuantity, 10)
+      : parseFloat(currentQuantity.replace(',', '.'));
+    const parsedMinQuantity = minQuantity
+      ? isUnit
+        ? parseInt(minQuantity, 10)
+        : parseFloat(minQuantity.replace(',', '.'))
+      : null;
+
+    let finalExpirationDate = null;
+    if (!isEquipmentOrGlassware) {
+      const parsedDate = new Date(expirationDate);
+      if (isNaN(parsedDate.getTime())) {
+        Toast.show({
+          type: 'error',
+          text1: 'Erro de Data',
+          text2: 'Por favor, insira uma data válida.',
+        });
+        return;
+      }
+      finalExpirationDate = parsedDate.toISOString();
     }
 
     const payload: any = {
       nome: name,
       categoria: category,
       tipo_medida: measurementUnit,
-      data_validade: parsedDate.toISOString(),
-      quantidade_saldo: Number(currentQuantity),
+      data_validade: finalExpirationDate,
+      quantidade_saldo: parsedCurrentQuantity,
+      quantidade_minima: parsedMinQuantity,
+      localizacao: location || null,
     };
 
     if (minQuantity) payload.quantidade_minima = Number(minQuantity);

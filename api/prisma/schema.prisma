@@ -81,7 +81,7 @@ model Insumo {
   updated_at DateTime @default(now()) @updatedAt
 
   tipo_medida   MedidasEntidades
-  data_validade DateTime
+  data_validade DateTime?
 
   localizacao String?
   status      String  @default("Disponível")
