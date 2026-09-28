@@ -33,7 +33,6 @@ export default function RegisterScreen() {
         contentContainerStyle={{ flexGrow: 1, padding: 20, justifyContent: 'center' }}
         keyboardShouldPersistTaps="handled"
         enableOnAndroid={true}
-        // Ajuste o extraScrollHeight para um valor menor, já que não há conflito agora
         extraScrollHeight={Platform.OS === 'ios' ? 20 : 230}
         showsVerticalScrollIndicator={false}
       >
