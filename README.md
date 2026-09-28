@@ -1,11 +1,3 @@
-Compreendido! O problema ocorreu porque o próprio README tem blocos de código dentro dele, o que acaba "quebrando" a caixa de formatação aqui no chat.
-
-Para não bugar de forma alguma, vou colocar o texto exato abaixo, **sem nenhuma caixa ao redor**. Você pode simplesmente selecionar tudo a partir do título abaixo, copiar e colar no seu arquivo `README.md` (ou diretamente num Google Docs, já que ele vai renderizar a formatação bonitinha).
-
-Aqui está:
-
----
-
 # 📱 AGIL - Aplicativo de Gerência de Insumos e Laboratórios
 
 **AGIL** é uma aplicação desenvolvida para facilitar o agendamento e gestão dos insumos e laboratório de química do Instituto Federal do Ceará (IFCE), beneficiando alunos, técnicos e professores da comunidade acadêmica.
