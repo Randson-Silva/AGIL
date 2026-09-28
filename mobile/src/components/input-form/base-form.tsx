@@ -13,8 +13,18 @@ const MEASUREMENT_UNITS = [
   { label: 'Unidade (un)', value: 'UN' },
 ];
 
+const CATEGORIES = [
+  { label: 'Reagente', value: 'REAGENTE' },
+  { label: 'Solução', value: 'SOLUCAO' },
+  { label: 'Vidraria', value: 'VIDRARIA' },
+  { label: 'Equipamento', value: 'EQUIPAMENTO' },
+];
+
 interface BaseFormProps {
   isEditing?: boolean;
+  category?: string;
+  setCategory?: (val: string) => void;
+
   name: string;
   setName: (val: string) => void;
   currentQuantity: string;
@@ -31,6 +41,8 @@ interface BaseFormProps {
 
 export const BaseForm: React.FC<BaseFormProps> = ({
   isEditing = false,
+  category,
+  setCategory,
   name,
   setName,
   currentQuantity,
@@ -46,6 +58,15 @@ export const BaseForm: React.FC<BaseFormProps> = ({
 }) => {
   return (
     <View>
+      {!isEditing && category !== undefined && setCategory && (
+        <FormSelect
+          label="CATEGORIA *"
+          selectedValue={category}
+          onValueChange={setCategory}
+          options={CATEGORIES}
+        />
+      )}
+
       <FormInput
         label="NOME DO ITEM *"
         value={name}

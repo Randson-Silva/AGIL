@@ -5,7 +5,6 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import Toast from 'react-native-toast-message'; // Novo import!
 
 import { BaseForm } from '../../../components/input-form/base-form';
-import { CategorySelector } from '../../../components/input-form/category-selector';
 import { EquipmentForm } from '../../../components/input-form/equipment-form';
 import { GlasswareForm } from '../../../components/input-form/glassware-form';
 import { ReagentForm } from '../../../components/input-form/reagent-form';
@@ -112,7 +111,7 @@ export default function NewItemScreen() {
   };
 
   return (
-    <PageWrapper style={{ backgroundColor: '#F4F7F4' }}>
+    <PageWrapper className="bg-[#F4F7F4]">
       <KeyboardAwareScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         keyboardShouldPersistTaps="handled"
@@ -125,9 +124,9 @@ export default function NewItemScreen() {
           <Text className="text-2xl font-bold text-gray-800">Novo Item</Text>
         </View>
 
-        <CategorySelector selectedCategory={category} onSelect={setCategory} />
-
         <BaseForm
+          category={category}
+          setCategory={setCategory}
           name={name}
           setName={setName}
           currentQuantity={currentQuantity}
