@@ -12,15 +12,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { BackButton } from '../../../components/ui/Back-button';
 import { PageWrapper } from '../../../components/ui/page-wrapper';
-
-const UNIT_LABELS: Record<string, string> = {
-  MG: 'mg',
-  G: 'g',
-  KG: 'kg',
-  ML: 'ml',
-  L: 'L',
-  UN: 'unidades',
-};
+import { UNIT_LABELS } from '../../../utils/constants';
 
 export default function AdjustStockScreen() {
   const { user } = useAuth();
@@ -66,7 +58,29 @@ export default function AdjustStockScreen() {
       Toast.show({ type: 'success', text1: 'Sucesso', text2: `Entrada de ${amount} registada.` });
       router.back();
     } catch (error) {
-      Toast.show({ type: 'error', text1: 'Erro', text2: 'Não foi possível atualizar o estoque.' });
+      let errorMessage = 'Não foi possível registar a movimentação. Tente novamente.';
+
+      if (axios.isAxiosError(error) && error.response) {
+        const status = error.response.status;
+
+        if (status === 400) {
+          const apiMessage = error.response.data?.message;
+          if (apiMessage) {
+            errorMessage = Array.isArray(apiMessage) ? apiMessage[0] : apiMessage;
+          }
+        } else if (status === 401) {
+          errorMessage = 'A sua sessão expirou. Por favor, faça login novamente.';
+        } else if (status >= 500) {
+          errorMessage =
+            'O nosso servidor está a enfrentar instabilidades. A nossa equipa já foi notificada.';
+        }
+      }
+
+      Toast.show({
+        type: 'error',
+        text1: 'Aviso',
+        text2: errorMessage,
+      });
     }
   };
 
@@ -88,15 +102,29 @@ export default function AdjustStockScreen() {
       Toast.show({ type: 'success', text1: 'Sucesso', text2: `Saída de ${amount} registada.` });
       router.back();
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 400) {
-        Toast.show({ type: 'error', text1: 'Atenção', text2: error.response.data.message });
-      } else {
-        Toast.show({
-          type: 'error',
-          text1: 'Erro',
-          text2: 'Não foi possível atualizar o estoque.',
-        });
+      let errorMessage = 'Não foi possível registar a movimentação. Tente novamente.';
+
+      if (axios.isAxiosError(error) && error.response) {
+        const status = error.response.status;
+
+        if (status === 400) {
+          const apiMessage = error.response.data?.message;
+          if (apiMessage) {
+            errorMessage = Array.isArray(apiMessage) ? apiMessage[0] : apiMessage;
+          }
+        } else if (status === 401) {
+          errorMessage = 'A sua sessão expirou. Por favor, faça login novamente.';
+        } else if (status >= 500) {
+          errorMessage =
+            'O nosso servidor está a enfrentar instabilidades. A nossa equipa já foi notificada.';
+        }
       }
+
+      Toast.show({
+        type: 'error',
+        text1: 'Aviso',
+        text2: errorMessage,
+      });
     }
   };
 

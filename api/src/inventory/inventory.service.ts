@@ -12,18 +12,14 @@ import {
   UpdateReagentDto,
   UpdateSolutionDto,
 } from './dtos/update.input.dto.js';
+import {
+  hasValidUpdates,
+  validateMeasurementUnit,
+} from '../utils/inventory.utils.js';
 
 @Injectable()
 export class InventoryService {
   constructor(private readonly prisma: PrismaService) {}
-
-  private validateUnitType(tipo_medida: string, amount: number) {
-    if (tipo_medida === 'UN' && amount % 1 !== 0) {
-      throw new BadRequestException(
-        'Itens medidos em Unidades (UN) não podem ter valores decimais.',
-      );
-    }
-  }
 
   async listInputs() {
     const inputs = await this.prisma.insumo.findMany({
@@ -40,9 +36,10 @@ export class InventoryService {
   }
 
   async createReagent(data: CreateReagentDto) {
-    this.validateUnitType(data.tipo_medida, data.quantidade_saldo);
-    if (data.quantidade_minima)
-      this.validateUnitType(data.tipo_medida, data.quantidade_minima);
+    validateMeasurementUnit(data.tipo_medida, data.quantidade_saldo);
+    if (data.quantidade_minima) {
+      validateMeasurementUnit(data.tipo_medida, data.quantidade_minima);
+    }
 
     return this.prisma.insumo.create({
       data: {
@@ -67,9 +64,10 @@ export class InventoryService {
   }
 
   async createSolution(data: CreateSolutionDto) {
-    this.validateUnitType(data.tipo_medida, data.quantidade_saldo);
-    if (data.quantidade_minima)
-      this.validateUnitType(data.tipo_medida, data.quantidade_minima);
+    validateMeasurementUnit(data.tipo_medida, data.quantidade_saldo);
+    if (data.quantidade_minima) {
+      validateMeasurementUnit(data.tipo_medida, data.quantidade_minima);
+    }
 
     return this.prisma.insumo.create({
       data: {
@@ -93,9 +91,10 @@ export class InventoryService {
   }
 
   async createEquipment(data: CreateEquipmentDto) {
-    this.validateUnitType(data.tipo_medida, data.quantidade_saldo);
-    if (data.quantidade_minima)
-      this.validateUnitType(data.tipo_medida, data.quantidade_minima);
+    validateMeasurementUnit(data.tipo_medida, data.quantidade_saldo);
+    if (data.quantidade_minima) {
+      validateMeasurementUnit(data.tipo_medida, data.quantidade_minima);
+    }
 
     return this.prisma.insumo.create({
       data: {
@@ -119,9 +118,10 @@ export class InventoryService {
   }
 
   async createGlassware(data: CreateGlasswareDto) {
-    this.validateUnitType(data.tipo_medida, data.quantidade_saldo);
-    if (data.quantidade_minima)
-      this.validateUnitType(data.tipo_medida, data.quantidade_minima);
+    validateMeasurementUnit(data.tipo_medida, data.quantidade_saldo);
+    if (data.quantidade_minima) {
+      validateMeasurementUnit(data.tipo_medida, data.quantidade_minima);
+    }
 
     return this.prisma.insumo.create({
       data: {
@@ -150,84 +150,116 @@ export class InventoryService {
   }
 
   async updateReagent(id: string, data: UpdateReagentDto) {
-    if (data.tipo_medida && data.quantidade_minima !== undefined) {
-      this.validateUnitType(data.tipo_medida, data.quantidade_minima);
+    if (data.quantidade_minima !== undefined) {
+      let unit = data.tipo_medida;
+      if (!unit) {
+        const item = await this.prisma.insumo.findUnique({ where: { id } });
+        if (!item)
+          throw new BadRequestException(
+            'O insumo solicitado não foi encontrado no sistema.',
+          );
+        unit = item.tipo_medida;
+      }
+      validateMeasurementUnit(unit, data.quantidade_minima);
     }
 
     const { formula, cas, marca, observacao, ...baseData } = data;
     const childData = { formula, cas, marca, observacao };
-    const hasChildUpdate = Object.values(childData).some(
-      (val) => val !== undefined,
-    );
 
     return this.prisma.insumo.update({
       where: { id },
       data: {
         ...baseData,
-        ...(hasChildUpdate && { reagenteInfo: { update: childData } }),
+        ...(hasValidUpdates(childData) && {
+          reagenteInfo: { update: childData },
+        }),
       },
       include: { reagenteInfo: true },
     });
   }
 
   async updateSolution(id: string, data: UpdateSolutionDto) {
-    if (data.tipo_medida && data.quantidade_minima !== undefined) {
-      this.validateUnitType(data.tipo_medida, data.quantidade_minima);
+    if (data.quantidade_minima !== undefined) {
+      let unit = data.tipo_medida;
+      if (!unit) {
+        const item = await this.prisma.insumo.findUnique({ where: { id } });
+        if (!item)
+          throw new BadRequestException(
+            'O insumo solicitado não foi encontrado no sistema.',
+          );
+        unit = item.tipo_medida;
+      }
+      validateMeasurementUnit(unit, data.quantidade_minima);
     }
 
     const { formula, cas, observacao, ...baseData } = data;
     const childData = { formula, cas, observacao };
-    const hasChildUpdate = Object.values(childData).some(
-      (val) => val !== undefined,
-    );
 
     return this.prisma.insumo.update({
       where: { id },
       data: {
         ...baseData,
-        ...(hasChildUpdate && { solucaoInfo: { update: childData } }),
+        ...(hasValidUpdates(childData) && {
+          solucaoInfo: { update: childData },
+        }),
       },
       include: { solucaoInfo: true },
     });
   }
 
   async updateEquipment(id: string, data: UpdateEquipmentDto) {
-    if (data.tipo_medida && data.quantidade_minima !== undefined) {
-      this.validateUnitType(data.tipo_medida, data.quantidade_minima);
+    if (data.quantidade_minima !== undefined) {
+      let unit = data.tipo_medida;
+      if (!unit) {
+        const item = await this.prisma.insumo.findUnique({ where: { id } });
+        if (!item)
+          throw new BadRequestException(
+            'O insumo solicitado não foi encontrado no sistema.',
+          );
+        unit = item.tipo_medida;
+      }
+      validateMeasurementUnit(unit, data.quantidade_minima);
     }
 
     const { marca, modelo, voltagem, ...baseData } = data;
     const childData = { marca, modelo, voltagem };
-    const hasChildUpdate = Object.values(childData).some(
-      (val) => val !== undefined,
-    );
 
     return this.prisma.insumo.update({
       where: { id },
       data: {
         ...baseData,
-        ...(hasChildUpdate && { equipamentoInfo: { update: childData } }),
+        ...(hasValidUpdates(childData) && {
+          equipamentoInfo: { update: childData },
+        }),
       },
       include: { equipamentoInfo: true },
     });
   }
 
   async updateGlassware(id: string, data: UpdateGlasswareDto) {
-    if (data.tipo_medida && data.quantidade_minima !== undefined) {
-      this.validateUnitType(data.tipo_medida, data.quantidade_minima);
+    if (data.quantidade_minima !== undefined) {
+      let unit = data.tipo_medida;
+      if (!unit) {
+        const item = await this.prisma.insumo.findUnique({ where: { id } });
+        if (!item)
+          throw new BadRequestException(
+            'O insumo solicitado não foi encontrado no sistema.',
+          );
+        unit = item.tipo_medida;
+      }
+      validateMeasurementUnit(unit, data.quantidade_minima);
     }
 
     const { marca, capacidade, ...baseData } = data;
     const childData = { marca, capacidade };
-    const hasChildUpdate = Object.values(childData).some(
-      (val) => val !== undefined,
-    );
 
     return this.prisma.insumo.update({
       where: { id },
       data: {
         ...baseData,
-        ...(hasChildUpdate && { vidrariaInfo: { update: childData } }),
+        ...(hasValidUpdates(childData) && {
+          vidrariaInfo: { update: childData },
+        }),
       },
       include: { vidrariaInfo: true },
     });
@@ -246,18 +278,18 @@ export class InventoryService {
 
         if (!insumo) {
           throw new BadRequestException(
-            `Insumo ID ${item.insumo_id} não encontrado.`,
+            `O insumo solicitado não foi encontrado no sistema.`,
           );
         }
 
-        this.validateUnitType(insumo.tipo_medida, item.quantidade);
+        validateMeasurementUnit(insumo.tipo_medida, item.quantidade);
 
-        const saldoAnterior = Number(insumo.quantidade_saldo);
-        const qtdSolicitada = Number(item.quantidade);
+        const saldoAnterior = insumo.quantidade_saldo.toNumber();
+        const qtdSolicitada = item.quantidade;
 
         if (saldoAnterior < qtdSolicitada) {
           throw new BadRequestException(
-            `Estoque insuficiente para o item '${insumo.nome}'. Disponível: ${saldoAnterior}, Solicitado: ${qtdSolicitada}.`,
+            `A saída solicitada (${qtdSolicitada}) para o item '${insumo.nome}' é maior que o saldo disponível (${saldoAnterior}).`,
           );
         }
 
@@ -286,9 +318,12 @@ export class InventoryService {
 
   async incrementStock(id: string, amount: number) {
     const item = await this.prisma.insumo.findUnique({ where: { id } });
-    if (!item) throw new BadRequestException('Item não encontrado');
+    if (!item)
+      throw new BadRequestException(
+        'O item solicitado não foi encontrado no sistema.',
+      );
 
-    this.validateUnitType(item.tipo_medida, amount);
+    validateMeasurementUnit(item.tipo_medida, amount);
 
     return this.prisma.insumo.update({
       where: { id },
@@ -302,13 +337,18 @@ export class InventoryService {
 
   async decrementStock(id: string, amount: number) {
     const item = await this.prisma.insumo.findUnique({ where: { id } });
-    if (!item) throw new BadRequestException('Item não encontrado');
-
-    this.validateUnitType(item.tipo_medida, amount);
-
-    if (item.quantidade_saldo.lessThan(amount)) {
+    if (!item)
       throw new BadRequestException(
-        `Estoque insuficiente. Tem apenas ${item.quantidade_saldo} unidades.`,
+        'O item solicitado não foi encontrado no sistema.',
+      );
+
+    validateMeasurementUnit(item.tipo_medida, amount);
+
+    const saldoAtual = item.quantidade_saldo.toNumber();
+
+    if (saldoAtual < amount) {
+      throw new BadRequestException(
+        `A saída solicitada (${amount}) é maior que o saldo disponível (${saldoAtual}).`,
       );
     }
 

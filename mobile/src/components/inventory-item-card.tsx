@@ -1,19 +1,11 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { UNIT_LABELS } from '../utils/constants';
 
 interface InventoryItemCardProps {
   item: any;
 }
-
-const UNIT_LABELS: Record<string, string> = {
-  MG: 'mg',
-  G: 'g',
-  KG: 'kg',
-  ML: 'ml',
-  L: 'L',
-  UN: 'unidades',
-};
 
 export const InventoryItemCard: React.FC<InventoryItemCardProps> = ({ item }) => {
   const isCritical = item.quantidade_saldo <= (item.quantidade_minima || 0);
@@ -102,9 +94,13 @@ export const InventoryItemCard: React.FC<InventoryItemCardProps> = ({ item }) =>
 
         <TouchableOpacity
           onPress={() =>
-            router.push({ pathname: '/adjust-inventory', params: { itemData: JSON.stringify(item) } })
+            router.push({
+              pathname: '/adjust-inventory',
+              params: { itemData: JSON.stringify(item) },
+            })
           }
-          className="flex-1 bg-green-700 rounded-lg py-3 items-center justify-center">
+          className="flex-1 bg-green-700 rounded-lg py-3 items-center justify-center"
+        >
           <Text className="text-white font-bold text-[14px]">Ajustar estoque</Text>
         </TouchableOpacity>
       </View>
