@@ -1,41 +1,43 @@
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Platform, Text, TouchableOpacity, View } from 'react-native';
 
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { PasswordRules } from '../../components/auth/PasswordRules';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { useRegister } from '../../hooks/useRegister';
+import { PageWrapper } from '../../components/ui/page-wrapper';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const {
-    firstName, setFirstName,
-    lastName, setLastName,
-    email, setEmail,
-    password, setPassword,
-    confirmPassword, setConfirmPassword,
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
     isLoading,
     handleRegister,
   } = useRegister();
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-emerald-50/30"
-    >
-      <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 20 }}>
-
+    <PageWrapper className="bg-emerald-50/30">
+      <KeyboardAwareScrollView
+        contentContainerStyle={{ flexGrow: 1, padding: 20, justifyContent: 'center' }}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
+        extraScrollHeight={Platform.OS === 'ios' ? 20 : 230}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Botão de Voltar e Header */}
-        <View className="mt-8 mb-6 relative items-center">
+        <View className=" mb-6 relative items-center">
           <TouchableOpacity
             onPress={() => router.back()}
             className="absolute left-0 top-2 w-10 h-10 bg-white rounded-full items-center justify-center border border-gray-200 shadow-sm z-10"
@@ -94,7 +96,6 @@ export default function RegisterScreen() {
             onChangeText={setPassword}
           />
 
-          {/* Regras Dinâmicas de Senha */}
           <PasswordRules password={password} />
 
           <Input
@@ -116,8 +117,7 @@ export default function RegisterScreen() {
           <Feather name="shield" size={14} color="#00623B" />
           <Text className="text-gray-400 text-xs ml-2">Ambiente seguro • IFCE Campus Quixadá</Text>
         </View>
-
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
+    </PageWrapper>
   );
 }

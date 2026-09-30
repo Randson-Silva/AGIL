@@ -31,7 +31,7 @@ export class BaseInputDto {
   @Min(1, { message: 'Quantidade em saldo deve ser maior que zero' })
   quantidade_saldo: number;
 
-  @IsNotEmpty({ message: 'Data de validade é obrigatória' })
+  @IsOptional()
   @Type(() => Date)
   @IsDate({ message: 'Deve ser uma data válida' })
   data_validade: Date;
