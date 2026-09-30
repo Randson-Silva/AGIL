@@ -64,5 +64,10 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      # expo-env.d.ts é gerado pelo `expo start` e fica no .gitignore;
+      # sem ele o TypeScript não reconhece os imports de .css
+      - name: Gerar expo-env.d.ts
+        run: echo '/// <reference types="expo/types" />' > expo-env.d.ts
+
       - name: Checagem de tipos
         run: npx tsc --noEmit
