@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { Role } from '../authz/roles.js';
+import { hasRightRoleAndEmail } from '../users/user.utils.js';
 import { UsersService } from '../users/users.service.js';
 import { AuthLoginDto } from './dtos/auth.login.dto.js';
 import { AuthRegisterDto } from './dtos/auth.register.dto.js';
@@ -14,6 +15,14 @@ export class AuthService {
   ) {}
 
   async register(createUserDto: AuthRegisterDto) {
+    const verification = hasRightRoleAndEmail(
+      createUserDto.profile,
+      createUserDto.email,
+    );
+
+    if (!verification)
+      throw new HttpException('Tipo de email e perfil não conferem', 400);
+
     const alreadyExists = await this.usersService.findByEmail(
       createUserDto.email,
     );
