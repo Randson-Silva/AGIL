@@ -6,6 +6,7 @@
 
 ## 📋 Índice
 
+- [Equipe](#equipe)
 - [Estrutura do Projeto](#estrutura-do-projeto)
 - [Pré-requisitos](#pré-requisitos)
 - [Instalação](#instalação)
@@ -19,6 +20,16 @@
 - [Troubleshooting](#troubleshooting)
 
 ---
+## 👥 Equipe
+|Nome|Matrícula|Email|
+|----|---------|-----|
+|ANA LETICIA OLIVEIRA MESQUITA|570889|ana.mesquita@alu.ufc.br|
+|EDIVAR CRUZ CARVALHO FILHO|565857|edivarcruz@alu.ufc.br|
+|GUILHERME SOUSA BARBOSA|565684|guilhermesb@alu.ufc.br|
+|JOÃO GABRIEL COSTA LEANDRO|569466|joaogcl@alu.ufc.br|
+|PAULO SERGIO VIEIRA DE OLIVEIRA|566589|paulo.sergio@alu.ufc.br|
+|RANDSON DA SILVA ALVES|568002|randsonalves@alu.ufc.br|
+
 
 ## 📁 Estrutura do Projeto
 
