@@ -45,11 +45,14 @@ enum TipoMovimentacao {
 }
 
 model Usuario {
-  id                   String                  @id @default(uuid())
+  id                   String    @id @default(uuid())
   nome                 String
-  email                String                  @unique
-  senha               String
+  email                String    @unique
+  senha                String
   perfil               Perfil
+  resetPasswordCode    String?
+  resetPasswordExpires DateTime?
+
   created_at           DateTime                @default(now())
   reservas             ReservaEspaco[]
   solicitacoes         SolicitacaoMaterial[]   @relation("solicitante")
