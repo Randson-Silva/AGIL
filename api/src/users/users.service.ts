@@ -29,4 +29,15 @@ export class UsersService {
 
     return user;
   }
+
+  async createFromGoogle(dto: UsersCreateDto) {
+    return this.prisma.usuario.create({
+      data: {
+        email: dto.email,
+        nome: dto.name,
+        senha: dto.password,
+        perfil: dto.profile,
+      },
+    });
+  }
 }

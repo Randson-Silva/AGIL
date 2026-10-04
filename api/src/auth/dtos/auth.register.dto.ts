@@ -14,7 +14,6 @@ export class AuthRegisterDto {
   @IsNotEmpty({ message: 'O email é obrigatório' })
   @IsEmail({
     allow_underscores: true,
-    host_whitelist: ['ifce.edu.br', 'aluno.ifce.edu.br'],
   })
   email: string;
 

@@ -1,9 +1,22 @@
+import { ConfigService } from '@nestjs/config';
+import { emailDomainsConfiguration } from '../auth/auth.utils.js';
 import { Role } from '../authz/roles.js';
 
-export function hasRightRoleAndEmail(role: Role, email: string): boolean {
-  if (!email.includes('aluno') && role === 'ALUNO') return false;
+export function hasRightRoleAndEmail(
+  role: Role,
+  email: string,
+  configService: ConfigService,
+): boolean {
+  const { studentDomain, teacherAndTechDomain } =
+    emailDomainsConfiguration(configService);
 
-  if (email.includes('aluno') && role !== 'ALUNO') return false;
+  if (role === 'ALUNO') {
+    return email.endsWith(studentDomain);
+  }
 
-  return true;
+  if (role === 'PROFESSOR' || role === 'TECNICO') {
+    return email.endsWith(teacherAndTechDomain);
+  }
+
+  return false;
 }
