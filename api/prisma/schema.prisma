@@ -44,11 +44,26 @@ enum TipoMovimentacao {
   AVARIA
 }
 
+enum ObjetivoReserva {
+  AULA_PRATICA
+  PROJETO_EXTENSAO
+  TCC
+  PESQUISA
+}
+
+enum StatusReserva {
+  PENDENTE
+  AVISO_SIMPLES
+  APROVADA
+  REJEITADA
+  CANCELADA
+}
+
 model Usuario {
   id                   String                  @id @default(uuid())
   nome                 String
   email                String                  @unique
-  senha               String
+  senha                String
   perfil               Perfil
   created_at           DateTime                @default(now())
   reservas             ReservaEspaco[]
@@ -59,14 +74,31 @@ model Usuario {
 }
 
 model ReservaEspaco {
-  id           String   @id @default(uuid())
-  professor_id String
-  professor    Usuario  @relation(fields: [professor_id], references: [id])
-  data_inicio  DateTime
-  data_fim     DateTime
-  prioridade   Int
-  status       String
-  created_at   DateTime @default(now())
+  id                 String           @id @default(uuid())
+  professor_id       String
+  professor          Usuario          @relation(fields: [professor_id], references: [id])
+
+  local              String
+  data_reserva       DateTime
+  dia_semana         Int
+  objetivo           ObjetivoReserva
+  titulo             String
+  quantidade_alunos  Int
+  observacoes        String?
+  pratica_recorrente Boolean          @default(false)
+  status             StatusReserva    @default(PENDENTE)
+
+  horarios           HorarioReserva[]
+  created_at         DateTime         @default(now())
+}
+
+model HorarioReserva {
+  id          String        @id @default(uuid())
+  reserva_id  String
+  reserva     ReservaEspaco @relation(fields: [reserva_id], references: [id], onDelete: Cascade)
+
+  hora_inicio String
+  hora_fim    String        
 }
 
 model Insumo {
