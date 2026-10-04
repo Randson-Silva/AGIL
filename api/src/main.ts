@@ -25,5 +25,7 @@ async function bootstrap() {
 }
 
 await bootstrap().then((PORT) =>
-  console.info(`🔥 Server running in http://localhost:${PORT}`),
+  console.info(
+    `🔥 Server running in ${process.env.NODE_ENV} at http://localhost:${PORT}`,
+  ),
 );
