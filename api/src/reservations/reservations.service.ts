@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../db/prisma/prisma.service.js';
-import { StatusReserva } from '../generated/prisma/client.js';
+import { ObjetivoReserva, StatusReserva } from '../generated/prisma/client.js';
 import {
   hasTimeOverlap,
   normalizeDateRange,
@@ -9,11 +9,16 @@ import {
 } from '../utils/reservation.utils.js';
 import { CreateReservationDto } from './dtos/create-reservation.dto.js';
 
+const LOWER_PRIORITY_OBJECTIVES: ObjetivoReserva[] = [
+  ObjetivoReserva.PESQUISA,
+  ObjetivoReserva.TCC,
+];
+
 @Injectable()
 export class ReservationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getOccupiedSlots(local: string, date: string) {
+  async getOccupiedSlots(local: string, date: string, objetivo?: string) {
     if (!local || !date) {
       throw new BadRequestException(
         'O laboratório e a data são obrigatórios para consultar horários.',
@@ -21,6 +26,7 @@ export class ReservationsService {
     }
 
     const { startOfDay, endOfDay, dayOfWeek } = normalizeDateRange(date);
+    const isPracticalClass = objetivo === ObjetivoReserva.AULA_PRATICA;
 
     const activeReservations = await this.prisma.reservaEspaco.findMany({
       where: {
@@ -28,6 +34,11 @@ export class ReservationsService {
         status: {
           notIn: [StatusReserva.REJEITADA, StatusReserva.CANCELADA],
         },
+        ...(isPracticalClass && {
+          objetivo: {
+            notIn: LOWER_PRIORITY_OBJECTIVES,
+          },
+        }),
         OR: [
           {
             data_reserva: {
@@ -75,7 +86,6 @@ export class ReservationsService {
     }
 
     const { startOfDay, endOfDay, dayOfWeek } = normalizeDateRange(date);
-
     const shouldFilterByLab = local && local !== 'Todos';
 
     const activeReservations = await this.prisma.reservaEspaco.findMany({
@@ -117,6 +127,7 @@ export class ReservationsService {
       status: StatusReserva;
       objetivo: string;
       titulo: string;
+      quantidade_alunos: number;
       professor_nome: string;
     }> = [];
 
@@ -129,6 +140,7 @@ export class ReservationsService {
           status: reservation.status,
           objetivo: reservation.objetivo,
           titulo: reservation.titulo,
+          quantidade_alunos: reservation.quantidade_alunos,
           professor_nome: reservation.professor.nome,
         });
       }
@@ -139,6 +151,16 @@ export class ReservationsService {
 
   async createReservation(professorId: string, data: CreateReservationDto) {
     const isRecurring = Boolean(data.pratica_recorrente);
+    const isPracticalClass = data.objetivo === ObjetivoReserva.AULA_PRATICA;
+
+    if (
+      isPracticalClass &&
+      (!data.quantidade_alunos || data.quantidade_alunos <= 0)
+    ) {
+      throw new BadRequestException(
+        'Informe uma quantidade válida de alunos para a aula prática.',
+      );
+    }
 
     validateTimeSlots(data.horarios);
     validateAdvanceNotice(data.data_reserva, data.horarios, isRecurring);
@@ -186,6 +208,14 @@ export class ReservationsService {
 
       for (const requestedSlot of data.horarios) {
         for (const existing of conflictingReservations) {
+          const canOverridePriority =
+            isPracticalClass &&
+            LOWER_PRIORITY_OBJECTIVES.includes(existing.objetivo);
+
+          if (canOverridePriority) {
+            continue;
+          }
+
           const conflict = existing.horarios.find((existingSlot) =>
             hasTimeOverlap(
               requestedSlot.hora_inicio,
@@ -215,7 +245,7 @@ export class ReservationsService {
           dia_semana: dayOfWeek,
           objetivo: data.objetivo,
           titulo: data.titulo,
-          quantidade_alunos: data.quantidade_alunos,
+          quantidade_alunos: isPracticalClass ? data.quantidade_alunos! : 0,
           observacoes: data.observacoes || null,
           pratica_recorrente: isRecurring,
           status: initialStatus,
@@ -235,9 +265,9 @@ export class ReservationsService {
 
   async listReservations(userId: string, userProfile: string) {
     const whereClause =
-      userProfile === 'TECNICO' ? {} : { professor_id: userId };
+      userProfile === 'PROFESSOR' ? { professor_id: userId } : {};
 
-    return this.prisma.reservaEspaco.findMany({
+    const reservations = await this.prisma.reservaEspaco.findMany({
       where: whereClause,
       orderBy: { data_reserva: 'asc' },
       include: {
@@ -250,6 +280,55 @@ export class ReservationsService {
           },
         },
       },
+    });
+
+    const enriched = reservations.map((res) => {
+      const isHighPriority = res.objetivo === ObjetivoReserva.AULA_PRATICA;
+
+      const hasPriorityConflict =
+        isHighPriority &&
+        reservations.some((other) => {
+          if (
+            other.id === res.id ||
+            other.local !== res.local ||
+            other.status === StatusReserva.REJEITADA ||
+            other.status === StatusReserva.CANCELADA ||
+            !LOWER_PRIORITY_OBJECTIVES.includes(other.objetivo)
+          ) {
+            return false;
+          }
+
+          const sameDay =
+            other.data_reserva.getTime() === res.data_reserva.getTime() ||
+            ((other.pratica_recorrente || res.pratica_recorrente) &&
+              other.dia_semana === res.dia_semana);
+
+          if (!sameDay) return false;
+
+          return res.horarios.some((slotA) =>
+            other.horarios.some((slotB) =>
+              hasTimeOverlap(
+                slotA.hora_inicio,
+                slotA.hora_fim,
+                slotB.hora_inicio,
+                slotB.hora_fim,
+              ),
+            ),
+          );
+        });
+
+      return {
+        ...res,
+        prioridade_maxima: isHighPriority,
+        alerta_conflito_remanejamento: hasPriorityConflict,
+      };
+    });
+
+    return enriched.sort((a, b) => {
+      if (a.prioridade_maxima !== b.prioridade_maxima) {
+        return a.prioridade_maxima ? -1 : 1;
+      }
+      return a.data_reserva.getTime() - b.data_reserva.getTime();
     });
   }
 }
