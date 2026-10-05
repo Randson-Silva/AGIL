@@ -8,12 +8,16 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
 import { Role } from '../authz/roles.js';
+import { MailService } from '../mail/mail.service.js';
 import { TransparenciaService } from '../users/pt/pt.service.js';
 import { hasRightRoleAndEmail } from '../users/user.utils.js';
 import { UsersService } from '../users/users.service.js';
 import { compare, emailDomainsConfiguration, hash } from './auth.utils.js';
 import { AuthLoginDto } from './dtos/auth.login.dto.js';
 import { AuthRegisterDto } from './dtos/auth.register.dto.js';
+import { ForgotPasswordDto } from './dtos/forgot-password.dto.js';
+import { ResetPasswordDto } from './dtos/reset-password.dto.js';
+import { VerifyCodeDto } from './dtos/verify-code.dto.js';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +26,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly transparenciaService: TransparenciaService,
     private readonly configService: ConfigService,
+    private readonly mailService: MailService,
   ) {}
 
   async validateGoogleUser(googleUser: {
@@ -145,6 +150,81 @@ export class AuthService {
         email: user.email,
         profile: user.perfil,
       },
+    };
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
+    const user = await this.usersService.findByEmail(dto.email);
+
+    if (!user) {
+      return {
+        message: 'Caso o email exista no sistema, um código será enviado.',
+      };
+    }
+
+    const resetPasswordCode = Math.floor(
+      10000 + Math.random() * 90000,
+    ).toString();
+
+    const resetPasswordExpires = new Date();
+    resetPasswordExpires.setMinutes(resetPasswordExpires.getMinutes() + 15);
+
+    await this.usersService.updateResetCodeAndPassword(
+      user.id,
+      resetPasswordCode,
+      resetPasswordExpires,
+    );
+
+    await this.mailService.sendPasswordResetEmail(
+      user.email,
+      resetPasswordCode,
+    );
+
+    return {
+      message: 'Se o e-mail existir em nossa base, um código será enviado.',
+    };
+  }
+
+  async resetPassword(data: ResetPasswordDto): Promise<{ message: string }> {
+    const { email, code, newPassword } = data;
+
+    const user = await this.usersService.findByEmail(email);
+
+    if (!user || user.codigoRedefinicao !== code) {
+      throw new BadRequestException('Código inválido ou incorreto.');
+    }
+
+    if (!user.codigoExpiracao || user.codigoExpiracao < new Date()) {
+      throw new BadRequestException('O código expirou. Solicite um novo.');
+    }
+
+    const hashedPassword = await hash(newPassword);
+
+    await this.usersService.updateResetCodeAndPassword(
+      user.id,
+      null,
+      null,
+      hashedPassword,
+    );
+
+    return { message: 'Senha alterada com sucesso.' };
+  }
+
+  async verifyCode(data: VerifyCodeDto): Promise<{ isValid: boolean }> {
+    const { email, code } = data;
+
+    const user = await this.usersService.findByEmail(email);
+
+    if (!user || user.codigoRedefinicao !== code) {
+      throw new BadRequestException('Código inválido ou incorreto.');
+    }
+
+    if (!user.codigoExpiracao || user.codigoExpiracao < new Date()) {
+      throw new BadRequestException('O código expirou. Solicite um novo.');
+    }
+
+    return {
+      isValid: true,
     };
   }
 

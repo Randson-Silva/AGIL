@@ -8,6 +8,7 @@ import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { JwtStrategy } from './jwt.strategy.js';
 import { GoogleStrategy } from './oauth/google.strategy.js';
+import { MailModule } from '../mail/mail.module.js';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { GoogleStrategy } from './oauth/google.strategy.js';
         },
       }),
     }),
+    MailModule,
   ],
   providers: [AuthService, JwtStrategy, GoogleStrategy],
   controllers: [AuthController],

@@ -60,11 +60,14 @@ enum StatusReserva {
 }
 
 model Usuario {
-  id                   String                  @id @default(uuid())
-  nome                 String
-  email                String                  @unique
-  senha                String
-  perfil               Perfil
+  id                String    @id @default(uuid())
+  nome              String
+  email             String    @unique
+  senha             String
+  perfil            Perfil
+  codigoRedefinicao String?
+  codigoExpiracao   DateTime?
+
   created_at           DateTime                @default(now())
   reservas             ReservaEspaco[]
   solicitacoes         SolicitacaoMaterial[]   @relation("solicitante")
