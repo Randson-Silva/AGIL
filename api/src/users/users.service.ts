@@ -20,9 +20,39 @@ export class UsersService {
     });
   }
 
+  async updateResetCodeAndPassword(
+    userId: string,
+    resetPasswordCode?: string | null,
+    resetPasswordExpires?: Date | null,
+    newPassword?: string,
+  ) {
+    const user = await this.findById(userId);
+
+    if (!user) return null;
+
+    await this.prisma.usuario.update({
+      where: { id: userId },
+      data: {
+        codigoRedefinicao: resetPasswordCode,
+        codigoExpiracao: resetPasswordExpires,
+        senha: newPassword,
+      },
+    });
+  }
+
   async findByEmail(email: string): Promise<Usuario | null> {
     const user = await this.prisma.usuario.findUnique({
       where: { email },
+    });
+
+    if (!user) return null;
+
+    return user;
+  }
+
+  async findById(id: string): Promise<Usuario | null> {
+    const user = await this.prisma.usuario.findUnique({
+      where: { id },
     });
 
     if (!user) return null;
