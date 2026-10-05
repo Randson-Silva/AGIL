@@ -30,7 +30,7 @@ export default function DashboardScreen() {
       {user?.profile === 'PROFESSOR' && (
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => router.push('/(protected)/(professor)/new-reservation')}
+          onPress={() => router.push('/(protected)/(professor)/availability')}
           className="bg-[#00623B] p-5 rounded-2xl flex-row items-center justify-between shadow-sm mb-4"
         >
           <View className="flex-row items-center gap-3">
@@ -39,10 +39,10 @@ export default function DashboardScreen() {
             </View>
             <View>
               <Text className="text-white font-bold text-base">
-                Nova Reserva de Laboratório
+                Disponibilidade de Laboratórios
               </Text>
               <Text className="text-emerald-100 text-xs mt-0.5">
-                Agendar aulas práticas, projetos ou pesquisas
+                Consultar horários livres e solicitar reservas
               </Text>
             </View>
           </View>

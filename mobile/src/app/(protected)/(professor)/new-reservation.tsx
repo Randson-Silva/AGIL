@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import axios from 'axios';
 
@@ -25,9 +25,13 @@ import { createReservation, getOccupiedTimeSlots } from '../../../services/reser
 
 export default function NewReservationScreen() {
   const router = useRouter();
+  const { initialLab, initialDate } = useLocalSearchParams<{
+    initialLab?: string;
+    initialDate?: string;
+  }>();
 
-  const [selectedLab, setSelectedLab] = useState(LABORATORIES[0].name);
-  const [selectedDate, setSelectedDate] = useState(''); // Formato YYYY-MM-DD
+  const [selectedLab, setSelectedLab] = useState(initialLab || LABORATORIES[0].name);
+  const [selectedDate, setSelectedDate] = useState(initialDate || '');
   const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>([]);
   const [occupiedSlots, setOccupiedSlots] = useState<TimeSlot[]>([]);
   const [objective, setObjective] = useState<ReservationObjective>('AULA_PRATICA');
@@ -206,7 +210,7 @@ export default function NewReservationScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         keyboardShouldPersistTaps="handled"
         enableOnAndroid={true}
-        extraScrollHeight={Platform.OS === 'ios' ? 20 : 40}
+        extraScrollHeight={Platform.OS === 'ios' ? 20 : 160}
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-row items-center gap-4 mt-2 mb-6">

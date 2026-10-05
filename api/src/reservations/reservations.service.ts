@@ -67,6 +67,76 @@ export class ReservationsService {
     return Array.from(occupiedMap.values());
   }
 
+  async getDailyAvailability(date: string, local?: string) {
+    if (!date) {
+      throw new BadRequestException(
+        'A data é obrigatória para consultar a disponibilidade.',
+      );
+    }
+
+    const { startOfDay, endOfDay, dayOfWeek } = normalizeDateRange(date);
+
+    const shouldFilterByLab = local && local !== 'Todos';
+
+    const activeReservations = await this.prisma.reservaEspaco.findMany({
+      where: {
+        ...(shouldFilterByLab && { local }),
+        status: {
+          notIn: [StatusReserva.REJEITADA, StatusReserva.CANCELADA],
+        },
+        OR: [
+          {
+            data_reserva: {
+              gte: startOfDay,
+              lte: endOfDay,
+            },
+          },
+          {
+            pratica_recorrente: true,
+            dia_semana: dayOfWeek,
+            data_reserva: {
+              lte: endOfDay,
+            },
+          },
+        ],
+      },
+      include: {
+        horarios: true,
+        professor: {
+          select: {
+            nome: true,
+          },
+        },
+      },
+    });
+
+    const occupiedDetails: Array<{
+      local: string;
+      hora_inicio: string;
+      hora_fim: string;
+      status: StatusReserva;
+      objetivo: string;
+      titulo: string;
+      professor_nome: string;
+    }> = [];
+
+    for (const reservation of activeReservations) {
+      for (const slot of reservation.horarios) {
+        occupiedDetails.push({
+          local: reservation.local,
+          hora_inicio: slot.hora_inicio,
+          hora_fim: slot.hora_fim,
+          status: reservation.status,
+          objetivo: reservation.objetivo,
+          titulo: reservation.titulo,
+          professor_nome: reservation.professor.nome,
+        });
+      }
+    }
+
+    return occupiedDetails;
+  }
+
   async createReservation(professorId: string, data: CreateReservationDto) {
     const isRecurring = Boolean(data.pratica_recorrente);
 

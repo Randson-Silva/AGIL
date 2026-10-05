@@ -25,3 +25,19 @@ export const createReservation = async (payload: CreateReservationPayload) => {
 export const getReservations = async () => {
   return api.get('/reservations');
 };
+
+export interface OccupiedSlotDetail {
+  local: string;
+  hora_inicio: string;
+  hora_fim: string;
+  status: 'PENDENTE' | 'AVISO_SIMPLES' | 'APROVADA' | 'REJEITADA' | 'CANCELADA';
+  objetivo: ReservationObjective;
+  titulo: string;
+  professor_nome: string;
+}
+
+export const getDailyAvailability = async (date: string, local?: string) => {
+  return api.get<OccupiedSlotDetail[]>('/reservations/availability', {
+    params: { date, local },
+  });
+};

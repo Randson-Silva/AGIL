@@ -68,3 +68,16 @@ export const TIME_SLOTS_BY_SHIFT: Record<'Manhã' | 'Tarde' | 'Noite', TimeSlot[
     { hora_inicio: '21:10', hora_fim: '22:00' },
   ],
 };
+
+export const OBJECTIVE_LABELS: Record<ReservationObjective, string> = {
+  AULA_PRATICA: 'Aula Prática',
+  PROJETO_EXTENSAO: 'Projeto de Extensão',
+  TCC: 'TCC',
+  PESQUISA: 'Pesquisa',
+};
+
+export const ALL_TIME_SLOTS: TimeSlot[] = [
+  ...TIME_SLOTS_BY_SHIFT.Manhã,
+  ...TIME_SLOTS_BY_SHIFT.Tarde,
+  ...TIME_SLOTS_BY_SHIFT.Noite,
+];
