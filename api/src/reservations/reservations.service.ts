@@ -203,10 +203,6 @@ export class ReservationsService {
         }
       }
 
-      const initialStatus = isRecurring
-        ? StatusReserva.AVISO_SIMPLES
-        : StatusReserva.PENDENTE;
-
       return tx.reservaEspaco.create({
         data: {
           professor_id: professorId,
@@ -218,7 +214,7 @@ export class ReservationsService {
           quantidade_alunos: data.quantidade_alunos,
           observacoes: data.observacoes || null,
           pratica_recorrente: isRecurring,
-          status: initialStatus,
+          status: StatusReserva.PENDENTE,
           horarios: {
             create: data.horarios.map((slot) => ({
               hora_inicio: slot.hora_inicio,

@@ -167,10 +167,8 @@ export default function NewReservationScreen() {
 
       Toast.show({
         type: 'success',
-        text1: 'Reserva registada',
-        text2: isRecurring
-          ? 'Prática recorrente registada como aviso simples.'
-          : 'Solicitação enviada para avaliação técnica.',
+        text1: 'Reserva solicitada',
+        text2: 'Solicitação enviada para avaliação técnica.',
       });
 
       router.back();
@@ -270,31 +268,43 @@ export default function NewReservationScreen() {
 
         <View className="mb-5">
           <Text className="text-sm font-bold text-gray-800 mb-2">Título</Text>
-          <TextInput
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Ex.: Titulação Ácido-Base"
-            placeholderTextColor="#9CA3AF"
-            className="bg-white border border-gray-200 rounded-2xl px-4 py-3.5 text-sm text-gray-900"
-          />
+          <View className="bg-white border border-gray-200 rounded-2xl px-4 h-[50px] justify-center">
+            <TextInput
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Ex.: Titulação Ácido-Base"
+              placeholderTextColor="#9CA3AF"
+              multiline={false}
+              numberOfLines={1}
+              scrollEnabled={false}
+              textAlignVertical="center"
+              className="text-sm text-gray-900 p-0"
+            />
+          </View>
         </View>
 
         <View className="mb-5">
-          <View className="flex-row items-center justify-between bg-white border border-gray-200 rounded-2xl px-4 py-2.5 w-48">
+          <View className="flex-row items-center justify-between bg-white border border-gray-200 rounded-2xl px-4 h-[50px] w-48">
             <View className="flex-row items-center">
               <Feather name="user" size={16} color="#4B5563" />
               <Text className="text-xs font-bold text-gray-800 ml-2">Alunos</Text>
             </View>
 
-            <TextInput
-              value={studentCount}
-              onChangeText={(val) => setStudentCount(val.replace(/[^0-9]/g, ''))}
-              keyboardType="number-pad"
-              placeholder="0"
-              placeholderTextColor="#6B7280"
-              maxLength={3}
-              className="bg-[#E8F0EC] rounded-full px-3 py-1 text-center text-xs font-bold text-gray-900 min-w-[48px]"
-            />
+            <View className="bg-[#E8F0EC] rounded-full px-3 h-7 justify-center min-w-[48px]">
+              <TextInput
+                value={studentCount}
+                onChangeText={(val) => setStudentCount(val.replace(/[^0-9]/g, ''))}
+                keyboardType="number-pad"
+                placeholder="0"
+                placeholderTextColor="#6B7280"
+                maxLength={3}
+                multiline={false}
+                numberOfLines={1}
+                scrollEnabled={false}
+                textAlignVertical="center"
+                className="text-center text-xs font-bold text-gray-900 p-0"
+              />
+            </View>
           </View>
         </View>
 
