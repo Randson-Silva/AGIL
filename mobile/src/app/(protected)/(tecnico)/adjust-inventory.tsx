@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, TextInput, Alert, Platform } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Toast from 'react-native-toast-message';
@@ -19,26 +19,18 @@ export default function AdjustStockScreen() {
   const router = useRouter();
   const { itemData } = useLocalSearchParams();
 
-  const [itemId, setItemId] = useState('');
-  const [name, setName] = useState('');
-  const [currentQuantity, setCurrentQuantity] = useState(0);
-  const [minQuantity, setMinQuantity] = useState<number | null>(null);
-  const [measurementUnit, setMeasurementUnit] = useState('UN');
+  // Os dados do item chegam pela rota e só são exibidos, então são derivados
+  // direto dos parâmetros em vez de copiados para estados via useEffect
+  const item = useMemo(() => (itemData ? JSON.parse(itemData as string) : null), [itemData]);
+  const itemId: string = item?.id ?? '';
+  const name: string = item?.nome ?? '';
+  const currentQuantity: number = item?.quantidade_saldo ?? 0;
+  const minQuantity: number | null = item?.quantidade_minima ?? null;
+  const measurementUnit: string = item ? UNIT_LABELS[item.tipo_medida] || item.tipo_medida : 'UN';
   const isUnit = measurementUnit === 'UN' || measurementUnit === 'unidades';
   const qtyPlaceholder = isUnit ? '0' : '0.0';
 
   const [adjustmentValue, setAdjustmentValue] = useState('');
-
-  useEffect(() => {
-    if (itemData) {
-      const parsed = JSON.parse(itemData as string);
-      setItemId(parsed.id);
-      setName(parsed.nome);
-      setCurrentQuantity(parsed.quantidade_saldo);
-      setMinQuantity(parsed.quantidade_minima);
-      setMeasurementUnit(UNIT_LABELS[parsed.tipo_medida] || parsed.tipo_medida);
-    }
-  }, [itemData]);
 
   const handleIncrement = async () => {
     const amount = isUnit

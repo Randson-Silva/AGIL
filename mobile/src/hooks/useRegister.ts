@@ -42,7 +42,7 @@ export function useRegister() {
       const profile = verifyEmailProfile(email);
 
       // Faz a requisição de cadastro. Enviando 'ALUNO' por padrão já que a tela não possui escolha.
-      await authService.register(fullName, email, password, profile)
+      await authService.register(fullName, email, password, profile);
 
       Alert.alert('Sucesso', 'Cadastro realizado com sucesso!', [
         { text: 'Fazer Login', onPress: () => router.replace('/(public)/login') },

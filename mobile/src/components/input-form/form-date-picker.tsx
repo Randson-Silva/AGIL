@@ -14,7 +14,7 @@ export const FormDatePicker: React.FC<FormDatePickerProps> = ({ label, value, on
   const currentDate = value ? new Date(`${value}T12:00:00Z`) : new Date();
 
   const formatDateToBR = (dateString: string) => {
-    if (!dateString) return "Selecionar data";
+    if (!dateString) return 'Selecionar data';
 
     const [year, month, day] = dateString.split('-');
     return `${day}/${month}/${year}`;
@@ -39,7 +39,7 @@ export const FormDatePicker: React.FC<FormDatePickerProps> = ({ label, value, on
         onPress={() => setShow(true)}
         className="border border-gray-300 rounded-lg px-3 justify-center h-[50px] bg-#F4F7F4"
       >
-        <Text className={value ? "text-gray-800 text-base" : "text-gray-400 text-base"}>
+        <Text className={value ? 'text-gray-800 text-base' : 'text-gray-400 text-base'}>
           {formatDateToBR(value)}
         </Text>
       </TouchableOpacity>

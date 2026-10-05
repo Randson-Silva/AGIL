@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Text, TouchableOpacity, View, Alert, Platform } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Toast from 'react-native-toast-message';
@@ -14,60 +14,84 @@ import { updateInventoryItem, deleteInventoryItem } from '../../../services/inve
 import { BackButton } from '../../../components/ui/Back-button';
 import { PageWrapper } from '../../../components/ui/page-wrapper';
 
+// Converte o item recebido pela rota nos valores iniciais do formulário
+function getInitialForm(itemData: unknown) {
+  const form = {
+    itemId: '',
+    category: '',
+    name: '',
+    minQuantity: '',
+    location: '',
+    measurementUnit: 'UN',
+    expirationDate: '',
+    formula: '',
+    cas: '',
+    brand: '',
+    notes: '',
+    model: '',
+    voltage: '',
+    capacity: '',
+  };
+
+  if (!itemData) return form;
+
+  const parsed = JSON.parse(itemData as string);
+
+  form.itemId = parsed.id;
+  form.category = parsed.categoria;
+  form.name = parsed.nome;
+  form.minQuantity = parsed.quantidade_minima ? String(parsed.quantidade_minima) : '';
+  form.location = parsed.localizacao || '';
+  form.measurementUnit = parsed.tipo_medida;
+
+  if (parsed.data_validade) {
+    form.expirationDate = parsed.data_validade.split('T')[0];
+  }
+
+  if (parsed.categoria === 'REAGENTE' && parsed.reagenteInfo) {
+    form.brand = parsed.reagenteInfo.marca || '';
+    form.formula = parsed.reagenteInfo.formula || '';
+    form.cas = parsed.reagenteInfo.cas || '';
+    form.notes = parsed.reagenteInfo.observacao || '';
+  } else if (parsed.categoria === 'SOLUCAO' && parsed.solucaoInfo) {
+    form.formula = parsed.solucaoInfo.formula || '';
+    form.cas = parsed.solucaoInfo.cas || '';
+    form.notes = parsed.solucaoInfo.observacao || '';
+  } else if (parsed.categoria === 'VIDRARIA' && parsed.vidrariaInfo) {
+    form.brand = parsed.vidrariaInfo.marca || '';
+    form.capacity = parsed.vidrariaInfo.capacidade || '';
+  } else if (parsed.categoria === 'EQUIPAMENTO' && parsed.equipamentoInfo) {
+    form.brand = parsed.equipamentoInfo.marca || '';
+    form.model = parsed.equipamentoInfo.modelo || '';
+    form.voltage = parsed.equipamentoInfo.voltagem || '';
+  }
+
+  return form;
+}
+
 export default function EditItemScreen() {
   const router = useRouter();
   const { itemData } = useLocalSearchParams();
 
-  const [itemId, setItemId] = useState('');
-  const [category, setCategory] = useState('');
-  const [name, setName] = useState('');
-  const [minQuantity, setMinQuantity] = useState('');
-  const [location, setLocation] = useState('');
-  const [measurementUnit, setMeasurementUnit] = useState('UN');
-  const [expirationDate, setExpirationDate] = useState('');
+  // Lido uma única vez ao abrir a tela: os estados já nascem preenchidos,
+  // sem precisar de um useEffect copiando os dados depois do primeiro render
+  const [initial] = useState(() => getInitialForm(itemData));
+  const { itemId } = initial;
 
-  const [formula, setFormula] = useState('');
-  const [cas, setCas] = useState('');
-  const [brand, setBrand] = useState('');
-  const [notes, setNotes] = useState('');
-  const [model, setModel] = useState('');
-  const [voltage, setVoltage] = useState('');
-  const [capacity, setCapacity] = useState('');
+  const [category, setCategory] = useState(initial.category);
+  const [name, setName] = useState(initial.name);
+  const [minQuantity, setMinQuantity] = useState(initial.minQuantity);
+  const [location, setLocation] = useState(initial.location);
+  const [measurementUnit, setMeasurementUnit] = useState(initial.measurementUnit);
+  const [expirationDate, setExpirationDate] = useState(initial.expirationDate);
 
-  useEffect(() => {
-    if (itemData) {
-      const parsed = JSON.parse(itemData as string);
-
-      setItemId(parsed.id);
-      setCategory(parsed.categoria);
-      setName(parsed.nome);
-      setMinQuantity(parsed.quantidade_minima ? String(parsed.quantidade_minima) : '');
-      setLocation(parsed.localizacao || '');
-      setMeasurementUnit(parsed.tipo_medida);
-
-      if (parsed.data_validade) {
-        setExpirationDate(parsed.data_validade.split('T')[0]);
-      }
-
-      if (parsed.categoria === 'REAGENTE' && parsed.reagenteInfo) {
-        setBrand(parsed.reagenteInfo.marca || '');
-        setFormula(parsed.reagenteInfo.formula || '');
-        setCas(parsed.reagenteInfo.cas || '');
-        setNotes(parsed.reagenteInfo.observacao || '');
-      } else if (parsed.categoria === 'SOLUCAO' && parsed.solucaoInfo) {
-        setFormula(parsed.solucaoInfo.formula || '');
-        setCas(parsed.solucaoInfo.cas || '');
-        setNotes(parsed.solucaoInfo.observacao || '');
-      } else if (parsed.categoria === 'VIDRARIA' && parsed.vidrariaInfo) {
-        setBrand(parsed.vidrariaInfo.marca || '');
-        setCapacity(parsed.vidrariaInfo.capacidade || '');
-      } else if (parsed.categoria === 'EQUIPAMENTO' && parsed.equipamentoInfo) {
-        setBrand(parsed.equipamentoInfo.marca || '');
-        setModel(parsed.equipamentoInfo.modelo || '');
-        setVoltage(parsed.equipamentoInfo.voltagem || '');
-      }
-    }
-  }, [itemData]);
+  const [formula, setFormula] = useState(initial.formula);
+  const [cas, setCas] = useState(initial.cas);
+  const [brand, setBrand] = useState(initial.brand);
+  const [notes, setNotes] = useState(initial.notes);
+  const [model, setModel] = useState(initial.model);
+  const [voltage, setVoltage] = useState(initial.voltage);
+  const [capacity, setCapacity] = useState(initial.capacity);
 
   const handleUpdate = async () => {
     const isEquipmentOrGlassware = category === 'EQUIPAMENTO' || category === 'VIDRARIA';

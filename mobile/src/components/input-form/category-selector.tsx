@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
 
 interface CategorySelectorProps {
@@ -18,7 +18,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
   onSelect,
 }) => {
   const [containerWidth, setContainerWidth] = useState(0);
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  const [slideAnim] = useState(() => new Animated.Value(0));
 
   const selectedIndex = CATEGORIES.findIndex((c) => c.id === selectedCategory);
 
@@ -29,7 +29,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
       bounciness: 2,
       speed: 12,
     }).start();
-  }, [selectedIndex]);
+  }, [selectedIndex, slideAnim]);
 
   return (
     <View className="mb-6">

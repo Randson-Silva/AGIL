@@ -69,5 +69,8 @@ jobs:
       - name: Gerar expo-env.d.ts
         run: echo '/// <reference types="expo/types" />' > expo-env.d.ts
 
+      - name: Lint
+        run: npm run lint
+
       - name: Checagem de tipos
         run: npx tsc --noEmit
