@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -46,8 +46,13 @@ export default function NewReservationScreen() {
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
-  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // "Carregando" é derivado: enquanto o par laboratório + data atual ainda não
+  // teve os horários buscados, a busca está em andamento
+  const slotsKey = selectedLab && selectedDate ? `${selectedLab}|${selectedDate}` : '';
+  const [loadedSlotsKey, setLoadedSlotsKey] = useState('');
+  const isLoadingSlots = slotsKey !== '' && slotsKey !== loadedSlotsKey;
 
   const focusInput = (inputRef: React.RefObject<TextInput | null>) => {
     if (!inputRef.current) return;
@@ -65,39 +70,46 @@ export default function NewReservationScreen() {
     return `${day}/${month}/${year}`;
   };
 
-  const fetchOccupiedSlots = useCallback(async (lab: string, date: string) => {
-    if (!lab || !date) return;
-
-    try {
-      setIsLoadingSlots(true);
-      const response = await getOccupiedTimeSlots(lab, date);
-      const occupied = response.data || [];
-      setOccupiedSlots(occupied);
-
-      setSelectedSlots((prev) =>
-        prev.filter(
-          (sel) =>
-            !occupied.some(
-              (occ) => occ.hora_inicio === sel.hora_inicio && occ.hora_fim === sel.hora_fim,
-            ),
-        ),
-      );
-    } catch {
-      Toast.show({
-        type: 'error',
-        text1: 'Aviso',
-        text2: 'Não foi possível carregar os horários ocupados para esta data.',
-      });
-    } finally {
-      setIsLoadingSlots(false);
-    }
-  }, []);
-
+  // Busca os horários ocupados sempre que o laboratório ou a data mudam.
+  // `ignore` descarta a resposta de uma busca antiga se a seleção mudar antes
+  // dela terminar, para não sobrescrever os horários da seleção atual
   useEffect(() => {
-    if (selectedLab && selectedDate) {
-      fetchOccupiedSlots(selectedLab, selectedDate);
-    }
-  }, [selectedLab, selectedDate, fetchOccupiedSlots]);
+    if (!selectedLab || !selectedDate) return;
+
+    let ignore = false;
+    const key = `${selectedLab}|${selectedDate}`;
+
+    getOccupiedTimeSlots(selectedLab, selectedDate)
+      .then((response) => {
+        if (ignore) return;
+        const occupied = response.data || [];
+        setOccupiedSlots(occupied);
+
+        setSelectedSlots((prev) =>
+          prev.filter(
+            (sel) =>
+              !occupied.some(
+                (occ) => occ.hora_inicio === sel.hora_inicio && occ.hora_fim === sel.hora_fim,
+              ),
+          ),
+        );
+      })
+      .catch(() => {
+        if (ignore) return;
+        Toast.show({
+          type: 'error',
+          text1: 'Aviso',
+          text2: 'Não foi possível carregar os horários ocupados para esta data.',
+        });
+      })
+      .finally(() => {
+        if (!ignore) setLoadedSlotsKey(key);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [selectedLab, selectedDate]);
 
   const handleToggleSlot = (slot: TimeSlot) => {
     setSelectedSlots((prev) => {

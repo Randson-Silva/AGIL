@@ -30,7 +30,7 @@ export const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
       (sel) => sel.hora_inicio === slot.hora_inicio && sel.hora_fim === slot.hora_fim,
     );
 
-  const shifts = Object.keys(TIME_SLOTS_BY_SHIFT) as Array<keyof typeof TIME_SLOTS_BY_SHIFT>;
+  const shifts = Object.keys(TIME_SLOTS_BY_SHIFT) as (keyof typeof TIME_SLOTS_BY_SHIFT)[];
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>

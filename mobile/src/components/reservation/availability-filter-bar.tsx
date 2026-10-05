@@ -43,15 +43,11 @@ export const AvailabilityFilterBar: React.FC<AvailabilityFilterBarProps> = ({
               activeOpacity={0.7}
               onPress={() => onSelectLabFilter(labName)}
               className={`px-4 py-2 rounded-full border ${
-                isSelected
-                  ? 'bg-[#00623B] border-[#00623B]'
-                  : 'bg-white border-gray-200'
+                isSelected ? 'bg-[#00623B] border-[#00623B]' : 'bg-white border-gray-200'
               }`}
             >
               <Text
-                className={`text-xs font-semibold ${
-                  isSelected ? 'text-white' : 'text-gray-700'
-                }`}
+                className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-gray-700'}`}
               >
                 {labName}
               </Text>
@@ -74,15 +70,11 @@ export const AvailabilityFilterBar: React.FC<AvailabilityFilterBarProps> = ({
               activeOpacity={0.7}
               onPress={() => onSelectDate(day.isoDate)}
               className={`px-3.5 py-2.5 rounded-full border ${
-                isSelected
-                  ? 'bg-[#E3F3EC] border-[#00623B]'
-                  : 'bg-white border-gray-200'
+                isSelected ? 'bg-[#E3F3EC] border-[#00623B]' : 'bg-white border-gray-200'
               }`}
             >
               <Text
-                className={`text-xs font-bold ${
-                  isSelected ? 'text-[#00623B]' : 'text-gray-800'
-                }`}
+                className={`text-xs font-bold ${isSelected ? 'text-[#00623B]' : 'text-gray-800'}`}
               >
                 {day.label}
               </Text>

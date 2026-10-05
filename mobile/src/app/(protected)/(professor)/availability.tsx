@@ -95,13 +95,13 @@ export default function AvailabilityScreen() {
         ? LABORATORIES
         : LABORATORIES.filter((l) => l.name === selectedLabFilter);
 
-    const items: Array<{
+    const items: {
       key: string;
       startTime: string;
       endTime: string;
       labName: string;
       occupation?: OccupiedSlotDetail;
-    }> = [];
+    }[] = [];
 
     for (const slot of ALL_TIME_SLOTS) {
       for (const lab of labsToDisplay) {

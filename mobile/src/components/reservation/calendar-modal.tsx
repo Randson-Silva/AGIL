@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Modal, View, Text, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
@@ -61,14 +61,21 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
   const [showMonthList, setShowMonthList] = useState(false);
   const [showYearList, setShowYearList] = useState(false);
 
-  useEffect(() => {
+  // Ao abrir o calendário (ou se a data selecionada mudar), volta a visualização
+  // para o mês da data selecionada. Feito durante o render, comparando com os
+  // valores anteriores, em vez de um useEffect com vários setState
+  const [prevVisible, setPrevVisible] = useState(visible);
+  const [prevInitialDate, setPrevInitialDate] = useState(initialDate);
+  if (visible !== prevVisible || initialDate !== prevInitialDate) {
+    setPrevVisible(visible);
+    setPrevInitialDate(initialDate);
     if (visible) {
       setViewMonth(initialDate.getMonth());
       setViewYear(initialDate.getFullYear());
       setShowMonthList(false);
       setShowYearList(false);
     }
-  }, [visible, initialDate]);
+  }
 
   const availableYears = useMemo(() => {
     return [todayInfo.year, todayInfo.year + 1, todayInfo.year + 2];
@@ -87,12 +94,12 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
     const daysInCurrentMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
     const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
 
-    const days: Array<{
+    const days: {
       day: number;
       month: number;
       year: number;
       isCurrentMonth: boolean;
-    }> = [];
+    }[] = [];
 
     for (let i = firstDayOfMonth - 1; i >= 0; i--) {
       const prevMonth = viewMonth === 0 ? 11 : viewMonth - 1;

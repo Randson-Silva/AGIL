@@ -14,9 +14,7 @@ export default function DashboardScreen() {
       <View className="flex-row justify-between items-center mt-2 mb-8">
         <View>
           <Text className="text-sm text-gray-500">Bem-vindo(a),</Text>
-          <Text className="text-2xl font-bold text-gray-900">
-            {user?.name || 'Utilizador'}
-          </Text>
+          <Text className="text-2xl font-bold text-gray-900">{user?.name || 'Utilizador'}</Text>
         </View>
 
         <TouchableOpacity
