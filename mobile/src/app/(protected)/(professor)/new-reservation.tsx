@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -30,6 +30,10 @@ export default function NewReservationScreen() {
     initialDate?: string;
   }>();
 
+  const titleInputRef = useRef<TextInput>(null);
+  const studentsInputRef = useRef<TextInput>(null);
+  const notesInputRef = useRef<TextInput>(null);
+
   const [selectedLab, setSelectedLab] = useState(initialLab || LABORATORIES[0].name);
   const [selectedDate, setSelectedDate] = useState(initialDate || '');
   const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>([]);
@@ -44,6 +48,16 @@ export default function NewReservationScreen() {
   const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const focusInput = (inputRef: React.RefObject<TextInput | null>) => {
+    if (!inputRef.current) return;
+    if (inputRef.current.isFocused()) {
+      inputRef.current.blur();
+      setTimeout(() => inputRef.current?.focus(), 20);
+    } else {
+      inputRef.current.focus();
+    }
+  };
 
   const formatDisplayDate = (isoDate: string) => {
     if (!isoDate) return 'Selecionar data';
@@ -167,8 +181,10 @@ export default function NewReservationScreen() {
 
       Toast.show({
         type: 'success',
-        text1: 'Reserva solicitada',
-        text2: 'Solicitação enviada para avaliação técnica.',
+        text1: 'Reserva registada',
+        text2: isRecurring
+          ? 'Prática recorrente registada como aviso simples.'
+          : 'Solicitação enviada para avaliação técnica.',
       });
 
       router.back();
@@ -268,30 +284,43 @@ export default function NewReservationScreen() {
 
         <View className="mb-5">
           <Text className="text-sm font-bold text-gray-800 mb-2">Título</Text>
-          <View className="bg-white border border-gray-200 rounded-2xl px-4 h-[50px] justify-center">
-            <TextInput
-              value={title}
-              onChangeText={setTitle}
-              placeholder="Ex.: Titulação Ácido-Base"
-              placeholderTextColor="#9CA3AF"
-              multiline={false}
-              numberOfLines={1}
-              scrollEnabled={false}
-              textAlignVertical="center"
-              className="text-sm text-gray-900 p-0"
-            />
-          </View>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => focusInput(titleInputRef)}
+            className="bg-white border border-gray-200 rounded-2xl px-4 h-[50px] justify-center"
+          >
+            <View pointerEvents="none">
+              <TextInput
+                ref={titleInputRef}
+                value={title}
+                onChangeText={setTitle}
+                placeholder="Ex.: Titulação Ácido-Base"
+                placeholderTextColor="#9CA3AF"
+                multiline={false}
+                style={{ fontSize: 14, includeFontPadding: false, paddingVertical: 0 }}
+                className="text-gray-900"
+              />
+            </View>
+          </TouchableOpacity>
         </View>
 
         <View className="mb-5">
-          <View className="flex-row items-center justify-between bg-white border border-gray-200 rounded-2xl px-4 h-[50px] w-48">
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => focusInput(studentsInputRef)}
+            className="flex-row items-center justify-between bg-white border border-gray-200 rounded-2xl px-4 h-[50px] w-48"
+          >
             <View className="flex-row items-center">
               <Feather name="user" size={16} color="#4B5563" />
               <Text className="text-xs font-bold text-gray-800 ml-2">Alunos</Text>
             </View>
 
-            <View className="bg-[#E8F0EC] rounded-full px-3 h-7 justify-center min-w-[48px]">
+            <View
+              pointerEvents="none"
+              className="bg-[#E8F0EC] rounded-full px-3 h-7 justify-center min-w-[48px]"
+            >
               <TextInput
+                ref={studentsInputRef}
                 value={studentCount}
                 onChangeText={(val) => setStudentCount(val.replace(/[^0-9]/g, ''))}
                 keyboardType="number-pad"
@@ -299,13 +328,11 @@ export default function NewReservationScreen() {
                 placeholderTextColor="#6B7280"
                 maxLength={3}
                 multiline={false}
-                numberOfLines={1}
-                scrollEnabled={false}
-                textAlignVertical="center"
-                className="text-center text-xs font-bold text-gray-900 p-0"
+                style={{ fontSize: 12, includeFontPadding: false, paddingVertical: 0 }}
+                className="text-center font-bold text-gray-900"
               />
             </View>
-          </View>
+          </TouchableOpacity>
         </View>
 
         <View className="flex-row items-center justify-between bg-white border border-gray-200 rounded-2xl px-4 py-3.5 mb-5">
@@ -323,18 +350,28 @@ export default function NewReservationScreen() {
           />
         </View>
 
+        {/* Observações */}
         <View className="mb-6">
           <Text className="text-sm font-bold text-gray-800 mb-2">Observações</Text>
-          <TextInput
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="Turma, disciplina..."
-            placeholderTextColor="#9CA3AF"
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-            className="bg-white border border-gray-200 rounded-2xl p-4 text-sm text-gray-900 min-h-[100px]"
-          />
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => focusInput(notesInputRef)}
+            className="bg-white border border-gray-200 rounded-2xl p-4 min-h-[100px]"
+          >
+            <View pointerEvents="none">
+              <TextInput
+                ref={notesInputRef}
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Turma, disciplina..."
+                placeholderTextColor="#9CA3AF"
+                multiline
+                textAlignVertical="top"
+                style={{ fontSize: 14, includeFontPadding: false, paddingVertical: 0 }}
+                className="text-gray-900"
+              />
+            </View>
+          </TouchableOpacity>
         </View>
 
         <View className="flex-row gap-4">
