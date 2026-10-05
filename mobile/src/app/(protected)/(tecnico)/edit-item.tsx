@@ -14,7 +14,6 @@ import { updateInventoryItem, deleteInventoryItem } from '../../../services/inve
 import { BackButton } from '../../../components/ui/Back-button';
 import { PageWrapper } from '../../../components/ui/page-wrapper';
 
-// Converte o item recebido pela rota nos valores iniciais do formulário
 function getInitialForm(itemData: unknown) {
   const form = {
     itemId: '',
@@ -73,8 +72,6 @@ export default function EditItemScreen() {
   const router = useRouter();
   const { itemData } = useLocalSearchParams();
 
-  // Lido uma única vez ao abrir a tela: os estados já nascem preenchidos,
-  // sem precisar de um useEffect copiando os dados depois do primeiro render
   const [initial] = useState(() => getInitialForm(itemData));
   const { itemId } = initial;
 

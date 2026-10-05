@@ -19,8 +19,6 @@ export default function AdjustStockScreen() {
   const router = useRouter();
   const { itemData } = useLocalSearchParams();
 
-  // Os dados do item chegam pela rota e só são exibidos, então são derivados
-  // direto dos parâmetros em vez de copiados para estados via useEffect
   const item = useMemo(() => (itemData ? JSON.parse(itemData as string) : null), [itemData]);
   const itemId: string = item?.id ?? '';
   const name: string = item?.nome ?? '';

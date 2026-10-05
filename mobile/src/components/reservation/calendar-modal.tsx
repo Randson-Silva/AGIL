@@ -61,9 +61,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
   const [showMonthList, setShowMonthList] = useState(false);
   const [showYearList, setShowYearList] = useState(false);
 
-  // Ao abrir o calendário (ou se a data selecionada mudar), volta a visualização
-  // para o mês da data selecionada. Feito durante o render, comparando com os
-  // valores anteriores, em vez de um useEffect com vários setState
+  // reseta o calendario ao abrir
   const [prevVisible, setPrevVisible] = useState(visible);
   const [prevInitialDate, setPrevInitialDate] = useState(initialDate);
   if (visible !== prevVisible || initialDate !== prevInitialDate) {

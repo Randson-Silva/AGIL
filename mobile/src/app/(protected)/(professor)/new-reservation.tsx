@@ -48,8 +48,6 @@ export default function NewReservationScreen() {
   const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // "Carregando" é derivado: enquanto o par laboratório + data atual ainda não
-  // teve os horários buscados, a busca está em andamento
   const slotsKey = selectedLab && selectedDate ? `${selectedLab}|${selectedDate}` : '';
   const [loadedSlotsKey, setLoadedSlotsKey] = useState('');
   const isLoadingSlots = slotsKey !== '' && slotsKey !== loadedSlotsKey;
@@ -70,9 +68,7 @@ export default function NewReservationScreen() {
     return `${day}/${month}/${year}`;
   };
 
-  // Busca os horários ocupados sempre que o laboratório ou a data mudam.
-  // `ignore` descarta a resposta de uma busca antiga se a seleção mudar antes
-  // dela terminar, para não sobrescrever os horários da seleção atual
+  // ignora a resposta se trocar o lab/data antes de terminar
   useEffect(() => {
     if (!selectedLab || !selectedDate) return;
 

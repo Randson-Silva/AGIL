@@ -1,3 +1,2 @@
-# Força quebra de linha LF em todos os arquivos de texto, em qualquer sistema
-# (alinhado com o .editorconfig e o .prettierrc)
+# usa LF em todos os arquivos
 * text=auto eol=lf
