@@ -32,6 +32,22 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
   selectedDate,
   onSelectDate,
 }) => {
+  const todayInfo = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const day = now.getDate();
+    const mm = String(month + 1).padStart(2, '0');
+    const dd = String(day).padStart(2, '0');
+
+    return {
+      year,
+      month,
+      day,
+      iso: `${year}-${mm}-${dd}`,
+    };
+  }, []);
+
   const initialDate = useMemo(() => {
     if (selectedDate) {
       const [y, m, d] = selectedDate.split('-').map(Number);
@@ -55,9 +71,16 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
   }, [visible, initialDate]);
 
   const availableYears = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    return [currentYear, currentYear + 1, currentYear + 2];
-  }, []);
+    return [todayInfo.year, todayInfo.year + 1, todayInfo.year + 2];
+  }, [todayInfo.year]);
+
+  const handleSelectYear = (yr: number) => {
+    setViewYear(yr);
+    if (yr === todayInfo.year && viewMonth < todayInfo.month) {
+      setViewMonth(todayInfo.month);
+    }
+    setShowYearList(false);
+  };
 
   const calendarDays = useMemo(() => {
     const firstDayOfMonth = new Date(viewYear, viewMonth, 1).getDay();
@@ -155,26 +178,40 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
 
           {showMonthList && (
             <View className="flex-row flex-wrap justify-between bg-white p-3 rounded-2xl border border-gray-200 mb-3 gap-y-2">
-              {MONTHS.map((m, idx) => (
-                <TouchableOpacity
-                  key={m}
-                  onPress={() => {
-                    setViewMonth(idx);
-                    setShowMonthList(false);
-                  }}
-                  className={`w-[31%] py-2 rounded-lg items-center ${
-                    viewMonth === idx ? 'bg-[#00623B]' : 'bg-gray-50'
-                  }`}
-                >
-                  <Text
-                    className={`text-xs font-semibold ${
-                      viewMonth === idx ? 'text-white' : 'text-gray-700'
+              {MONTHS.map((m, idx) => {
+                const isPastMonth = viewYear === todayInfo.year && idx < todayInfo.month;
+                const isSelectedMonth = viewMonth === idx;
+
+                return (
+                  <TouchableOpacity
+                    key={m}
+                    disabled={isPastMonth}
+                    onPress={() => {
+                      setViewMonth(idx);
+                      setShowMonthList(false);
+                    }}
+                    className={`w-[31%] py-2 rounded-lg items-center ${
+                      isSelectedMonth
+                        ? 'bg-[#00623B]'
+                        : isPastMonth
+                          ? 'bg-gray-100 opacity-40'
+                          : 'bg-gray-50'
                     }`}
                   >
-                    {m}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      className={`text-xs font-semibold ${
+                        isSelectedMonth
+                          ? 'text-white'
+                          : isPastMonth
+                            ? 'text-gray-400'
+                            : 'text-gray-700'
+                      }`}
+                    >
+                      {m}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           )}
 
@@ -183,10 +220,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
               {availableYears.map((yr) => (
                 <TouchableOpacity
                   key={yr}
-                  onPress={() => {
-                    setViewYear(yr);
-                    setShowYearList(false);
-                  }}
+                  onPress={() => handleSelectYear(yr)}
                   className={`px-5 py-2 rounded-lg ${
                     viewYear === yr ? 'bg-[#00623B]' : 'bg-gray-50'
                   }`}
@@ -216,10 +250,12 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
               {calendarDays.map((item, index) => {
                 const isoDate = formatToIso(item.year, item.month, item.day);
                 const isSelected = selectedDate === isoDate;
+                const isPastDate = isoDate < todayInfo.iso;
 
                 return (
                   <TouchableOpacity
                     key={`${isoDate}-${index}`}
+                    disabled={isPastDate}
                     activeOpacity={0.7}
                     onPress={() => {
                       onSelectDate(isoDate);
@@ -236,9 +272,11 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
                         className={`text-sm font-medium ${
                           isSelected
                             ? 'text-white font-bold'
-                            : item.isCurrentMonth
-                              ? 'text-gray-700'
-                              : 'text-gray-400'
+                            : isPastDate
+                              ? 'text-gray-300'
+                              : item.isCurrentMonth
+                                ? 'text-gray-700'
+                                : 'text-gray-400'
                         }`}
                       >
                         {item.day}

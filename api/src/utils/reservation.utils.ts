@@ -45,8 +45,6 @@ export function validateAdvanceNotice(
   slots: TimeSlotInput[],
   isRecurring = false,
 ): void {
-  if (isRecurring) return;
-
   const datePart = reservationDateIso.split('T')[0];
 
   const earliestStart = slots.map((s) => s.hora_inicio).sort()[0];
@@ -59,6 +57,15 @@ export function validateAdvanceNotice(
   }
 
   const now = new Date();
+
+  if (reservationStart.getTime() < now.getTime()) {
+    throw new BadRequestException(
+      'Não é possível realizar reservas para datas ou horários que já passaram.',
+    );
+  }
+
+  if (isRecurring) return;
+
   const diffInHours =
     (reservationStart.getTime() - now.getTime()) / (1000 * 60 * 60);
 
