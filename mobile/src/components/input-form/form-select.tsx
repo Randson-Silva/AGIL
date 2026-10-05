@@ -12,6 +12,7 @@ interface FormSelectProps {
   selectedValue: string;
   onValueChange: (itemValue: string) => void;
   options: Option[];
+  disabled?: boolean;
 }
 
 export const FormSelect: React.FC<FormSelectProps> = ({
@@ -19,12 +20,22 @@ export const FormSelect: React.FC<FormSelectProps> = ({
   selectedValue,
   onValueChange,
   options,
+  disabled = false,
 }) => {
   return (
     <View className="mb-4">
       <Text className="text-sm font-semibold mb-1 text-gray-600">{label}</Text>
-      <View className="border border-gray-300 rounded-lg bg-white overflow-hidden">
-        <Picker selectedValue={selectedValue} onValueChange={onValueChange} style={{ height: 50 }}>
+      <View
+        className={`border border-gray-300 rounded-lg overflow-hidden h-[50px] justify-center ${
+          disabled ? 'bg-gray-100 opacity-70' : 'bg-white'
+        }`}
+      >
+        <Picker
+          selectedValue={selectedValue}
+          onValueChange={onValueChange}
+          enabled={!disabled}
+          style={{ height: 50 }}
+        >
           {options.map((option) => (
             <Picker.Item
               key={option.value}

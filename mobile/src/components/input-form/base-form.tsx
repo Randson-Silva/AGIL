@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { FormInput } from './form-input';
 import { FormSelect } from './form-select';
+import { FormDatePicker } from './form-date-picker';
 
 const MEASUREMENT_UNITS = [
   { label: 'Miligrama (mg)', value: 'MG' },
@@ -12,7 +13,17 @@ const MEASUREMENT_UNITS = [
   { label: 'Unidade (un)', value: 'UN' },
 ];
 
+const CATEGORIES = [
+  { label: 'Reagente', value: 'REAGENTE' },
+  { label: 'Solução', value: 'SOLUCAO' },
+  { label: 'Vidraria', value: 'VIDRARIA' },
+  { label: 'Equipamento', value: 'EQUIPAMENTO' },
+];
+
 interface BaseFormProps {
+  isEditing?: boolean;
+  category: string;
+  setCategory?: (val: string) => void;
   name: string;
   setName: (val: string) => void;
   currentQuantity: string;
@@ -28,6 +39,9 @@ interface BaseFormProps {
 }
 
 export const BaseForm: React.FC<BaseFormProps> = ({
+  isEditing = false,
+  category,
+  setCategory,
   name,
   setName,
   currentQuantity,
@@ -41,8 +55,27 @@ export const BaseForm: React.FC<BaseFormProps> = ({
   location,
   setLocation,
 }) => {
+  const isEquipmentOrGlassware = category === 'EQUIPAMENTO' || category === 'VIDRARIA';
+  const isUnit = measurementUnit === 'UN';
+  const qtyPlaceholder = isUnit ? '0' : '0.0';
+
+  useEffect(() => {
+    if (isEquipmentOrGlassware) {
+      setMeasurementUnit('UN');
+    }
+  }, [category]);
+
   return (
     <View>
+      {!isEditing && setCategory && (
+        <FormSelect
+          label="CATEGORIA *"
+          selectedValue={category}
+          onValueChange={setCategory}
+          options={CATEGORIES}
+        />
+      )}
+
       <FormInput
         label="NOME DO ITEM *"
         value={name}
@@ -51,21 +84,24 @@ export const BaseForm: React.FC<BaseFormProps> = ({
       />
 
       <View className="flex-row gap-4">
-        <View className="flex-1">
-          <FormInput
-            label="QTD ATUAL *"
-            value={currentQuantity}
-            onChangeText={setCurrentQuantity}
-            keyboardType="numeric"
-            placeholder="Ex.: 100"
-          />
-        </View>
+        {!isEditing && (
+          <View className="flex-1">
+            <FormInput
+              label="QTD ATUAL *"
+              value={currentQuantity}
+              onChangeText={setCurrentQuantity}
+              keyboardType={isUnit ? 'number-pad' : 'decimal-pad'}
+              placeholder={`Ex.: ${qtyPlaceholder}`}
+            />
+          </View>
+        )}
         <View className="flex-1">
           <FormSelect
             label="UNIDADE DE MEDIDA *"
             selectedValue={measurementUnit}
             onValueChange={setMeasurementUnit}
             options={MEASUREMENT_UNITS}
+            disabled={isEquipmentOrGlassware}
           />
         </View>
       </View>
@@ -76,18 +112,19 @@ export const BaseForm: React.FC<BaseFormProps> = ({
             label="QTD MÍNIMA"
             value={minQuantity}
             onChangeText={setMinQuantity}
-            keyboardType="numeric"
-            placeholder="Ex.: 10"
+            keyboardType={isUnit ? 'number-pad' : 'decimal-pad'}
+            placeholder={`Ex.: ${qtyPlaceholder}`}
           />
         </View>
-        <View className="flex-1">
-          <FormInput
-            label="VALIDADE *"
-            value={expirationDate}
-            onChangeText={setExpirationDate}
-            placeholder="AAAA-MM-DD"
-          />
-        </View>
+        {!isEquipmentOrGlassware && (
+          <View className="flex-1">
+            <FormDatePicker
+              label="VALIDADE *"
+              value={expirationDate}
+              onChange={setExpirationDate}
+            />
+          </View>
+        )}
       </View>
 
       <FormInput

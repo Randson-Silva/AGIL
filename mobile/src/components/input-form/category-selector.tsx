@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, Animated } from 'react-native';
 
 interface CategorySelectorProps {
   selectedCategory: string;
@@ -17,21 +17,67 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
   selectedCategory,
   onSelect,
 }) => {
+  const [containerWidth, setContainerWidth] = useState(0);
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  const selectedIndex = CATEGORIES.findIndex((c) => c.id === selectedCategory);
+
+  useEffect(() => {
+    Animated.spring(slideAnim, {
+      toValue: selectedIndex,
+      useNativeDriver: true,
+      bounciness: 2,
+      speed: 12,
+    }).start();
+  }, [selectedIndex]);
+
   return (
-    <View>
-      <Text className="text-sm font-semibold mb-2 text-gray-600">CATEGORIA *</Text>
-      <View className="flex-row flex-wrap gap-2 mb-6">
+    <View className="mb-6">
+      <Text className="text-sm font-semibold mb-2 text-gray-500 tracking-wider">CATEGORIA</Text>
+
+      <View
+        className="flex-row bg-white rounded-full border border-gray-200 relative overflow-hidden h-[50px]"
+        onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
+      >
+        {containerWidth > 0 && (
+          <Animated.View
+            style={{
+              position: 'absolute',
+              width: containerWidth / 4,
+              height: '100%',
+              backgroundColor: 'green',
+              borderRadius: 9999,
+              transform: [
+                {
+                  translateX: slideAnim.interpolate({
+                    inputRange: [0, 1, 2, 3],
+                    outputRange: [
+                      0,
+                      containerWidth / 4,
+                      (containerWidth / 4) * 2,
+                      (containerWidth / 4) * 3,
+                    ],
+                  }),
+                },
+              ],
+            }}
+          />
+        )}
+
         {CATEGORIES.map((cat) => {
           const isSelected = selectedCategory === cat.id;
           return (
             <TouchableOpacity
               key={cat.id}
+              activeOpacity={0.8}
               onPress={() => onSelect(cat.id)}
-              className={`px-4 py-2 rounded-full border ${
-                isSelected ? 'bg-green-600 border-green-600' : 'bg-gray-100 border-gray-300'
-              }`}
+              className="flex-1 justify-center items-center z-10"
             >
-              <Text className={isSelected ? 'text-white' : 'text-gray-700'}>{cat.label}</Text>
+              <Text
+                className={`font-semibold text-[13px] ${isSelected ? 'text-white' : 'text-gray-500'}`}
+              >
+                {cat.label}
+              </Text>
             </TouchableOpacity>
           );
         })}

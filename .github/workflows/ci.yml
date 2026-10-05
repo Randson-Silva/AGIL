@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+
+# Cancela execuções antigas da mesma branch/PR quando chega um push novo
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API (NestJS)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    env:
+      # Valores fictícios, só para o Prisma e o build não reclamarem
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      JWT_SECRET: ci-secret
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Gerar Prisma Client
+        run: npm run db:generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Testes
+        run: npm test -- --passWithNoTests
+
+  mobile:
+    name: Mobile (Expo)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      # expo-env.d.ts é gerado pelo `expo start` e fica no .gitignore;
+      # sem ele o TypeScript não reconhece os imports de .css
+      - name: Gerar expo-env.d.ts
+        run: echo '/// <reference types="expo/types" />' > expo-env.d.ts
+
+      - name: Checagem de tipos
+        run: npx tsc --noEmit

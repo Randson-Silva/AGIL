@@ -1,11 +1,3 @@
-Compreendido! O problema ocorreu porque o próprio README tem blocos de código dentro dele, o que acaba "quebrando" a caixa de formatação aqui no chat.
-
-Para não bugar de forma alguma, vou colocar o texto exato abaixo, **sem nenhuma caixa ao redor**. Você pode simplesmente selecionar tudo a partir do título abaixo, copiar e colar no seu arquivo `README.md` (ou diretamente num Google Docs, já que ele vai renderizar a formatação bonitinha).
-
-Aqui está:
-
----
-
 # 📱 AGIL - Aplicativo de Gerência de Insumos e Laboratórios
 
 **AGIL** é uma aplicação desenvolvida para facilitar o agendamento e gestão dos insumos e laboratório de química do Instituto Federal do Ceará (IFCE), beneficiando alunos, técnicos e professores da comunidade acadêmica.
@@ -14,6 +6,7 @@ Aqui está:
 
 ## 📋 Índice
 
+- [Equipe](#equipe)
 - [Estrutura do Projeto](#estrutura-do-projeto)
 - [Pré-requisitos](#pré-requisitos)
 - [Instalação](#instalação)
@@ -27,6 +20,16 @@ Aqui está:
 - [Troubleshooting](#troubleshooting)
 
 ---
+## 👥 Equipe
+|Nome|Matrícula|Email|
+|----|---------|-----|
+|ANA LETICIA OLIVEIRA MESQUITA|570889|ana.mesquita@alu.ufc.br|
+|EDIVAR CRUZ CARVALHO FILHO|565857|edivarcruz@alu.ufc.br|
+|GUILHERME SOUSA BARBOSA|565684|guilhermesb@alu.ufc.br|
+|JOÃO GABRIEL COSTA LEANDRO|569466|joaogcl@alu.ufc.br|
+|PAULO SERGIO VIEIRA DE OLIVEIRA|566589|paulo.sergio@alu.ufc.br|
+|RANDSON DA SILVA ALVES|568002|randsonalves@alu.ufc.br|
+
 
 ## 📁 Estrutura do Projeto
 

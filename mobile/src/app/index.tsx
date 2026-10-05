@@ -18,7 +18,7 @@ export default function IndexScreen() {
   }
 
   // Redireciona o TÉCNICO direto para o inventário
-  if (user.perfil === 'TECNICO') {
+  if (user.profile === 'TECNICO') {
     return <Redirect href="/(protected)/(tecnico)/inventory" />;
   }
 

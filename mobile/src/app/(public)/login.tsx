@@ -1,17 +1,12 @@
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Text, TouchableOpacity, View, Platform } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 import { RoleSelector } from '@/components/auth/RoleSelect';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useLogin } from '../../hooks/useLogin';
+import { PageWrapper } from '../../components/ui/page-wrapper';
 
 export default function LoginScreen() {
   const {
@@ -24,16 +19,20 @@ export default function LoginScreen() {
     isLoading,
     handleLogin,
     handleGoogleLogin,
+    handlePressRegister,
   } = useLogin();
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-emerald-50/30"
-    >
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 20 }}>
+    <PageWrapper className="bg-emerald-50/30">
+      <KeyboardAwareScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 20 }}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
+        extraScrollHeight={Platform.OS === 'ios' ? 20 : 80}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Cabeçalho */}
-        <View className="items-center mb-8 mt-6">
+        <View className="items-center mb-8">
           <View className="w-16 h-16 bg-[#00623B] rounded-full items-center justify-center mb-3">
             <MaterialCommunityIcons name="flask-outline" size={32} color="#FFF" />
           </View>
@@ -68,6 +67,7 @@ export default function LoginScreen() {
             secureTextEntry
             value={password}
             onChangeText={setPassword}
+            isPassword
           />
 
           <TouchableOpacity className="mb-6 ml-1">
@@ -95,7 +95,7 @@ export default function LoginScreen() {
           {/* Cadastre-se */}
           <View className="flex-row justify-center mt-2">
             <Text className="text-gray-500 text-sm">Ainda não possui cadastro? </Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={handlePressRegister}>
               <Text className="text-[#00623B] text-sm font-semibold">Cadastre-se aqui</Text>
             </TouchableOpacity>
           </View>
@@ -106,7 +106,7 @@ export default function LoginScreen() {
           <Feather name="shield" size={14} color="#00623B" />
           <Text className="text-gray-400 text-xs ml-2">Ambiente seguro • IFCE Campus Quixadá</Text>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
+    </PageWrapper>
   );
 }

@@ -7,6 +7,8 @@ import { UsersModule } from '../users/users.module.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { JwtStrategy } from './jwt.strategy.js';
+import { GoogleStrategy } from './oauth/google.strategy.js';
+import { MailModule } from '../mail/mail.module.js';
 
 @Module({
   imports: [
@@ -23,8 +25,9 @@ import { JwtStrategy } from './jwt.strategy.js';
         },
       }),
     }),
+    MailModule,
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, GoogleStrategy],
   controllers: [AuthController],
   exports: [PassportModule, JwtModule],
 })

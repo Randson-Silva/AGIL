@@ -1,14 +1,17 @@
 import axios from 'axios';
 import { useState } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity } from 'react-native';
+import { Platform, Text, TouchableOpacity, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import Toast from 'react-native-toast-message'; // Novo import!
 
 import { BaseForm } from '../../../components/input-form/base-form';
-import { CategorySelector } from '../../../components/input-form/category-selector';
 import { EquipmentForm } from '../../../components/input-form/equipment-form';
 import { GlasswareForm } from '../../../components/input-form/glassware-form';
 import { ReagentForm } from '../../../components/input-form/reagent-form';
 import { SolutionForm } from '../../../components/input-form/solution-form';
 import { createInventoryItem } from '../../../services/inventory.service';
+import { BackButton } from '../../../components/ui/Back-button';
+import { PageWrapper } from '../../../components/ui/page-wrapper';
 
 export default function NewItemScreen() {
   const [category, setCategory] = useState('REAGENTE');
@@ -29,18 +32,40 @@ export default function NewItemScreen() {
   const [capacity, setCapacity] = useState('');
 
   const handleSave = async () => {
-    const parsedDate = new Date(expirationDate);
-    if (isNaN(parsedDate.getTime())) {
-      Alert.alert('Erro', 'Por favor, insira uma data válida (Ex: 2026-12-31).');
-      return;
+    const isEquipmentOrGlassware = category === 'EQUIPAMENTO' || category === 'VIDRARIA';
+    const isUnit = measurementUnit === 'UN';
+
+    const parsedCurrentQuantity = isUnit
+      ? parseInt(currentQuantity, 10)
+      : parseFloat(currentQuantity.replace(',', '.'));
+    const parsedMinQuantity = minQuantity
+      ? isUnit
+        ? parseInt(minQuantity, 10)
+        : parseFloat(minQuantity.replace(',', '.'))
+      : null;
+
+    let finalExpirationDate = null;
+    if (!isEquipmentOrGlassware) {
+      const parsedDate = new Date(expirationDate);
+      if (isNaN(parsedDate.getTime())) {
+        Toast.show({
+          type: 'error',
+          text1: 'Erro de Data',
+          text2: 'Por favor, insira uma data válida.',
+        });
+        return;
+      }
+      finalExpirationDate = parsedDate.toISOString();
     }
 
     const payload: any = {
       nome: name,
       categoria: category,
       tipo_medida: measurementUnit,
-      data_validade: parsedDate.toISOString(),
-      quantidade_saldo: Number(currentQuantity),
+      data_validade: finalExpirationDate,
+      quantidade_saldo: parsedCurrentQuantity,
+      quantidade_minima: parsedMinQuantity,
+      localizacao: location || null,
     };
 
     if (minQuantity) payload.quantidade_minima = Number(minQuantity);
@@ -67,86 +92,121 @@ export default function NewItemScreen() {
     try {
       const response = await createInventoryItem(category, payload);
       if (response.status === 201) {
-        Alert.alert('Sucesso', 'Item cadastrado com sucesso!');
+        Toast.show({
+          type: 'success',
+          text1: 'Sucesso!',
+          text2: 'Item cadastrado no inventário com sucesso.',
+        });
+        setName('');
+        setCurrentQuantity('');
+        setMinQuantity('');
+        setExpirationDate('');
+        setLocation('');
+        setFormula('');
+        setCas('');
+        setBrand('');
+        setNotes('');
+        setModel('');
+        setVoltage('');
+        setCapacity('');
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 400) {
         const msgs = error.response.data.message;
-        Alert.alert('Erro de Validação', Array.isArray(msgs) ? msgs.join('\n') : msgs);
+        Toast.show({
+          type: 'error',
+          text1: 'Erro de Validação',
+          text2: Array.isArray(msgs) ? msgs.join('\n') : msgs,
+        });
       } else {
-        Alert.alert('Erro', 'Ocorreu um problema no servidor.');
+        Toast.show({
+          type: 'error',
+          text1: 'Erro',
+          text2: 'Ocorreu um problema no servidor.',
+        });
       }
     }
   };
 
   return (
-    <ScrollView className="flex-1 p-4 bg-white">
-      <Text className="text-2xl font-bold mb-6 text-gray-800">Novo Item</Text>
-
-      <CategorySelector selectedCategory={category} onSelect={setCategory} />
-
-      <BaseForm
-        name={name}
-        setName={setName}
-        currentQuantity={currentQuantity}
-        setCurrentQuantity={setCurrentQuantity}
-        measurementUnit={measurementUnit}
-        setMeasurementUnit={setMeasurementUnit}
-        minQuantity={minQuantity}
-        setMinQuantity={setMinQuantity}
-        expirationDate={expirationDate}
-        setExpirationDate={setExpirationDate}
-        location={location}
-        setLocation={setLocation}
-      />
-
-      {category === 'REAGENTE' && (
-        <ReagentForm
-          brand={brand}
-          setBrand={setBrand}
-          formula={formula}
-          setFormula={setFormula}
-          cas={cas}
-          setCas={setCas}
-          notes={notes}
-          setNotes={setNotes}
-        />
-      )}
-      {category === 'SOLUCAO' && (
-        <SolutionForm
-          formula={formula}
-          setFormula={setFormula}
-          cas={cas}
-          setCas={setCas}
-          notes={notes}
-          setNotes={setNotes}
-        />
-      )}
-      {category === 'VIDRARIA' && (
-        <GlasswareForm
-          brand={brand}
-          setBrand={setBrand}
-          capacity={capacity}
-          setCapacity={setCapacity}
-        />
-      )}
-      {category === 'EQUIPAMENTO' && (
-        <EquipmentForm
-          brand={brand}
-          setBrand={setBrand}
-          model={model}
-          setModel={setModel}
-          voltage={voltage}
-          setVoltage={setVoltage}
-        />
-      )}
-
-      <TouchableOpacity
-        onPress={handleSave}
-        className="bg-green-600 rounded-lg p-4 items-center justify-center mt-4 mb-8"
+    <PageWrapper className="bg-[#F4F7F4]">
+      <KeyboardAwareScrollView
+        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
+        extraScrollHeight={Platform.OS === 'ios' ? 20 : 220}
+        enableAutomaticScroll={true}
       >
-        <Text className="text-white font-bold text-lg">Cadastrar Item</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <View className="flex-row items-center gap-4 mt-2 mb-6">
+          <BackButton />
+          <Text className="text-2xl font-bold text-gray-800">Novo Item</Text>
+        </View>
+
+        <BaseForm
+          category={category}
+          setCategory={setCategory}
+          name={name}
+          setName={setName}
+          currentQuantity={currentQuantity}
+          setCurrentQuantity={setCurrentQuantity}
+          measurementUnit={measurementUnit}
+          setMeasurementUnit={setMeasurementUnit}
+          minQuantity={minQuantity}
+          setMinQuantity={setMinQuantity}
+          expirationDate={expirationDate}
+          setExpirationDate={setExpirationDate}
+          location={location}
+          setLocation={setLocation}
+        />
+
+        {category === 'REAGENTE' && (
+          <ReagentForm
+            brand={brand}
+            setBrand={setBrand}
+            formula={formula}
+            setFormula={setFormula}
+            cas={cas}
+            setCas={setCas}
+            notes={notes}
+            setNotes={setNotes}
+          />
+        )}
+        {category === 'SOLUCAO' && (
+          <SolutionForm
+            formula={formula}
+            setFormula={setFormula}
+            cas={cas}
+            setCas={setCas}
+            notes={notes}
+            setNotes={setNotes}
+          />
+        )}
+        {category === 'VIDRARIA' && (
+          <GlasswareForm
+            brand={brand}
+            setBrand={setBrand}
+            capacity={capacity}
+            setCapacity={setCapacity}
+          />
+        )}
+        {category === 'EQUIPAMENTO' && (
+          <EquipmentForm
+            brand={brand}
+            setBrand={setBrand}
+            model={model}
+            setModel={setModel}
+            voltage={voltage}
+            setVoltage={setVoltage}
+          />
+        )}
+
+        <TouchableOpacity
+          onPress={handleSave}
+          className="bg-green-700 rounded-lg p-4 items-center justify-center mt-6 mb-8 shadow-sm"
+        >
+          <Text className="text-white font-bold text-lg">Cadastrar Item</Text>
+        </TouchableOpacity>
+      </KeyboardAwareScrollView>
+    </PageWrapper>
   );
 }

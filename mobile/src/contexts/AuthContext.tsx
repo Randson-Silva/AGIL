@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const response = await api.post('/auth/login', credentials);
     const { access_token: token, user: userData } = response.data;
 
-    await storage.saveAuthData(String(token), JSON.stringify(userData));
+    await storage.saveAuthData(String(token), userData);
     setUser(userData);
   };
 
