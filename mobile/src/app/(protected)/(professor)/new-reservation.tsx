@@ -49,6 +49,8 @@ export default function NewReservationScreen() {
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isPracticalClass = objective === 'AULA_PRATICA';
+
   const focusInput = (inputRef: React.RefObject<TextInput | null>) => {
     if (!inputRef.current) return;
     if (inputRef.current.isFocused()) {
@@ -65,39 +67,42 @@ export default function NewReservationScreen() {
     return `${day}/${month}/${year}`;
   };
 
-  const fetchOccupiedSlots = useCallback(async (lab: string, date: string) => {
-    if (!lab || !date) return;
+  const fetchOccupiedSlots = useCallback(
+    async (lab: string, date: string, currentObjective: ReservationObjective) => {
+      if (!lab || !date) return;
 
-    try {
-      setIsLoadingSlots(true);
-      const response = await getOccupiedTimeSlots(lab, date);
-      const occupied = response.data || [];
-      setOccupiedSlots(occupied);
+      try {
+        setIsLoadingSlots(true);
+        const response = await getOccupiedTimeSlots(lab, date, currentObjective);
+        const occupied = response.data || [];
+        setOccupiedSlots(occupied);
 
-      setSelectedSlots((prev) =>
-        prev.filter(
-          (sel) =>
-            !occupied.some(
-              (occ) => occ.hora_inicio === sel.hora_inicio && occ.hora_fim === sel.hora_fim,
-            ),
-        ),
-      );
-    } catch {
-      Toast.show({
-        type: 'error',
-        text1: 'Aviso',
-        text2: 'Não foi possível carregar os horários ocupados para esta data.',
-      });
-    } finally {
-      setIsLoadingSlots(false);
-    }
-  }, []);
+        setSelectedSlots((prev) =>
+          prev.filter(
+            (sel) =>
+              !occupied.some(
+                (occ) => occ.hora_inicio === sel.hora_inicio && occ.hora_fim === sel.hora_fim,
+              ),
+          ),
+        );
+      } catch {
+        Toast.show({
+          type: 'error',
+          text1: 'Aviso',
+          text2: 'Não foi possível carregar os horários ocupados para esta data.',
+        });
+      } finally {
+        setIsLoadingSlots(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     if (selectedLab && selectedDate) {
-      fetchOccupiedSlots(selectedLab, selectedDate);
+      fetchOccupiedSlots(selectedLab, selectedDate, objective);
     }
-  }, [selectedLab, selectedDate, fetchOccupiedSlots]);
+  }, [selectedLab, selectedDate, objective, fetchOccupiedSlots]);
 
   const handleToggleSlot = (slot: TimeSlot) => {
     setSelectedSlots((prev) => {
@@ -156,11 +161,11 @@ export default function NewReservationScreen() {
     }
 
     const parsedStudents = parseInt(studentCount, 10);
-    if (!parsedStudents || parsedStudents <= 0) {
+    if (isPracticalClass && (!parsedStudents || parsedStudents <= 0)) {
       Toast.show({
         type: 'error',
         text1: 'Valor inválido',
-        text2: 'Informe uma quantidade válida de alunos.',
+        text2: 'Informe uma quantidade válida de alunos para a aula prática.',
       });
       return;
     }
@@ -173,7 +178,7 @@ export default function NewReservationScreen() {
         data_reserva: selectedDate,
         objetivo: objective,
         titulo: title.trim(),
-        quantidade_alunos: parsedStudents,
+        quantidade_alunos: isPracticalClass ? parsedStudents : undefined,
         observacoes: notes.trim() || undefined,
         pratica_recorrente: isRecurring,
         horarios: selectedSlots,
@@ -304,36 +309,38 @@ export default function NewReservationScreen() {
           </TouchableOpacity>
         </View>
 
-        <View className="mb-5">
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={() => focusInput(studentsInputRef)}
-            className="flex-row items-center justify-between bg-white border border-gray-200 rounded-2xl px-4 h-[50px] w-48"
-          >
-            <View className="flex-row items-center">
-              <Feather name="user" size={16} color="#4B5563" />
-              <Text className="text-xs font-bold text-gray-800 ml-2">Alunos</Text>
-            </View>
-
-            <View
-              pointerEvents="none"
-              className="bg-[#E8F0EC] rounded-full px-3 h-7 justify-center min-w-[48px]"
+        {isPracticalClass && (
+          <View className="mb-5">
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={() => focusInput(studentsInputRef)}
+              className="flex-row items-center justify-between bg-white border border-gray-200 rounded-2xl px-4 h-[50px] w-48"
             >
-              <TextInput
-                ref={studentsInputRef}
-                value={studentCount}
-                onChangeText={(val) => setStudentCount(val.replace(/[^0-9]/g, ''))}
-                keyboardType="number-pad"
-                placeholder="0"
-                placeholderTextColor="#6B7280"
-                maxLength={3}
-                multiline={false}
-                style={{ fontSize: 12, includeFontPadding: false, paddingVertical: 0 }}
-                className="text-center font-bold text-gray-900"
-              />
-            </View>
-          </TouchableOpacity>
-        </View>
+              <View className="flex-row items-center">
+                <Feather name="user" size={16} color="#4B5563" />
+                <Text className="text-xs font-bold text-gray-800 ml-2">Alunos</Text>
+              </View>
+
+              <View
+                pointerEvents="none"
+                className="bg-[#E8F0EC] rounded-full px-3 h-7 justify-center min-w-[48px]"
+              >
+                <TextInput
+                  ref={studentsInputRef}
+                  value={studentCount}
+                  onChangeText={(val) => setStudentCount(val.replace(/[^0-9]/g, ''))}
+                  keyboardType="number-pad"
+                  placeholder="0"
+                  placeholderTextColor="#6B7280"
+                  maxLength={3}
+                  multiline={false}
+                  style={{ fontSize: 12, includeFontPadding: false, paddingVertical: 0 }}
+                  className="text-center font-bold text-gray-900"
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View className="flex-row items-center justify-between bg-white border border-gray-200 rounded-2xl px-4 py-3.5 mb-5">
           <View className="flex-1 pr-4">
@@ -350,7 +357,6 @@ export default function NewReservationScreen() {
           />
         </View>
 
-        {/* Observações */}
         <View className="mb-6">
           <Text className="text-sm font-bold text-gray-800 mb-2">Observações</Text>
           <TouchableOpacity

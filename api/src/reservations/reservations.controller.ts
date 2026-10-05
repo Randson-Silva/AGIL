@@ -16,8 +16,18 @@ export class ReservationsController {
   async getOccupiedSlots(
     @Query('local') local: string,
     @Query('date') date: string,
+    @Query('objetivo') objetivo?: string,
   ) {
-    return this.reservationsService.getOccupiedSlots(local, date);
+    return this.reservationsService.getOccupiedSlots(local, date, objetivo);
+  }
+
+  @Get('availability')
+  @Roles('PROFESSOR', 'TECNICO', 'ALUNO')
+  async getDailyAvailability(
+    @Query('date') date: string,
+    @Query('local') local?: string,
+  ) {
+    return this.reservationsService.getDailyAvailability(date, local);
   }
 
   @Post()
@@ -33,25 +43,10 @@ export class ReservationsController {
   @Get()
   @Roles('PROFESSOR', 'TECNICO')
   async listReservations(
-    @CurrentUser()
-    user: {
-      id: string;
-      sub?: string;
-      perfil?: string;
-      profile?: string;
-    },
+    @CurrentUser() user: { id: string; sub?: string; perfil?: string; profile?: string },
   ) {
     const userId = user.id || user.sub!;
     const profile = user.perfil || user.profile || 'PROFESSOR';
     return this.reservationsService.listReservations(userId, profile);
-  }
-
-  @Get('availability')
-  @Roles('PROFESSOR', 'TECNICO', 'ALUNO')
-  async getDailyAvailability(
-    @Query('date') date: string,
-    @Query('local') local?: string,
-  ) {
-    return this.reservationsService.getDailyAvailability(date, local);
   }
 }

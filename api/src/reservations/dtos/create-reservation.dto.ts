@@ -11,6 +11,7 @@ import {
   IsString,
   Matches,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { ObjetivoReserva } from '../../generated/prisma/client.js';
@@ -48,9 +49,14 @@ export class CreateReservationDto {
   @IsNotEmpty({ message: 'O título da prática é obrigatório.' })
   titulo: string;
 
+  @ValidateIf(
+    (o: CreateReservationDto) => o.objetivo === ObjetivoReserva.AULA_PRATICA,
+  )
   @IsInt({ message: 'A quantidade de alunos deve ser um número inteiro.' })
-  @Min(1, { message: 'A reserva deve ter pelo menos 1 aluno.' })
-  quantidade_alunos: number;
+  @Min(1, {
+    message: 'A reserva para aula prática deve ter pelo menos 1 aluno.',
+  })
+  quantidade_alunos?: number;
 
   @IsOptional()
   @IsString()
