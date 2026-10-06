@@ -1,9 +1,7 @@
+import { authService } from '@/services/authService';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import { api } from '../services/api';
-import { authService } from '@/services/authService';
-import { verifyEmailProfile } from '@/utils/verify-email-profile';
 
 export function useRegister() {
   const router = useRouter();
@@ -15,7 +13,6 @@ export function useRegister() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleRegister = async () => {
-    // 1. Validações básicas
     if (!firstName || !lastName || !email || !password || !confirmPassword) {
       return Alert.alert('Atenção', 'Preencha todos os campos.');
     }
@@ -24,7 +21,6 @@ export function useRegister() {
       return Alert.alert('Atenção', 'As senhas não coincidem.');
     }
 
-    // Validação das regras da senha (garantindo que o backend não vai recusar)
     if (
       !/[A-Z]/.test(password) ||
       !/[!@#$%^&*(),.?":{}|<>]/.test(password) ||
@@ -36,13 +32,9 @@ export function useRegister() {
     try {
       setIsLoading(true);
 
-      // Concatena nome e sobrenome para enviar ao NestJS conforme exigido ("nome e sobrenome")
       const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
-      const profile = verifyEmailProfile(email);
-
-      // Faz a requisição de cadastro. Enviando 'ALUNO' por padrão já que a tela não possui escolha.
-      await authService.register(fullName, email, password, profile)
+      await authService.register(fullName, email, password);
 
       Alert.alert('Sucesso', 'Cadastro realizado com sucesso!', [
         { text: 'Fazer Login', onPress: () => router.replace('/(public)/login') },
