@@ -20,6 +20,7 @@ export default function LoginScreen() {
     handleLogin,
     handleGoogleLogin,
     handlePressRegister,
+    handlePressForgotPassword,
   } = useLogin();
 
   return (
@@ -70,7 +71,7 @@ export default function LoginScreen() {
             isPassword
           />
 
-          <TouchableOpacity className="mb-6 ml-1">
+          <TouchableOpacity className="mb-6 ml-1" onPress={handlePressForgotPassword}>
             <Text className="text-[#00623B] font-medium text-sm">Esqueceu sua senha?</Text>
           </TouchableOpacity>
 

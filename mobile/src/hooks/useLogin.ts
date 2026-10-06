@@ -35,6 +35,10 @@ export function useLogin() {
     router.navigate('/(public)/register');
   };
 
+  const handlePressForgotPassword = () => {
+    router.navigate('/(public)/forgot-password');
+  };
+
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
@@ -61,5 +65,6 @@ export function useLogin() {
     handleLogin,
     handleGoogleLogin,
     handlePressRegister,
+    handlePressForgotPassword
   };
 }

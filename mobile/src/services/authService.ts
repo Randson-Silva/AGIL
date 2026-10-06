@@ -43,9 +43,18 @@ export const authService = {
     throw new Error('Login cancelado ou interrompido');
   },
 
-  async forgotPassword() {},
+  async forgotPassword(email: string) {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  },
 
-  async validateCode() {},
+  async verifyCode(email: string, code: string) {
+    const response = await api.post('/auth/verify-code', { email, code });
+    return response.data;
+  },
 
-  async resetPassword() {},
+  async resetPassword(email: string, code: string, newPassword: string) {
+    const response = await api.post('/auth/reset-password', { email, code, newPassword });
+    return response.data;
+  },
 };
