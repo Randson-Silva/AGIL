@@ -36,7 +36,7 @@ export class RequestModuleController {
   @Roles('PROFESSOR', 'ALUNO', 'TECNICO')
   findAll(@Query() filtros: ListRequestDto, @Req() req: any) {
     const solicitanteId = req.user.id;
-    const role = req.user.roles?.[0];
+    const role = req.user.role
     return this.requestModuleService.findAll(solicitanteId, role, filtros);
   }
 

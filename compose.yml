@@ -46,6 +46,16 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
+  adminer:
+      image: adminer:latest
+      container_name: projeto-integrado-adminer
+      restart: unless-stopped
+      ports:
+        - "8080:8080" # A porta da esquerda (8080) é a que você vai acessar no navegador
+      depends_on:
+        postgres:
+          condition: service_healthy
+
 volumes:
   postgres_data:
   pgadmin_data:
