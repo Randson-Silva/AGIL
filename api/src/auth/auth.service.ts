@@ -10,7 +10,6 @@ import { randomUUID } from 'crypto';
 import { Role } from '../authz/roles.js';
 import { MailService } from '../mail/mail.service.js';
 import { TransparenciaService } from '../users/pt/pt.service.js';
-import { hasRightRoleAndEmail } from '../users/user.utils.js';
 import { UsersService } from '../users/users.service.js';
 import { compare, emailDomainsConfiguration, hash } from './auth.utils.js';
 import { AuthLoginDto } from './dtos/auth.login.dto.js';
@@ -46,7 +45,7 @@ export class AuthService {
       */
       const fullName =
         this.configService.get('NODE_ENV') !== 'production'
-          ? 'Giselle Raulino'
+          ? 'Alisson Handel'
           : `${googleUser.firstName} ${googleUser.lastName}`.trim();
 
       const profile = await this.resolveRoleFromGoogleAccount(
@@ -77,21 +76,17 @@ export class AuthService {
   }
 
   async register(createUserDto: AuthRegisterDto) {
-    const verification = hasRightRoleAndEmail(
-      createUserDto.profile,
-      createUserDto.email,
-      this.configService,
-    );
-
-    if (!verification)
-      throw new BadRequestException('Tipo de email e perfil não conferem');
-
     const alreadyExists = await this.usersService.findByEmail(
       createUserDto.email,
     );
 
     if (alreadyExists)
       throw new BadRequestException('Já existe um usuário com este email');
+
+    const profile = await this.resolveRoleFromGoogleAccount(
+      createUserDto.email,
+      createUserDto.name,
+    );
 
     const { name } = createUserDto;
 
@@ -104,6 +99,7 @@ export class AuthService {
     const newUser = {
       ...createUserDto,
       password: hashedPassword,
+      profile,
     };
 
     return this.usersService.create(newUser);

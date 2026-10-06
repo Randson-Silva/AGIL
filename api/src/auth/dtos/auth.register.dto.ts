@@ -21,7 +21,7 @@ export class AuthRegisterDto {
   @IsStrongPassword()
   password: string;
 
-  @IsNotEmpty()
-  @IsString()
-  profile: Role;
+  // @IsNotEmpty()
+  // @IsString()
+  // profile: Role;
 }
