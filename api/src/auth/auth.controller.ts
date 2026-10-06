@@ -38,13 +38,12 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() registerDto: AuthRegisterDto) {
-    const { email, name, password, profile } = registerDto;
+    const { email, name, password } = registerDto;
 
     const response = await this.authService.register({
       email,
       name,
       password,
-      profile,
     });
 
     return response;
@@ -76,13 +75,13 @@ export class AuthController {
   async googleAuthRedirect(@Req() req: any, @Res() res: any) {
     const authData = await this.authService.validateGoogleUser(req.user);
 
-    // redireciona pro front enviando o token JWT gerado
-    const frontendUrl = this.configService.get<string>(
-      'FRONTEND_URL',
-      'http://localhost:8081',
-    );
+    const clientRedirectUrl =
+      req.query.state || this.configService.get<string>('FRONTEND_URL');
+
+    const separator = clientRedirectUrl.includes('?') ? '&' : '?';
+
     return res.redirect(
-      `${frontendUrl}/oauth-success?token=${authData.access_token}`,
+      `${clientRedirectUrl}${separator}token=${authData.access_token}`,
     );
   }
 }

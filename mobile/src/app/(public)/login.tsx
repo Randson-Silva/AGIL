@@ -1,12 +1,12 @@
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Text, TouchableOpacity, View, Platform } from 'react-native';
+import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 import { RoleSelector } from '@/components/auth/RoleSelect';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { useLogin } from '../../hooks/useLogin';
 import { PageWrapper } from '../../components/ui/page-wrapper';
+import { useLogin } from '../../hooks/useLogin';
 
 export default function LoginScreen() {
   const {

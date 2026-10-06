@@ -1,9 +1,8 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { useAuth } from '../../hooks/useAuth';
+import { useRouter } from 'expo-router';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { PageWrapper } from '../../components/ui/page-wrapper';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function DashboardScreen() {
   const { user, signOut } = useAuth();
