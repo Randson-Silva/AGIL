@@ -1,12 +1,12 @@
 import { RoleType } from '@/components/auth/RoleSelect';
+import { authService } from '@/services/authService';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert } from 'react-native';
 import { useAuth } from './useAuth';
 
 export function useLogin() {
-  const { signIn } = useAuth();
-
+  const { signIn, signInWithToken } = useAuth();
   const router = useRouter();
 
   const [email, setEmail] = useState('');
@@ -22,7 +22,6 @@ export function useLogin() {
     try {
       setIsLoading(true);
       await signIn({ email, password, profile });
-
       router.replace('/');
     } catch (error) {
       console.error(error);
@@ -36,8 +35,23 @@ export function useLogin() {
     router.navigate('/(public)/register');
   };
 
-  const handleGoogleLogin = () => {
-    Alert.alert('Google OAuth', 'Não implementado...');
+  const handlePressForgotPassword = () => {
+    router.navigate('/(public)/forgot-password');
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+      const token = await authService.loginWithGoogle();
+
+      await signInWithToken(token);
+      router.replace('/');
+    } catch (error) {
+      console.error('Falha no login com Google:', error);
+      Alert.alert('Erro', 'Não foi possível autenticar com a conta Google.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return {
@@ -51,5 +65,6 @@ export function useLogin() {
     handleLogin,
     handleGoogleLogin,
     handlePressRegister,
+    handlePressForgotPassword,
   };
 }
