@@ -33,4 +33,32 @@ export class MailService {
       throw new Error('Não foi possível enviar o e-mail de recuperação.');
     }
   }
+
+  async sendLowStockAlertEmail(
+    to: string[],
+    insumoNome: string,
+    saldo: number,
+    minimo: number,
+  ) {
+    if (!to || to.length === 0) return;
+    try {
+      await this.transporter.sendMail({
+        from: `"AGIL - Alerta de Estoque" <${this.configService.get<string>('SMTP_USER')}>`,
+        to,
+        subject: `⚠️ Alerta: Estoque Crítico - ${insumoNome}`,
+        html: `
+              <h2>Alerta de Estoque Baixo</h2>
+              <p>O insumo <strong>${insumoNome}</strong> atingiu um nível crítico.</p>
+              <ul>
+                <li><strong>Saldo Atual:</strong> ${saldo}</li>
+                <li><strong>Quantidade Mínima Ideal:</strong> ${minimo}</li>
+              </ul>
+              <p>Por favor, providencie a reposição o mais rápido possível.</p>
+            `,
+      });
+      this.logger.log(`Alerta de estoque enviado para ${to}`);
+    } catch (error) {
+      this.logger.error('Erro ao enviar alerta de estoque', error);
+    }
+  }
 }
