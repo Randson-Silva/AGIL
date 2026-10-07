@@ -22,6 +22,11 @@ export default function IndexScreen() {
     return <Redirect href="/(protected)/(tecnico)/painel" />;
   }
 
-  // PROFESSOR e ALUNO vão para o dashboard padrão
+  // Redireciona o PROFESSOR para o seu painel
+  if (user.profile === 'PROFESSOR') {
+    return <Redirect href="/(protected)/(professor)/painel" />;
+  }
+
+  // ALUNO vai para o dashboard padrão
   return <Redirect href="/(protected)/dashboard" />;
 }
