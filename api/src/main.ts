@@ -5,11 +5,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 
 async function bootstrap() {
-  Date.prototype.toJSON = function () {
-    const timezoneOffset = -3;
-    const dataLocal = new Date(this.getTime() + timezoneOffset * 3600 * 1000);
-    return dataLocal.toISOString().replace('Z', '-03:00');
-  };
   const PORT = process.env.PORT ?? 3000;
 
   const app = await NestFactory.create(AppModule);
