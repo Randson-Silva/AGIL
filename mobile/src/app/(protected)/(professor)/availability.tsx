@@ -140,7 +140,7 @@ export default function AvailabilityScreen() {
       <View className="flex-1 px-4 pt-2">
         <View className="flex-row items-center gap-4 mt-2 mb-4">
           <BackButton />
-          <Text className="text-2xl font-bold text-gray-900">Disponibilidade</Text>
+          <Text className="text-xl font-bold text-gray-900">Disponibilidade</Text>
         </View>
 
         <AvailabilityFilterBar

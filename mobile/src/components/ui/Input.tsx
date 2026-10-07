@@ -5,11 +5,12 @@ import { Text, TextInput, TextInputProps, TouchableOpacity, View } from 'react-n
 interface InputProps extends TextInputProps {
   label: string;
   iconName: keyof typeof Feather.glyphMap;
-  isPassword?: boolean; // Flag para ativar o botão de ver senha
+  isPassword?: boolean;
+  rightIconName?: keyof typeof Feather.glyphMap;
+  onRightIconPress?: () => void;
 }
 
-export function Input({ label, iconName, isPassword, secureTextEntry, ...rest }: InputProps) {
-  // O estado começa como true se for senha, ocultando o texto inicialmente
+export function Input({ label, iconName, isPassword, secureTextEntry, rightIconName, onRightIconPress, ...rest }: InputProps) {
   const [isSecure, setIsSecure] = useState(isPassword || secureTextEntry);
 
   return (
@@ -26,12 +27,15 @@ export function Input({ label, iconName, isPassword, secureTextEntry, ...rest }:
           {...rest}
         />
 
-        {/* Se for um campo de senha, renderiza o ícone clicável do lado direito */}
-        {isPassword && (
+        {isPassword ? (
           <TouchableOpacity onPress={() => setIsSecure(!isSecure)} className="p-1 pl-3">
             <Feather name={isSecure ? 'eye-off' : 'eye'} size={20} color="#9CA3AF" />
           </TouchableOpacity>
-        )}
+        ) : rightIconName ? (
+          <TouchableOpacity onPress={onRightIconPress} className="p-1 pl-3">
+            <Feather name={rightIconName} size={20} color="#9CA3AF" />
+          </TouchableOpacity>
+        ) : null}
       </View>
     </View>
   );
