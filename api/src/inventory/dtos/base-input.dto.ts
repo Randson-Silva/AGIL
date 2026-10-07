@@ -63,6 +63,7 @@ export class CreateEquipmentDto extends BaseInputDto {
   @IsOptional() @IsString() marca?: string;
   @IsOptional() @IsString() modelo?: string;
   @IsOptional() @IsString() voltagem?: string;
+  @IsString() numero_patrimonio: string;
 }
 
 export class CreateGlasswareDto extends BaseInputDto {
