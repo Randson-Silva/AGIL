@@ -23,7 +23,7 @@ import { RequestModuleModule } from './request-module/request-module.module.js';
     NotificationsModule,
     RequestModuleModule,
   ],
-  controllers: [AppController, InventoryController],
-  providers: [InventoryService],
+  controllers: [AppController],
+  providers: [],
 })
 export class AppModule {}

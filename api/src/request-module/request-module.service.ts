@@ -109,7 +109,7 @@ export class RequestModuleService {
         quantidade: Number(item.quantidade),
       }));
 
-      await this.inventoryService.darBaixaEstoque(
+      await this.inventoryService.updateStock(
         itensFormatados,
         tecnicoId,
         id,
