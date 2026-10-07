@@ -17,8 +17,13 @@ export function useReservas() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reservationToCancel, setReservationToCancel] = useState<any>(null);
 
+  const getFirstName = () => {
+    if (!user?.name) return 'Professor';
+    return user.name.split(' ')[0];
+  };
+
   const getInitials = () => {
-    if (!user?.name) return 'US';
+    if (!user?.name) return 'PR';
     const names = user.name.trim().split(' ');
     if (names.length >= 2) {
       return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
@@ -120,6 +125,7 @@ export function useReservas() {
     handleCloseCancelModal,
     handleConfirmCancel,
     handleNewReservation,
+    firstName: getFirstName(),
     initials: getInitials(),
   };
 }

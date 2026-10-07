@@ -22,6 +22,7 @@ export default function ReservasScreen() {
     handleCloseCancelModal,
     handleConfirmCancel,
     handleNewReservation,
+    firstName,
     initials,
   } = useReservas();
 
@@ -37,6 +38,7 @@ export default function ReservasScreen() {
         initials={initials} 
         title="Minhas Reservas" 
         icon={<Feather name="calendar" size={20} color="#FFF" />} 
+        hasBorder
       />
 
       {/* Filtros */}
