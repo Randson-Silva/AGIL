@@ -17,9 +17,9 @@ export default function IndexScreen() {
     return <Redirect href="/(public)/login" />;
   }
 
-  // Redireciona o TÉCNICO direto para o inventário
+  // Redireciona o TÉCNICO direto para o painel principal
   if (user.profile === 'TECNICO') {
-    return <Redirect href="/(protected)/(tecnico)/inventory" />;
+    return <Redirect href="/(protected)/(tecnico)/painel" />;
   }
 
   // PROFESSOR e ALUNO vão para o dashboard padrão

@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -23,6 +24,7 @@ import {
   UpdateReagentDto,
   UpdateSolutionDto,
 } from './dtos/update.input.dto.js';
+import { ListAlertsDto } from './dtos/filter.dto.js';
 import { InventoryService } from './inventory.service.js';
 
 @Controller('inventory')
@@ -30,7 +32,6 @@ import { InventoryService } from './inventory.service.js';
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
 
-  @Roles('TECNICO')
   @Get('inputs')
   async listInputs() {
     return this.inventoryService.listInputs();
@@ -103,5 +104,17 @@ export class InventoryController {
   @Delete(':id')
   async deleteInput(@Param('id') id: string) {
     return this.inventoryService.deleteInput(id);
+  }
+
+  @Roles('TECNICO')
+  @Get('alerts')
+  async listAlerts() {
+    return this.inventoryService.listAlerts();
+  }
+
+  @Roles('TECNICO')
+  @Get('story-alerts')
+  async listStoryAlerts(@Query() filters: ListAlertsDto) {
+    return this.inventoryService.listStoryAlerts(filters);
   }
 }

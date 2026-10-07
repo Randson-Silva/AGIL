@@ -21,7 +21,6 @@ export const PageWrapper: React.FC<PageWrapperProps> = ({
         {
           flex: 1,
           paddingTop: insets.top,
-          paddingBottom: insets.bottom > 0 ? insets.bottom : 16,
         },
         style,
       ]}
