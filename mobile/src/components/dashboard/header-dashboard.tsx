@@ -1,5 +1,5 @@
 import React from 'react';
-import { BeakerIcon, BellIcon } from 'react-native-heroicons/outline';
+import { BellIcon, UserIcon } from 'react-native-heroicons/outline';
 import { Text, View } from 'react-native';
 
 interface HeaderDashboardProps {
@@ -7,15 +7,16 @@ interface HeaderDashboardProps {
   userName?: string;
   title?: string;
   icon?: React.ReactNode;
+  hasBorder?: boolean;
 }
 
-export function HeaderDashboard({ userName, initials, title, icon }: HeaderDashboardProps) {
+export function HeaderDashboard({ userName, initials, title, icon, hasBorder }: HeaderDashboardProps) {
   return (
-    <View className="flex-row items-center justify-between px-6 pt-6 pb-4">
+    <View className={`flex-row items-center justify-between px-6 pt-6 pb-4 ${hasBorder ? 'bg-white border-b border-gray-200' : ''}`}>
       {/* Esquerda: Logo e Nome/Título */}
       <View className="flex-row items-center flex-1 pr-4">
         <View className="w-10 h-10 bg-[#00623B] rounded-full items-center justify-center mr-3">
-          {icon ? icon : <BeakerIcon size={20} color="#FFF" />}
+          {icon ? icon : <UserIcon size={20} color="#FFF" />}
         </View>
         <Text className="text-xl font-bold text-gray-900" numberOfLines={1}>
           {title ? title : `Olá, ${userName}`}
