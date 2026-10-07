@@ -59,6 +59,23 @@ enum StatusReserva {
   CANCELADA
 }
 
+enum StatusAlerta {
+  PENDENTE
+  REPOSICAO_SOLICITADA
+  RESOLVIDO
+}
+
+enum StatusInsumo {
+  CRITICO
+  ESTAVEL
+  NAO_APLICAVEL
+}
+
+enum NaturezaPatrimonial {
+  TOMBADO
+  CONSUMO
+}
+
 model Usuario {
   id                String    @id @default(uuid())
   nome              String
@@ -77,9 +94,9 @@ model Usuario {
 }
 
 model ReservaEspaco {
-  id                 String           @id @default(uuid())
-  professor_id       String
-  professor          Usuario          @relation(fields: [professor_id], references: [id])
+  id           String  @id @default(uuid())
+  professor_id String
+  professor    Usuario @relation(fields: [professor_id], references: [id])
 
   local              String
   data_reserva       DateTime
@@ -88,20 +105,20 @@ model ReservaEspaco {
   titulo             String
   quantidade_alunos  Int
   observacoes        String?
-  pratica_recorrente Boolean          @default(false)
-  status             StatusReserva    @default(PENDENTE)
+  pratica_recorrente Boolean         @default(false)
+  status             StatusReserva   @default(PENDENTE)
 
-  horarios           HorarioReserva[]
-  created_at         DateTime         @default(now())
+  horarios   HorarioReserva[]
+  created_at DateTime         @default(now())
 }
 
 model HorarioReserva {
-  id          String        @id @default(uuid())
-  reserva_id  String
-  reserva     ReservaEspaco @relation(fields: [reserva_id], references: [id], onDelete: Cascade)
+  id         String        @id @default(uuid())
+  reserva_id String
+  reserva    ReservaEspaco @relation(fields: [reserva_id], references: [id], onDelete: Cascade)
 
   hora_inicio String
-  hora_fim    String        
+  hora_fim    String
 }
 
 model Insumo {
@@ -118,8 +135,10 @@ model Insumo {
   tipo_medida   MedidasEntidades
   data_validade DateTime?
 
-  localizacao String?
-  status      String  @default("Disponível")
+  localizacao          String?
+  statusInsumo         StatusInsumo        @default(NAO_APLICAVEL)
+  natureza_patrimonial NaturezaPatrimonial @default(CONSUMO)
+  alertasEstoque       AlertaEstoque[]
 
   itensSolicitacao ItemSolicitacaoMaterial[]
   avarias          AvariaReportada[]
@@ -161,9 +180,10 @@ model Equipamento {
   insumo_id String @unique
   insumo    Insumo @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
 
-  marca    String?
-  modelo   String?
-  voltagem String?
+  marca             String?
+  modelo            String?
+  voltagem          String?
+  numero_patrimonio String?
 }
 
 model Vidraria {
@@ -235,4 +255,17 @@ model HistoricoMovimentacao {
   observacao String?
   usuario    Usuario? @relation(fields: [usuarioId], references: [id])
   usuarioId  String?
+}
+
+model AlertaEstoque {
+  id                   String       @id @default(uuid())
+  insumo_id            String
+  insumo               Insumo       @relation(fields: [insumo_id], references: [id])
+  quantidade_momento   Decimal      @db.Decimal(10, 3)
+  data_alerta          DateTime     @default(now())
+  status               StatusAlerta @default(PENDENTE)
+
+  // Campos para histórico de resolução
+  data_resolucao       DateTime?
+  quantidade_resolucao Decimal?     @db.Decimal(10, 3)
 }
