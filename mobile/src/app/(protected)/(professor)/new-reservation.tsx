@@ -225,6 +225,12 @@ export default function NewReservationScreen() {
 
   return (
     <PageWrapper className="bg-[#F4F7F4]">
+      {/* Static Header */}
+      <View className="flex-row items-center gap-4 px-4 pt-6 pb-4 bg-white border-b border-gray-200">
+        <BackButton />
+        <Text className="text-xl font-bold text-gray-900">Nova Reserva</Text>
+      </View>
+
       <KeyboardAwareScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         keyboardShouldPersistTaps="handled"
@@ -232,11 +238,6 @@ export default function NewReservationScreen() {
         extraScrollHeight={Platform.OS === 'ios' ? 20 : 160}
         showsVerticalScrollIndicator={false}
       >
-        <View className="flex-row items-center gap-4 mt-2 mb-6">
-          <BackButton />
-          <Text className="text-2xl font-bold text-gray-900">Nova Reserva</Text>
-        </View>
-
         <LabSelector selectedLab={selectedLab} onSelectLab={setSelectedLab} />
 
         <View className="mb-5">

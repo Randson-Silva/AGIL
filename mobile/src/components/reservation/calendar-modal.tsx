@@ -71,7 +71,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
   }, [visible, initialDate]);
 
   const availableYears = useMemo(() => {
-    return [todayInfo.year, todayInfo.year + 1, todayInfo.year + 2];
+    return Array.from({ length: 10 }, (_, i) => todayInfo.year + i);
   }, [todayInfo.year]);
 
   const handleSelectYear = (yr: number) => {
@@ -216,12 +216,12 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
           )}
 
           {showYearList && (
-            <View className="flex-row justify-around bg-white p-3 rounded-2xl border border-gray-200 mb-3">
+            <View className="flex-row flex-wrap justify-between bg-white p-3 rounded-2xl border border-gray-200 mb-3 gap-y-2">
               {availableYears.map((yr) => (
                 <TouchableOpacity
                   key={yr}
                   onPress={() => handleSelectYear(yr)}
-                  className={`px-5 py-2 rounded-lg ${
+                  className={`w-[31%] py-2 rounded-lg items-center ${
                     viewYear === yr ? 'bg-[#00623B]' : 'bg-gray-50'
                   }`}
                 >

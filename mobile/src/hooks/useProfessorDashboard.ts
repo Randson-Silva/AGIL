@@ -99,7 +99,7 @@ export function useProfessorDashboard() {
       iconName: 'CubeIcon',
       label: 'Solicitar materiais',
       description: 'Monte sua cesta e defina o prazo',
-      onPress: () => console.log('Navegar para Solicitar Materiais')
+      onPress: () => router.push('/(protected)/(professor)/materiais')
     },
     {
       id: 'reportar_avaria',
@@ -113,7 +113,7 @@ export function useProfessorDashboard() {
       iconName: 'ClipboardDocumentListIcon',
       label: 'Minhas reservas',
       description: 'Acompanhe status e cancele',
-      onPress: () => console.log('Navegar para Minhas Reservas')
+      onPress: () => router.push('/(protected)/(professor)/reservas')
     },
     {
       id: 'meu_historico',

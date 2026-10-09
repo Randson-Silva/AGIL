@@ -41,15 +41,15 @@ export default function ProfessorPainelScreen() {
 
   return (
     <PageWrapper className="bg-[#F8FAF9]">
+      <HeaderDashboard userName={firstName} initials={initials} hasBorder />
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         className="flex-1"
         style={{ backgroundColor: '#F8FAF9' }}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 16 }}
       >
-        <HeaderDashboard userName={firstName} initials={initials} />
-
-        <View className="px-6 flex-1">
+        <View className="px-6 flex-1 pt-6">
           {/* Badge Perfil: Professor */}
           <View className="mb-6 self-start">
             <View className="bg-emerald-100/50 px-3 py-1.5 rounded-full">
