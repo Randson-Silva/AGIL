@@ -1,33 +1,34 @@
 import { authService } from '@/services/authService';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Toast from 'react-native-toast-message';
+
+const MAX_ATTEMPTS = 5;
 
 interface VerifyCodeFormProps {
   email: string;
   onSuccess: (code: string) => void;
-  onResendCode?: () => Promise<void> | void;
+  onResendCode: () => Promise<void>;
+  timer: number;
+  attempts: number;
+  setAttempts: (attempts: number) => void;
 }
 
-export function VerifyCodeForm({ email, onSuccess, onResendCode }: VerifyCodeFormProps) {
+export function VerifyCodeForm({
+  email,
+  onSuccess,
+  onResendCode,
+  timer,
+  attempts,
+  setAttempts,
+}: VerifyCodeFormProps) {
   const [code, setCode] = useState(['', '', '', '', '']);
   const [hasError, setHasError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
 
-  // Duração incremental do cooldown (começa em 30 segundos)
-  const [cooldownDuration, setCooldownDuration] = useState(30);
-  const [timer, setTimer] = useState(30);
-
   const inputsRef = useRef<Array<TextInput | null>>([]);
-
-  useEffect(() => {
-    if (timer <= 0) return;
-    const interval = setInterval(() => {
-      setTimer((prev) => prev - 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [timer]);
+  const isBlocked = attempts >= MAX_ATTEMPTS;
 
   function handleChangeText(text: string, index: number) {
     setHasError(false);
@@ -47,6 +48,15 @@ export function VerifyCodeForm({ email, onSuccess, onResendCode }: VerifyCodeFor
   }
 
   async function handleVerify() {
+    if (isBlocked) {
+      Toast.show({
+        type: 'error',
+        text1: 'Limite de tentativas excedido',
+        text2: 'Aguarde o tempo de reenvio ou solicite um novo código.',
+      });
+      return;
+    }
+
     const fullCode = code.join('');
     if (fullCode.length < 5) {
       setHasError(true);
@@ -58,13 +68,35 @@ export function VerifyCodeForm({ email, onSuccess, onResendCode }: VerifyCodeFor
       const verification = await authService.verifyCode(email, fullCode);
 
       if (!verification || !verification.isValid) {
-        setHasError(true);
-        return;
+        throw new Error('Código inválido');
       }
 
       onSuccess(fullCode);
     } catch (error: any) {
+      const status = error.response?.status;
+
+      if (status === 429) {
+        setAttempts(MAX_ATTEMPTS);
+        setHasError(true);
+        Toast.show({
+          type: 'error',
+          text1: 'Muitas tentativas',
+          text2: 'Por segurança, bloqueamos temporariamente.',
+        });
+        return;
+      }
+
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
       setHasError(true);
+
+      if (newAttempts >= MAX_ATTEMPTS) {
+        Toast.show({
+          type: 'error',
+          text1: 'Bloqueado por tentativas incorretas',
+          text2: 'Solicite um novo código para continuar.',
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -76,16 +108,7 @@ export function VerifyCodeForm({ email, onSuccess, onResendCode }: VerifyCodeFor
     try {
       setIsResending(true);
 
-      if (onResendCode) {
-        await onResendCode();
-      } else {
-        await authService.forgotPassword(email);
-      }
-
-      // Calcula o próximo tempo (soma +1 minuto ao tempo anterior)
-      const nextCooldown = cooldownDuration + 60;
-      setCooldownDuration(nextCooldown);
-      setTimer(nextCooldown);
+      await onResendCode();
 
       setCode(['', '', '', '', '']);
       setHasError(false);
@@ -93,15 +116,24 @@ export function VerifyCodeForm({ email, onSuccess, onResendCode }: VerifyCodeFor
 
       Toast.show({
         type: 'info',
-        text1: 'Código reenviado',
-        text2: 'Verifique a sua caixa de entrada.',
+        text1: 'Novo código enviado',
+        text2: 'Suas tentativas foram reiniciadas.',
       });
     } catch (error: any) {
-      Toast.show({
-        type: 'error',
-        text1: 'Erro ao reenviar',
-        text2: error.response?.data?.message || 'Tente novamente em instantes.',
-      });
+      const status = error.response?.status;
+      if (status === 429) {
+        Toast.show({
+          type: 'error',
+          text1: 'Calma lá!',
+          text2: 'Muitos e-mails solicitados. Aguarde alguns instantes.',
+        });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Erro ao reenviar',
+          text2: error.response?.data?.message || 'Tente novamente.',
+        });
+      }
     } finally {
       setIsResending(false);
     }
@@ -135,9 +167,9 @@ export function VerifyCodeForm({ email, onSuccess, onResendCode }: VerifyCodeFor
             onKeyPress={(e) => handleKeyPress(e, index)}
             keyboardType="number-pad"
             maxLength={1}
-            editable={!loading && !isResending}
+            editable={!loading && !isResending && !isBlocked}
             className={`w-12 h-14 bg-white rounded-2xl border text-center text-2xl font-bold ${
-              hasError
+              hasError || isBlocked
                 ? 'border-red-500 text-gray-900'
                 : digit
                   ? 'border-[#00623B] text-gray-900'
@@ -149,11 +181,13 @@ export function VerifyCodeForm({ email, onSuccess, onResendCode }: VerifyCodeFor
 
       {hasError && (
         <Text className="text-red-500 text-xs text-center font-medium mt-1 mb-2">
-          Código incorreto ou expirado. Tente novamente
+          {isBlocked
+            ? `Limite de ${MAX_ATTEMPTS} tentativas atingido. Envie um novo código.`
+            : `Código incorreto (${attempts}/${MAX_ATTEMPTS} tentativas). Tente novamente`}
         </Text>
       )}
 
-      {/* Reenvio com Feedback de Loading e Cooldown Progressivo */}
+      {/* Reenvio */}
       <View className="items-center my-3 min-h-[32px] justify-center">
         {isResending ? (
           <View className="flex-row items-center gap-2">
@@ -182,9 +216,9 @@ export function VerifyCodeForm({ email, onSuccess, onResendCode }: VerifyCodeFor
 
       <TouchableOpacity
         onPress={handleVerify}
-        disabled={loading || isResending}
+        disabled={loading || isResending || isBlocked}
         activeOpacity={0.8}
-        className="w-full bg-[#00623B] py-4 rounded-2xl items-center justify-center mt-2 shadow-sm disabled:opacity-60"
+        className="w-full bg-[#00623B] py-4 rounded-2xl items-center justify-center mt-2 shadow-sm disabled:opacity-50"
       >
         {loading ? (
           <ActivityIndicator color="#FFFFFF" />

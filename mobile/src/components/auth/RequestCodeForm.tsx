@@ -53,7 +53,7 @@ export function RequestCodeForm({ onSuccess }: RequestCodeFormProps) {
         <Input
           label="E-mail institucional"
           iconName="mail"
-          placeholder="aluno@ifce.edu.br"
+          placeholder="nome@ifce.edu.br"
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}

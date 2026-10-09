@@ -54,7 +54,7 @@ export default function LoginScreen() {
           <Input
             label="E-mail institucional"
             iconName="mail"
-            placeholder="nome@ifce.edu.br"
+            placeholder={profile != 'ALUNO' ? 'nome@ifce.edu.br' : 'nome@aluno.ifce.edu.br'}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
