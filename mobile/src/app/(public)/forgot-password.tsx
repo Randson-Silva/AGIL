@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
@@ -19,9 +19,35 @@ export default function ForgotPasswordScreen() {
   const [savedEmail, setSavedEmail] = useState('');
   const [verifiedCode, setVerifiedCode] = useState('');
 
+  const [attempts, setAttempts] = useState(0);
+  const [timer, setTimer] = useState(0);
+  const [cooldownDuration, setCooldownDuration] = useState(30);
+
+  useEffect(() => {
+    if (timer <= 0) return;
+    const interval = setInterval(() => {
+      setTimer((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timer]);
+
   function handleEmailSubmitted(email: string) {
     setSavedEmail(email);
     setStep('verify');
+
+    if (timer === 0 && attempts === 0) {
+      setTimer(30);
+      setCooldownDuration(30);
+    }
+  }
+
+  async function handleResendCode() {
+    await authService.forgotPassword(savedEmail);
+
+    const nextCooldown = cooldownDuration + 60;
+    setCooldownDuration(nextCooldown);
+    setTimer(nextCooldown);
+    setAttempts(0);
   }
 
   function handleCodeVerified(code: string) {
@@ -42,10 +68,7 @@ export default function ForgotPasswordScreen() {
   return (
     <PageWrapper className="bg-emerald-50/30">
       <KeyboardAwareScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          padding: 20,
-        }}
+        contentContainerStyle={{ flexGrow: 1, padding: 20 }}
         keyboardShouldPersistTaps="handled"
         enableOnAndroid={true}
         extraScrollHeight={20}
@@ -58,7 +81,6 @@ export default function ForgotPasswordScreen() {
           >
             <Feather name="arrow-left" size={20} color="#374151" />
           </TouchableOpacity>
-
           <AuthHeader />
         </View>
 
@@ -70,7 +92,10 @@ export default function ForgotPasswordScreen() {
               <VerifyCodeForm
                 email={savedEmail}
                 onSuccess={handleCodeVerified}
-                onResendCode={() => authService.forgotPassword(savedEmail)}
+                onResendCode={handleResendCode}
+                timer={timer}
+                attempts={attempts}
+                setAttempts={setAttempts}
               />
             )}
 

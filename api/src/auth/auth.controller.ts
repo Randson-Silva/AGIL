@@ -8,6 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service.js';
 import { AuthLoginDto } from './dtos/auth.login.dto.js';
 import { AuthRegisterDto } from './dtos/auth.register.dto.js';
@@ -17,6 +18,7 @@ import { VerifyCodeDto } from './dtos/verify-code.dto.js';
 import { GoogleOauthGuard } from './oauth/google-oauth.guard.js';
 
 @Controller('auth')
+@UseGuards(ThrottlerGuard)
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
@@ -50,11 +52,13 @@ export class AuthController {
   }
 
   @Post('forgot-password')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
 
   @Post('verify-code')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async verifyCode(@Body() verifyCodeDto: VerifyCodeDto) {
     return this.authService.verifyCode(verifyCodeDto);
   }
