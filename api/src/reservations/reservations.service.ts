@@ -4,7 +4,8 @@ import { ObjetivoReserva, StatusReserva } from '../generated/prisma/client.js';
 import {
   hasTimeOverlap,
   normalizeDateRange,
-  validateAdvanceNotice,
+  validateLabCapacity,
+  validateNotPastReservation,
   validateTimeSlots,
 } from '../utils/reservation.utils.js';
 import { CreateReservationDto } from './dtos/create-reservation.dto.js';
@@ -18,7 +19,7 @@ const LOWER_PRIORITY_OBJECTIVES: ObjetivoReserva[] = [
 export class ReservationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getOccupiedSlots(local: string, date: string, objetivo?: string) {
+  async getOccupiedSlots(local: string, date: string, isRecurring = false) {
     if (!local || !date) {
       throw new BadRequestException(
         'O laboratório e a data são obrigatórios para consultar horários.',
@@ -26,7 +27,6 @@ export class ReservationsService {
     }
 
     const { startOfDay, endOfDay, dayOfWeek } = normalizeDateRange(date);
-    const isPracticalClass = objetivo === ObjetivoReserva.AULA_PRATICA;
 
     const activeReservations = await this.prisma.reservaEspaco.findMany({
       where: {
@@ -34,26 +34,32 @@ export class ReservationsService {
         status: {
           notIn: [StatusReserva.REJEITADA, StatusReserva.CANCELADA],
         },
-        ...(isPracticalClass && {
-          objetivo: {
-            notIn: LOWER_PRIORITY_OBJECTIVES,
-          },
-        }),
-        OR: [
-          {
-            data_reserva: {
-              gte: startOfDay,
-              lte: endOfDay,
-            },
-          },
-          {
-            pratica_recorrente: true,
-            dia_semana: dayOfWeek,
-            data_reserva: {
-              lte: endOfDay,
-            },
-          },
-        ],
+        OR: isRecurring
+          ? [
+              {
+                dia_semana: dayOfWeek,
+                data_reserva: { gte: startOfDay },
+              },
+              {
+                pratica_recorrente: true,
+                dia_semana: dayOfWeek,
+              },
+            ]
+          : [
+              {
+                data_reserva: {
+                  gte: startOfDay,
+                  lte: endOfDay,
+                },
+              },
+              {
+                pratica_recorrente: true,
+                dia_semana: dayOfWeek,
+                data_reserva: {
+                  lte: endOfDay,
+                },
+              },
+            ],
       },
       include: {
         horarios: true,
@@ -128,6 +134,7 @@ export class ReservationsService {
       objetivo: string;
       titulo: string;
       quantidade_alunos: number;
+      quantidade_grupos: number;
       professor_nome: string;
     }> = [];
 
@@ -141,6 +148,7 @@ export class ReservationsService {
           objetivo: reservation.objetivo,
           titulo: reservation.titulo,
           quantidade_alunos: reservation.quantidade_alunos,
+          quantidade_grupos: reservation.quantidade_grupos,
           professor_nome: reservation.professor.nome,
         });
       }
@@ -153,17 +161,22 @@ export class ReservationsService {
     const isRecurring = Boolean(data.pratica_recorrente);
     const isPracticalClass = data.objetivo === ObjetivoReserva.AULA_PRATICA;
 
-    if (
-      isPracticalClass &&
-      (!data.quantidade_alunos || data.quantidade_alunos <= 0)
-    ) {
-      throw new BadRequestException(
-        'Informe uma quantidade válida de alunos para a aula prática.',
-      );
+    if (isPracticalClass) {
+      if (!data.quantidade_alunos || data.quantidade_alunos <= 0) {
+        throw new BadRequestException(
+          'Informe uma quantidade válida de alunos para a aula prática.',
+        );
+      }
+      if (!data.quantidade_grupos || data.quantidade_grupos <= 0) {
+        throw new BadRequestException(
+          'Informe uma quantidade válida de grupos para a aula prática.',
+        );
+      }
+      validateLabCapacity(data.local, data.quantidade_alunos);
     }
 
     validateTimeSlots(data.horarios);
-    validateAdvanceNotice(data.data_reserva, data.horarios, isRecurring);
+    validateNotPastReservation(data.data_reserva, data.horarios);
 
     const { startOfDay, endOfDay, dayOfWeek } = normalizeDateRange(
       data.data_reserva,
@@ -208,14 +221,6 @@ export class ReservationsService {
 
       for (const requestedSlot of data.horarios) {
         for (const existing of conflictingReservations) {
-          const canOverridePriority =
-            isPracticalClass &&
-            LOWER_PRIORITY_OBJECTIVES.includes(existing.objetivo);
-
-          if (canOverridePriority) {
-            continue;
-          }
-
           const conflict = existing.horarios.find((existingSlot) =>
             hasTimeOverlap(
               requestedSlot.hora_inicio,
@@ -233,10 +238,6 @@ export class ReservationsService {
         }
       }
 
-      const initialStatus = isRecurring
-        ? StatusReserva.AVISO_SIMPLES
-        : StatusReserva.PENDENTE;
-
       return tx.reservaEspaco.create({
         data: {
           professor_id: professorId,
@@ -246,9 +247,10 @@ export class ReservationsService {
           objetivo: data.objetivo,
           titulo: data.titulo,
           quantidade_alunos: isPracticalClass ? data.quantidade_alunos! : 0,
+          quantidade_grupos: isPracticalClass ? data.quantidade_grupos! : 0,
           observacoes: data.observacoes || null,
           pratica_recorrente: isRecurring,
-          status: initialStatus,
+          status: StatusReserva.PENDENTE,
           horarios: {
             create: data.horarios.map((slot) => ({
               hora_inicio: slot.hora_inicio,

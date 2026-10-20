@@ -6,7 +6,11 @@ export interface TimeSlotInput {
 }
 
 const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
-const MIN_ADVANCE_HOURS = 24;
+
+export const LAB_CAPACITIES: Record<string, number> = {
+  'Lab. de Química Geral': 30,
+  'Lab. de Química Orgânica': 24,
+};
 
 export function validateTimeSlots(slots: TimeSlotInput[]): void {
   if (!slots || slots.length === 0) {
@@ -40,38 +44,71 @@ export function validateTimeSlots(slots: TimeSlotInput[]): void {
   }
 }
 
-export function validateAdvanceNotice(
+export function getCurrentDateTimeInBrazil(): {
+  currentDateIso: string;
+  currentTime: string;
+} {
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Fortaleza',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(now);
+  const getPart = (type: string) =>
+    parts.find((p) => p.type === type)?.value || '';
+
+  const year = getPart('year');
+  const month = getPart('month');
+  const day = getPart('day');
+  const hour = getPart('hour') === '24' ? '00' : getPart('hour');
+  const minute = getPart('minute');
+
+  return {
+    currentDateIso: `${year}-${month}-${day}`,
+    currentTime: `${hour}:${minute}`,
+  };
+}
+
+export function validateNotPastReservation(
   reservationDateIso: string,
   slots: TimeSlotInput[],
-  isRecurring = false,
 ): void {
   const datePart = reservationDateIso.split('T')[0];
+  const { currentDateIso, currentTime } = getCurrentDateTimeInBrazil();
 
-  const earliestStart = slots.map((s) => s.hora_inicio).sort()[0];
-
-  const reservationStart = new Date(`${datePart}T${earliestStart}:00`);
-  if (isNaN(reservationStart.getTime())) {
+  if (datePart < currentDateIso) {
     throw new BadRequestException(
-      'A data informada para a reserva é inválida.',
+      'Não é possível realizar reservas para datas que já passaram.',
     );
   }
 
-  const now = new Date();
-
-  if (reservationStart.getTime() < now.getTime()) {
-    throw new BadRequestException(
-      'Não é possível realizar reservas para datas ou horários que já passaram.',
-    );
+  if (datePart === currentDateIso) {
+    for (const slot of slots) {
+      if (slot.hora_inicio <= currentTime) {
+        throw new BadRequestException(
+          `O horário ${slot.hora_inicio} — ${slot.hora_fim} já passou e não pode ser alocado.`,
+        );
+      }
+    }
   }
+}
 
-  if (isRecurring) return;
+export function validateLabCapacity(
+  local: string,
+  quantidadeAlunos?: number,
+): void {
+  if (!quantidadeAlunos) return;
 
-  const diffInHours =
-    (reservationStart.getTime() - now.getTime()) / (1000 * 60 * 60);
-
-  if (diffInHours < MIN_ADVANCE_HOURS) {
+  const maxCapacity = LAB_CAPACITIES[local];
+  if (maxCapacity && quantidadeAlunos > maxCapacity) {
     throw new BadRequestException(
-      'Solicitações esporádicas exigem no mínimo 24h de antecedência',
+      `A quantidade de alunos (${quantidadeAlunos}) excede a capacidade máxima do ${local} (${maxCapacity} lugares).`,
     );
   }
 }
@@ -91,8 +128,16 @@ export function normalizeDateRange(dateString: string): {
   dayOfWeek: number;
 } {
   const datePart = dateString.split('T')[0];
-  const startOfDay = new Date(`${datePart}T00:00:00.000Z`);
-  const endOfDay = new Date(`${datePart}T23:59:59.999Z`);
+  const [year, month, day] = datePart.split('-').map(Number);
+
+  if (!year || !month || !day) {
+    throw new BadRequestException(
+      'Formato de data inválido. Utilize o padrão YYYY-MM-DD.',
+    );
+  }
+
+  const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+  const endOfDay = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
 
   if (isNaN(startOfDay.getTime())) {
     throw new BadRequestException(
