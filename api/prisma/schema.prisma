@@ -100,10 +100,11 @@ model ReservaEspaco {
 
   local              String
   data_reserva       DateTime
-  dia_semana         Int
+  dia_semana         Int // 0 (Dom) a 6 (Sáb)
   objetivo           ObjetivoReserva
   titulo             String
-  quantidade_alunos  Int
+  quantidade_alunos  Int             @default(0)
+  quantidade_grupos  Int             @default(0)
   observacoes        String?
   pratica_recorrente Boolean         @default(false)
   status             StatusReserva   @default(PENDENTE)
@@ -258,14 +259,14 @@ model HistoricoMovimentacao {
 }
 
 model AlertaEstoque {
-  id                   String       @id @default(uuid())
-  insumo_id            String
-  insumo               Insumo       @relation(fields: [insumo_id], references: [id])
-  quantidade_momento   Decimal      @db.Decimal(10, 3)
-  data_alerta          DateTime     @default(now())
-  status               StatusAlerta @default(PENDENTE)
+  id                 String       @id @default(uuid())
+  insumo_id          String
+  insumo             Insumo       @relation(fields: [insumo_id], references: [id])
+  quantidade_momento Decimal      @db.Decimal(10, 3)
+  data_alerta        DateTime     @default(now())
+  status             StatusAlerta @default(PENDENTE)
 
   // Campos para histórico de resolução
   data_resolucao       DateTime?
-  quantidade_resolucao Decimal?     @db.Decimal(10, 3)
+  quantidade_resolucao Decimal?  @db.Decimal(10, 3)
 }
