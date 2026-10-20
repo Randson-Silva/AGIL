@@ -17,7 +17,7 @@ export const AvailabilitySlotCard: React.FC<AvailabilitySlotCardProps> = ({
   occupation,
 }) => {
   const isOccupied = Boolean(occupation);
-  const isPending = occupation?.status === 'PENDENTE';
+  const isPending = occupation?.status === 'PENDENTE' || occupation?.status === 'AVISO_SIMPLES';
 
   let cardContainerStyle = 'bg-white border-gray-200';
   let badgeContainerStyle = 'bg-[#E3F3EC] border border-[#00623B]/30';

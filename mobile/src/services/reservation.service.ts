@@ -7,6 +7,7 @@ export interface CreateReservationPayload {
   objetivo: ReservationObjective;
   titulo: string;
   quantidade_alunos?: number;
+  quantidade_grupos?: number;
   observacoes?: string;
   pratica_recorrente: boolean;
   horarios: TimeSlot[];
@@ -20,16 +21,13 @@ export interface OccupiedSlotDetail {
   objetivo: ReservationObjective;
   titulo: string;
   quantidade_alunos: number;
+  quantidade_grupos: number;
   professor_nome: string;
 }
 
-export const getOccupiedTimeSlots = async (
-  local: string,
-  date: string,
-  objetivo?: ReservationObjective,
-) => {
+export const getOccupiedTimeSlots = async (local: string, date: string, isRecurring?: boolean) => {
   return api.get<TimeSlot[]>('/reservations/occupied-slots', {
-    params: { local, date, objetivo },
+    params: { local, date, isRecurring },
   });
 };
 
