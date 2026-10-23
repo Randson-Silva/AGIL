@@ -1,5 +1,5 @@
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { useAuth } from './useAuth';
 import { listMaterialRequests } from '../services/material-request.service';
 import { getInventoryItems } from '../services/inventory.service';
@@ -10,28 +10,13 @@ import {
 } from '../components/dashboard/types';
 
 export function useDashboard() {
-  const { user } = useAuth();
+  const { firstName, initials } = useAuth();
   const router = useRouter();
 
   const [pendingCount, setPendingCount] = useState<number>(0);
+  const [criticalCount, setCriticalCount] = useState<number>(0);
   const [inventoryCount, setInventoryCount] = useState<number>(0);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
-
-  // Função para pegar o primeiro nome
-  const getFirstName = () => {
-    if (!user?.name) return 'Usuário';
-    return user.name.split(' ')[0];
-  };
-
-  // Função para pegar iniciais
-  const getInitials = () => {
-    if (!user?.name) return 'US';
-    const names = user.name.trim().split(' ');
-    if (names.length >= 2) {
-      return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
-    }
-    return user.name.substring(0, 2).toUpperCase();
-  };
 
   const handleNavigateToInventory = () => {
     router.navigate('/(protected)/(tecnico)/inventory');
@@ -41,36 +26,57 @@ export function useDashboard() {
     router.navigate('/(protected)/(tecnico)/new-item');
   };
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      setIsLoadingStats(true);
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
 
-      const [requestsResult, inventoryResult] = await Promise.allSettled([
-        listMaterialRequests({ status: 'PENDENTE' }),
-        getInventoryItems(),
-      ]);
+      const fetchStats = async () => {
+        setIsLoadingStats(true);
 
-      if (requestsResult.status === 'fulfilled') {
-        const data = requestsResult.value.data?.data || requestsResult.value.data;
-        setPendingCount(Array.isArray(data) ? data.length : 0);
-      } else {
-        console.error('Erro ao buscar aprovações pendentes:', requestsResult.reason);
-        setPendingCount(0);
-      }
+        const [requestsResult, inventoryResult] = await Promise.allSettled([
+          listMaterialRequests({ status: 'PENDENTE' }),
+          getInventoryItems(),
+        ]);
 
-      if (inventoryResult.status === 'fulfilled') {
-        const data = inventoryResult.value.data?.data || inventoryResult.value.data;
-        setInventoryCount(Array.isArray(data) ? data.length : 0);
-      } else {
-        console.error('Erro ao buscar inventário:', inventoryResult.reason);
-        setInventoryCount(0);
-      }
+        if (!isActive) return;
 
-      setIsLoadingStats(false);
-    };
+        if (requestsResult.status === 'fulfilled') {
+          const data = requestsResult.value.data?.data || requestsResult.value.data;
+          setPendingCount(Array.isArray(data) ? data.length : 0);
+        } else {
+          console.error('Erro ao buscar aprovações pendentes:', requestsResult.reason);
+          setPendingCount(0);
+        }
 
-    fetchStats();
-  }, []);
+        if (inventoryResult.status === 'fulfilled') {
+          const data = inventoryResult.value.data?.data || inventoryResult.value.data;
+          if (Array.isArray(data)) {
+            setInventoryCount(data.length);
+            const critical = data.filter(
+              (item: { quantidade_saldo?: number; quantidade_minima?: number }) =>
+                Number(item.quantidade_saldo ?? 0) <= Number(item.quantidade_minima ?? 0),
+            ).length;
+            setCriticalCount(critical);
+          } else {
+            setInventoryCount(0);
+            setCriticalCount(0);
+          }
+        } else {
+          console.error('Erro ao buscar inventário:', inventoryResult.reason);
+          setInventoryCount(0);
+          setCriticalCount(0);
+        }
+
+        setIsLoadingStats(false);
+      };
+
+      fetchStats();
+
+      return () => {
+        isActive = false;
+      };
+    }, []),
+  );
 
   const stats: StatItem[] = [
     {
@@ -81,7 +87,7 @@ export function useDashboard() {
     },
     {
       id: '2',
-      count: '03',
+      count: criticalCount.toString().padStart(2, '0'),
       label: 'Itens\ncríticos',
       iconName: 'ExclamationTriangleIcon',
     },
@@ -145,8 +151,8 @@ export function useDashboard() {
   ];
 
   return {
-    firstName: getFirstName(),
-    initials: getInitials(),
+    firstName,
+    initials,
     stats,
     isLoadingStats,
     alertsMock,

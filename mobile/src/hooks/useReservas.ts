@@ -7,8 +7,8 @@ import { useAuth } from './useAuth';
 
 export function useReservas() {
   const router = useRouter();
-  const { user } = useAuth();
-  
+  const { firstName, initials } = useAuth();
+
   const [reservations, setReservations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FilterOption>('Todas');
@@ -16,20 +16,6 @@ export function useReservas() {
   // Controle de Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reservationToCancel, setReservationToCancel] = useState<any>(null);
-
-  const getFirstName = () => {
-    if (!user?.name) return 'Professor';
-    return user.name.split(' ')[0];
-  };
-
-  const getInitials = () => {
-    if (!user?.name) return 'PR';
-    const names = user.name.trim().split(' ');
-    if (names.length >= 2) {
-      return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
-    }
-    return user.name.substring(0, 2).toUpperCase();
-  };
 
   useFocusEffect(
     useCallback(() => {
@@ -63,7 +49,7 @@ export function useReservas() {
       return () => {
         isActive = false;
       };
-    }, [])
+    }, []),
   );
 
   const filteredReservations = reservations.filter((res) => {
@@ -102,9 +88,7 @@ export function useReservas() {
 
     // Mock: atualizar estado local para fingir o cancelamento
     setReservations((prev) =>
-      prev.map((r) =>
-        r.id === reservationToCancel.id ? { ...r, status: 'CANCELADA' } : r
-      )
+      prev.map((r) => (r.id === reservationToCancel.id ? { ...r, status: 'CANCELADA' } : r)),
     );
 
     handleCloseCancelModal();
@@ -125,7 +109,7 @@ export function useReservas() {
     handleCloseCancelModal,
     handleConfirmCancel,
     handleNewReservation,
-    firstName: getFirstName(),
-    initials: getInitials(),
+    firstName,
+    initials,
   };
 }
