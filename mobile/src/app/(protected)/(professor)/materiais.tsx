@@ -29,6 +29,7 @@ export default function MateriaisScreen() {
     setWithdrawalDate,
     returnDate,
     setReturnDate,
+    selectedCalendarIsoDate,
     calendarType,
     setCalendarType,
     handleDateSelect,
@@ -36,12 +37,13 @@ export default function MateriaisScreen() {
     historyPage,
     setHistoryPage,
     totalHistoryPages,
-    handleSubmit
+    handleSubmit,
   } = useMateriais();
 
   return (
     <PageWrapper className="bg-[#F8FAF9]">
       <HeaderDashboard
+        userName={firstName}
         initials={initials}
         title="Materiais"
         icon={<CubeIcon size={20} color="#FFF" />}
@@ -110,7 +112,9 @@ export default function MateriaisScreen() {
               iconName="edit-2"
               rightIconName="calendar"
               onRightIconPress={() => setCalendarType('withdrawal')}
-              placeholder="YYYY-MM-DD"
+              placeholder="DD-MM-AAAA"
+              keyboardType="number-pad"
+              maxLength={10}
               value={withdrawalDate}
               onChangeText={setWithdrawalDate}
             />
@@ -121,7 +125,9 @@ export default function MateriaisScreen() {
               iconName="edit-2"
               rightIconName="calendar"
               onRightIconPress={() => setCalendarType('return')}
-              placeholder="YYYY-MM-DD"
+              placeholder="DD-MM-AAAA"
+              keyboardType="number-pad"
+              maxLength={10}
               value={returnDate}
               onChangeText={setReturnDate}
             />
@@ -181,7 +187,7 @@ export default function MateriaisScreen() {
       <CalendarModal
         visible={calendarType !== null}
         onClose={() => setCalendarType(null)}
-        selectedDate={calendarType === 'withdrawal' ? withdrawalDate : returnDate}
+        selectedDate={selectedCalendarIsoDate}
         onSelectDate={handleDateSelect}
       />
 
