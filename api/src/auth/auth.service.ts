@@ -63,12 +63,13 @@ export class AuthService {
       });
     }
 
-    const payload = { sub: user.id, email: user.email, role: user.perfil };
+    const payload = { sub: user.id, email: user.email, role: user.perfil, name: user.nome };
 
     return {
       access_token: this.jwtService.sign(payload),
       user: {
         id: user.id,
+        name: user.nome,
         email: user.email,
         profile: user.perfil,
       },
@@ -137,12 +138,13 @@ export class AuthService {
 
     if (!user) throw new NotFoundException('Email ou senha inválidos');
 
-    const payload = { email: user.email, sub: user.id, role: user.perfil };
+    const payload = { email: user.email, sub: user.id, role: user.perfil, name: user.nome };
 
     return {
       access_token: this.jwtService.sign(payload),
       user: {
         id: user.id,
+        name: user.nome,
         email: user.email,
         profile: user.perfil,
       },
