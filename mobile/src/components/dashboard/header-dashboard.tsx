@@ -1,6 +1,7 @@
 import React from 'react';
+import { usePathname, useRouter } from 'expo-router';
 import { BellIcon, UserIcon } from 'react-native-heroicons/outline';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 interface HeaderDashboardProps {
   initials: string;
@@ -11,8 +12,22 @@ interface HeaderDashboardProps {
 }
 
 export function HeaderDashboard({ userName, initials, title, icon, hasBorder }: HeaderDashboardProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const isProfileScreen = pathname === '/perfil' || pathname.endsWith('/perfil');
+
+  const handleOpenProfile = () => {
+    if (isProfileScreen) return;
+    router.navigate('/(protected)/perfil');
+  };
+
   return (
-    <View className={`flex-row items-center justify-between px-6 pt-6 pb-4 ${hasBorder ? 'bg-white border-b border-gray-200' : ''}`}>
+    <View
+      className={`flex-row items-center justify-between px-6 pt-6 pb-4 ${
+        hasBorder ? 'bg-white border-b border-gray-200' : ''
+      }`}
+    >
       {/* Esquerda: Logo e Nome/Título */}
       <View className="flex-row items-center flex-1 pr-4">
         <View className="w-10 h-10 bg-[#00623B] rounded-full items-center justify-center mr-3">
@@ -30,9 +45,14 @@ export function HeaderDashboard({ userName, initials, title, icon, hasBorder }: 
           {/* Bolinha vermelha de notificação */}
           <View className="absolute top-1 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
         </View>
-        <View className="w-10 h-10 bg-emerald-100 rounded-full items-center justify-center">
+        <TouchableOpacity
+          activeOpacity={isProfileScreen ? 1 : 0.7}
+          disabled={isProfileScreen}
+          onPress={handleOpenProfile}
+          className="w-10 h-10 bg-emerald-100 rounded-full items-center justify-center"
+        >
           <Text className="text-[#00623B] font-bold text-sm uppercase">{initials}</Text>
-        </View>
+        </TouchableOpacity>
       </View>
     </View>
   );
