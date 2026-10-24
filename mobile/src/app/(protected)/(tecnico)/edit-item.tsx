@@ -32,6 +32,7 @@ export default function EditItemScreen() {
   const [model, setModel] = useState('');
   const [voltage, setVoltage] = useState('');
   const [capacity, setCapacity] = useState('');
+  const [isRestricted, setIsRestricted] = useState(false);
 
   useEffect(() => {
     if (itemData) {
@@ -64,6 +65,7 @@ export default function EditItemScreen() {
         setBrand(parsed.equipamentoInfo.marca || '');
         setModel(parsed.equipamentoInfo.modelo || '');
         setVoltage(parsed.equipamentoInfo.voltagem || '');
+        setIsRestricted(Boolean(parsed.equipamentoInfo.uso_restrito));
       }
     }
   }, [itemData]);
@@ -113,6 +115,7 @@ export default function EditItemScreen() {
       payload.marca = brand || null;
       payload.modelo = model || null;
       payload.voltagem = voltage || null;
+      payload.uso_restrito = isRestricted;
     }
 
     try {
@@ -147,7 +150,6 @@ export default function EditItemScreen() {
 
   return (
     <PageWrapper className="bg-[#F4F7F4]">
-      {/* Static Header */}
       <View className="flex-row justify-between items-center px-4 pt-6 pb-4 bg-white border-b border-gray-200">
         <View className="flex-row items-center gap-4">
           <BackButton />
@@ -222,6 +224,8 @@ export default function EditItemScreen() {
             setModel={setModel}
             voltage={voltage}
             setVoltage={setVoltage}
+            isRestricted={isRestricted}
+            setIsRestricted={setIsRestricted}
           />
         )}
 
