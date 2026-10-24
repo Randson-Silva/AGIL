@@ -17,6 +17,8 @@ export interface SignInCredentials {
 
 interface AuthContextData {
   user: User | null;
+  firstName: string;
+  initials: string;
   isLoading: boolean;
   signIn: (credentials: SignInCredentials) => Promise<void>;
   signInWithToken: (token: string) => Promise<void>;
@@ -36,7 +38,7 @@ function parseJwt(token: string) {
         .join(''),
     );
     return JSON.parse(jsonPayload);
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -47,9 +49,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     async function loadStoredData() {
-      const { user: storedUser } = await storage.getAuthData();
+      const { token, user: storedUser } = await storage.getAuthData();
       if (storedUser) {
-        setUser(storedUser);
+        const payload = token ? parseJwt(token) : null;
+        const resolvedName =
+          storedUser.name ||
+          storedUser.nome ||
+          payload?.name ||
+          '';
+
+        setUser({
+          ...storedUser,
+          name: resolvedName,
+        });
       }
       setIsLoading(false);
     }
@@ -59,23 +71,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (credentials: SignInCredentials) => {
     const response = await authService.login(credentials);
 
-    const { access_token: token, user: userData } = response;
+    const { access_token: token, refresh_token: refreshToken, user: rawUser } = response;
+    const userData: User = {
+      id: rawUser.id,
+      email: rawUser.email,
+      profile: rawUser.profile,
+      name: rawUser.name || rawUser.nome || '',
+    };
 
-    await storage.saveAuthData(String(token), userData);
+    await storage.saveAuthData(
+      String(token),
+      userData,
+      refreshToken ? String(refreshToken) : undefined,
+    );
     setUser(userData);
   };
 
-  const signInWithToken = async (token: string) => {
+  const signInWithToken = async (token: string, refreshToken?: string) => {
     const payload = parseJwt(token);
 
     const userData: User = {
       id: payload?.sub || '',
       email: payload?.email || '',
       profile: payload?.role || 'ALUNO',
-      name: payload?.email ? payload.email.split('@')[0] : 'Usuário',
+      name: payload?.name || (payload?.email ? payload.email.split('@')[0] : ''),
     };
 
-    await storage.saveAuthData(token, userData);
+    await storage.saveAuthData(token, userData, refreshToken);
     setUser(userData);
   };
 
@@ -84,8 +106,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
+  const getFirstName = (): string => {
+    const trimmedName = user?.name?.trim();
+    if (trimmedName) {
+      return trimmedName.split(/\s+/)[0];
+    }
+    if (user?.profile === 'PROFESSOR') return 'Professor';
+    if (user?.profile === 'TECNICO') return 'Técnico';
+    return 'Usuário';
+  };
+
+  const getInitials = (): string => {
+    const trimmedName = user?.name?.trim();
+    if (trimmedName) {
+      const names = trimmedName.split(/\s+/);
+      if (names.length >= 2) {
+        return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+      }
+      return trimmedName.substring(0, 2).toUpperCase();
+    }
+    if (user?.profile === 'PROFESSOR') return 'PR';
+    if (user?.profile === 'TECNICO') return 'TC';
+    return 'US';
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, signIn, signInWithToken, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        firstName: getFirstName(),
+        initials: getInitials(),
+        isLoading,
+        signIn,
+        signInWithToken,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

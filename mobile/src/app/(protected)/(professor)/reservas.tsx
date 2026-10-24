@@ -35,6 +35,7 @@ export default function ReservasScreen() {
   return (
     <PageWrapper className="bg-[#F8FAF9]">
       <HeaderDashboard 
+        userName={firstName}
         initials={initials} 
         title="Minhas Reservas" 
         icon={<Feather name="calendar" size={20} color="#FFF" />} 

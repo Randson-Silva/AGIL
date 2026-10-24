@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useState } from 'react';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import Toast from 'react-native-toast-message'; // Novo import!
+import Toast from 'react-native-toast-message';
 
 import { BaseForm } from '../../../components/input-form/base-form';
 import { EquipmentForm } from '../../../components/input-form/equipment-form';
@@ -130,6 +130,12 @@ export default function NewItemScreen() {
 
   return (
     <PageWrapper className="bg-[#F4F7F4]">
+      {/* Static Header */}
+      <View className="flex-row items-center gap-4 px-4 pt-6 pb-4 bg-white border-b border-gray-200">
+        <BackButton />
+        <Text className="text-xl font-bold text-gray-900">Novo Item</Text>
+      </View>
+
       <KeyboardAwareScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         keyboardShouldPersistTaps="handled"
@@ -137,11 +143,6 @@ export default function NewItemScreen() {
         extraScrollHeight={Platform.OS === 'ios' ? 20 : 220}
         enableAutomaticScroll={true}
       >
-        <View className="flex-row items-center gap-4 mt-2 mb-6">
-          <BackButton />
-          <Text className="text-2xl font-bold text-gray-800">Novo Item</Text>
-        </View>
-
         <BaseForm
           category={category}
           setCategory={setCategory}

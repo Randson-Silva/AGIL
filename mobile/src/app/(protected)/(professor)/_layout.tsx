@@ -4,7 +4,7 @@ import {
   HomeIcon,
   CalendarIcon,
   CubeIcon,
-  UserIcon,
+  ArchiveBoxIcon,
 } from 'react-native-heroicons/outline';
 
 export default function ProfessorLayout() {
@@ -59,11 +59,11 @@ export default function ProfessorLayout() {
         }}
       />
       <Tabs.Screen
-        name="perfil"
+        name="historico"
         options={{
-          title: 'Perfil',
+          title: 'Histórico',
           tabBarIcon: ({ color, size }) => (
-            <UserIcon size={size} color={color} />
+            <ArchiveBoxIcon size={size} color={color} />
           ),
         }}
       />

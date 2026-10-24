@@ -7,21 +7,21 @@ import { QuickAccessCard } from '../../../components/dashboard/quick-access-card
 import { useDashboard } from '../../../hooks/useDashboard';
 
 export default function TecnicoPainelScreen() {
-  const { firstName, initials, stats, isLoadingStats, alertsMock, quickAccessMock } =
+  const { firstName, initials, stats, alertsMock, quickAccessMock } =
     useDashboard();
 
   return (
     <PageWrapper className="bg-[#F8FAF9]">
+      <HeaderDashboard userName={firstName} initials={initials} hasBorder />
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         className="flex-1"
         style={{ backgroundColor: '#F8FAF9' }}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 16 }}
       >
-        <HeaderDashboard userName={firstName} initials={initials} />
-
         {/* Estatísticas */}
-        <View className="pl-6 mb-8">
+        <View className="pl-6 mb-8 pt-6">
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {stats.map((stat) => (
               <StatCard key={stat.id} item={stat} />

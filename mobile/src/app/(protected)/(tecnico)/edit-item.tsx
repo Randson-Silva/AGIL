@@ -3,7 +3,6 @@ import { Text, TouchableOpacity, View, Alert, Platform } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Toast from 'react-native-toast-message';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import axios from 'axios';
 
 import { BaseForm } from '../../../components/input-form/base-form';
 import { EquipmentForm } from '../../../components/input-form/equipment-form';
@@ -120,7 +119,7 @@ export default function EditItemScreen() {
       await updateInventoryItem(itemId, category, payload);
       Toast.show({ type: 'success', text1: 'Atualizado', text2: 'Item atualizado com sucesso!' });
       router.back();
-    } catch (error) {
+    } catch {
       Toast.show({ type: 'error', text1: 'Erro', text2: 'Falha ao atualizar o item.' });
     }
   };
@@ -141,13 +140,25 @@ export default function EditItemScreen() {
       await deleteInventoryItem(itemId);
       Toast.show({ type: 'success', text1: 'Excluído', text2: 'Item removido do inventário.' });
       router.back();
-    } catch (error) {
+    } catch {
       Toast.show({ type: 'error', text1: 'Erro', text2: 'Falha ao excluir o item.' });
     }
   };
 
   return (
-    <PageWrapper>
+    <PageWrapper className="bg-[#F4F7F4]">
+      {/* Static Header */}
+      <View className="flex-row justify-between items-center px-4 pt-6 pb-4 bg-white border-b border-gray-200">
+        <View className="flex-row items-center gap-4">
+          <BackButton />
+          <Text className="text-xl font-bold text-gray-900">Editar Item</Text>
+        </View>
+
+        <View className="bg-gray-200 px-3 py-1 rounded-full">
+          <Text className="text-gray-600 font-bold text-xs">{category}</Text>
+        </View>
+      </View>
+
       <KeyboardAwareScrollView
         style={{ backgroundColor: '#F4F7F4' }}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
@@ -155,15 +166,6 @@ export default function EditItemScreen() {
         enableOnAndroid={true}
         extraScrollHeight={Platform.OS === 'ios' ? 20 : 120}
       >
-        <View className="flex-row justify-between items-center mt-2 mb-6">
-          <BackButton />
-          <Text className="text-2xl font-bold text-gray-800">Editar Item</Text>
-
-          <View className="bg-gray-200 px-3 py-1 rounded-full">
-            <Text className="text-gray-600 font-bold text-xs">{category}</Text>
-          </View>
-        </View>
-
         <BaseForm
           isEditing={true}
           name={name}

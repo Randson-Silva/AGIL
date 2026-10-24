@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Alert, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Platform } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Toast from 'react-native-toast-message';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -9,13 +9,11 @@ import {
   incrementInventoryStock,
   decrementInventoryStock,
 } from '../../../services/inventory.service';
-import { useAuth } from '@/hooks/useAuth';
 import { BackButton } from '../../../components/ui/Back-button';
 import { PageWrapper } from '../../../components/ui/page-wrapper';
 import { UNIT_LABELS } from '../../../utils/constants';
 
 export default function AdjustStockScreen() {
-  const { user } = useAuth();
   const router = useRouter();
   const { itemData } = useLocalSearchParams();
 
@@ -129,7 +127,13 @@ export default function AdjustStockScreen() {
   };
 
   return (
-    <PageWrapper>
+    <PageWrapper className="bg-[#F4F7F4]">
+      {/* Static Header */}
+      <View className="flex-row items-center gap-4 px-4 pt-6 pb-4 bg-white border-b border-gray-200">
+        <BackButton />
+        <Text className="text-xl font-bold text-gray-900">Ajustar Estoque</Text>
+      </View>
+
       <KeyboardAwareScrollView
         style={{ backgroundColor: '#F4F7F4' }}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
@@ -137,11 +141,6 @@ export default function AdjustStockScreen() {
         enableOnAndroid={true}
         extraScrollHeight={Platform.OS === 'ios' ? 20 : 40}
       >
-        <View className="flex-row items-center gap-4 mt-2 mb-8">
-          <BackButton />
-          <Text className="text-2xl font-bold text-gray-800">Ajustar Estoque</Text>
-        </View>
-
         <View className="bg-white border border-gray-200 rounded-2xl p-6 mb-8 shadow-sm">
           <Text className="text-[17px] font-extrabold text-gray-900 mb-6">{name}</Text>
 
