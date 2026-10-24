@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Feather } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import axios from 'axios';
 
@@ -19,7 +19,7 @@ import { BackButton } from '../../../components/ui/Back-button';
 import { LabSelector } from '../../../components/reservation/lab-selector';
 import { ObjectiveSelector } from '../../../components/reservation/objective-selector';
 import { CalendarModal } from '../../../components/reservation/calendar-modal';
-import { TimeSlotModal } from '../../../components/reservation/time-slot-modal';
+import { TimeSlotModal, isTimeSlotInPast } from '../../../components/reservation/time-slot-modal';
 import { LABORATORIES, ReservationObjective, TimeSlot } from '../../../utils/constants';
 import { createReservation, getOccupiedTimeSlots } from '../../../services/reservation.service';
 
@@ -32,6 +32,7 @@ export default function NewReservationScreen() {
 
   const titleInputRef = useRef<TextInput>(null);
   const studentsInputRef = useRef<TextInput>(null);
+  const groupsInputRef = useRef<TextInput>(null);
   const notesInputRef = useRef<TextInput>(null);
 
   const [selectedLab, setSelectedLab] = useState(initialLab || LABORATORIES[0].name);
@@ -41,6 +42,7 @@ export default function NewReservationScreen() {
   const [objective, setObjective] = useState<ReservationObjective>('AULA_PRATICA');
   const [title, setTitle] = useState('');
   const [studentCount, setStudentCount] = useState('');
+  const [groupCount, setGroupCount] = useState('');
   const [notes, setNotes] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
 
@@ -50,6 +52,29 @@ export default function NewReservationScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isPracticalClass = objective === 'AULA_PRATICA';
+  const currentLabOption = LABORATORIES.find((lab) => lab.name === selectedLab);
+  const maxLabCapacity = currentLabOption?.capacity ?? 30;
+  const parsedStudentNumber = parseInt(studentCount, 10) || 0;
+  const exceedsCapacity = isPracticalClass && parsedStudentNumber > maxLabCapacity;
+
+  const resetForm = useCallback((lab?: string, date?: string) => {
+    setSelectedLab(lab || LABORATORIES[0].name);
+    setSelectedDate(date || '');
+    setSelectedSlots([]);
+    setOccupiedSlots([]);
+    setObjective('AULA_PRATICA');
+    setTitle('');
+    setStudentCount('');
+    setGroupCount('');
+    setNotes('');
+    setIsRecurring(false);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      resetForm(initialLab, initialDate);
+    }, [initialLab, initialDate, resetForm]),
+  );
 
   const focusInput = (inputRef: React.RefObject<TextInput | null>) => {
     if (!inputRef.current) return;
@@ -67,57 +92,43 @@ export default function NewReservationScreen() {
     return `${day}/${month}/${year}`;
   };
 
-  const fetchOccupiedSlots = useCallback(
-    async (lab: string, date: string, currentObjective: ReservationObjective) => {
-      if (!lab || !date) return;
+  const fetchOccupiedSlots = useCallback(async (lab: string, date: string, recurring: boolean) => {
+    if (!lab || !date) return;
 
-      try {
-        setIsLoadingSlots(true);
-        const response = await getOccupiedTimeSlots(lab, date, currentObjective);
-        const occupied = response.data || [];
-        setOccupiedSlots(occupied);
+    try {
+      setIsLoadingSlots(true);
+      const response = await getOccupiedTimeSlots(lab, date, recurring);
+      const occupied = response.data || [];
+      setOccupiedSlots(occupied);
 
-        setSelectedSlots((prev) =>
-          prev.filter(
-            (sel) =>
-              !occupied.some(
-                (occ) => occ.hora_inicio === sel.hora_inicio && occ.hora_fim === sel.hora_fim,
-              ),
-          ),
-        );
-      } catch {
-        Toast.show({
-          type: 'error',
-          text1: 'Aviso',
-          text2: 'Não foi possível carregar os horários ocupados para esta data.',
-        });
-      } finally {
-        setIsLoadingSlots(false);
-      }
-    },
-    [],
-  );
+      setSelectedSlots((prev) =>
+        prev.filter(
+          (sel) =>
+            !isTimeSlotInPast(sel, date) &&
+            !occupied.some(
+              (occ) => occ.hora_inicio === sel.hora_inicio && occ.hora_fim === sel.hora_fim,
+            ),
+        ),
+      );
+    } catch {
+      Toast.show({
+        type: 'error',
+        text1: 'Aviso',
+        text2: 'Não foi possível carregar os horários ocupados para esta data.',
+      });
+    } finally {
+      setIsLoadingSlots(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (selectedLab && selectedDate) {
-      fetchOccupiedSlots(selectedLab, selectedDate, objective);
+      fetchOccupiedSlots(selectedLab, selectedDate, isRecurring);
     }
-  }, [selectedLab, selectedDate, objective, fetchOccupiedSlots]);
+  }, [selectedLab, selectedDate, isRecurring, fetchOccupiedSlots]);
 
-  const handleToggleSlot = (slot: TimeSlot) => {
-    setSelectedSlots((prev) => {
-      const exists = prev.some(
-        (item) => item.hora_inicio === slot.hora_inicio && item.hora_fim === slot.hora_fim,
-      );
-
-      if (exists) {
-        return prev.filter(
-          (item) => !(item.hora_inicio === slot.hora_inicio && item.hora_fim === slot.hora_fim),
-        );
-      }
-
-      return [...prev, slot].sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio));
-    });
+  const handleConfirmSlots = (slots: TimeSlot[]) => {
+    setSelectedSlots(slots);
   };
 
   const handleOpenTimeModal = () => {
@@ -132,6 +143,11 @@ export default function NewReservationScreen() {
     setIsTimeModalOpen(true);
   };
 
+  const handleCancel = () => {
+    resetForm();
+    router.back();
+  };
+
   const handleConfirmReservation = async () => {
     if (!selectedDate) {
       Toast.show({
@@ -142,11 +158,13 @@ export default function NewReservationScreen() {
       return;
     }
 
-    if (selectedSlots.length === 0) {
+    const validSlots = selectedSlots.filter((slot) => !isTimeSlotInPast(slot, selectedDate));
+
+    if (validSlots.length === 0) {
       Toast.show({
         type: 'error',
         text1: 'Campo obrigatório',
-        text2: 'Selecione pelo menos um horário para a prática.',
+        text2: 'Selecione pelo menos um horário válido para a prática.',
       });
       return;
     }
@@ -161,13 +179,35 @@ export default function NewReservationScreen() {
     }
 
     const parsedStudents = parseInt(studentCount, 10);
-    if (isPracticalClass && (!parsedStudents || parsedStudents <= 0)) {
-      Toast.show({
-        type: 'error',
-        text1: 'Valor inválido',
-        text2: 'Informe uma quantidade válida de alunos para a aula prática.',
-      });
-      return;
+    const parsedGroups = parseInt(groupCount, 10);
+
+    if (isPracticalClass) {
+      if (!parsedStudents || parsedStudents <= 0) {
+        Toast.show({
+          type: 'error',
+          text1: 'Valor inválido',
+          text2: 'Informe uma quantidade válida de alunos para a aula prática.',
+        });
+        return;
+      }
+
+      if (parsedStudents > maxLabCapacity) {
+        Toast.show({
+          type: 'error',
+          text1: 'Capacidade excedida',
+          text2: `O ${selectedLab} comporta no máximo ${maxLabCapacity} alunos.`,
+        });
+        return;
+      }
+
+      if (!parsedGroups || parsedGroups <= 0) {
+        Toast.show({
+          type: 'error',
+          text1: 'Valor inválido',
+          text2: 'Informe uma quantidade válida de grupos para a aula prática.',
+        });
+        return;
+      }
     }
 
     try {
@@ -179,19 +219,19 @@ export default function NewReservationScreen() {
         objetivo: objective,
         titulo: title.trim(),
         quantidade_alunos: isPracticalClass ? parsedStudents : undefined,
+        quantidade_grupos: isPracticalClass ? parsedGroups : undefined,
         observacoes: notes.trim() || undefined,
         pratica_recorrente: isRecurring,
-        horarios: selectedSlots,
+        horarios: validSlots,
       });
 
       Toast.show({
         type: 'success',
-        text1: 'Reserva registada',
-        text2: isRecurring
-          ? 'Prática recorrente registada como aviso simples.'
-          : 'Solicitação enviada para avaliação técnica.',
+        text1: 'Reserva solicitada',
+        text2: 'Solicitação registada como pendente para avaliação técnica.',
       });
 
+      resetForm();
       router.back();
     } catch (error) {
       let errorMessage = 'Não foi possível registar a reserva. Tente novamente.';
@@ -225,12 +265,6 @@ export default function NewReservationScreen() {
 
   return (
     <PageWrapper className="bg-[#F4F7F4]">
-      {/* Static Header */}
-      <View className="flex-row items-center gap-4 px-4 pt-6 pb-4 bg-white border-b border-gray-200">
-        <BackButton />
-        <Text className="text-xl font-bold text-gray-900">Nova Reserva</Text>
-      </View>
-
       <KeyboardAwareScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         keyboardShouldPersistTaps="handled"
@@ -238,6 +272,11 @@ export default function NewReservationScreen() {
         extraScrollHeight={Platform.OS === 'ios' ? 20 : 160}
         showsVerticalScrollIndicator={false}
       >
+        <View className="flex-row items-center gap-4 mt-2 mb-6">
+          <BackButton />
+          <Text className="text-2xl font-bold text-gray-900">Nova Reserva</Text>
+        </View>
+
         <LabSelector selectedLab={selectedLab} onSelectLab={setSelectedLab} />
 
         <View className="mb-5">
@@ -303,7 +342,11 @@ export default function NewReservationScreen() {
                 placeholder="Ex.: Titulação Ácido-Base"
                 placeholderTextColor="#9CA3AF"
                 multiline={false}
-                style={{ fontSize: 14, includeFontPadding: false, paddingVertical: 0 }}
+                style={{
+                  fontSize: 14,
+                  includeFontPadding: false,
+                  paddingVertical: 0,
+                }}
                 className="text-gray-900"
               />
             </View>
@@ -312,34 +355,86 @@ export default function NewReservationScreen() {
 
         {isPracticalClass && (
           <View className="mb-5">
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={() => focusInput(studentsInputRef)}
-              className="flex-row items-center justify-between bg-white border border-gray-200 rounded-2xl px-4 h-[50px] w-48"
-            >
-              <View className="flex-row items-center">
-                <Feather name="user" size={16} color="#4B5563" />
-                <Text className="text-xs font-bold text-gray-800 ml-2">Alunos</Text>
-              </View>
-
-              <View
-                pointerEvents="none"
-                className="bg-[#E8F0EC] rounded-full px-3 h-7 justify-center min-w-[48px]"
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={() => focusInput(studentsInputRef)}
+                className={`flex-1 flex-row items-center justify-between bg-white border rounded-2xl px-4 h-[50px] ${
+                  exceedsCapacity ? 'border-red-400' : 'border-gray-200'
+                }`}
               >
-                <TextInput
-                  ref={studentsInputRef}
-                  value={studentCount}
-                  onChangeText={(val) => setStudentCount(val.replace(/[^0-9]/g, ''))}
-                  keyboardType="number-pad"
-                  placeholder="0"
-                  placeholderTextColor="#6B7280"
-                  maxLength={3}
-                  multiline={false}
-                  style={{ fontSize: 12, includeFontPadding: false, paddingVertical: 0 }}
-                  className="text-center font-bold text-gray-900"
-                />
-              </View>
-            </TouchableOpacity>
+                <View className="flex-row items-center">
+                  <Feather name="user" size={16} color="#4B5563" />
+                  <Text className="text-xs font-bold text-gray-800 ml-2">Alunos</Text>
+                </View>
+
+                <View
+                  pointerEvents="none"
+                  className={`rounded-full px-3 h-7 justify-center min-w-[48px] ${
+                    exceedsCapacity ? 'bg-red-100' : 'bg-[#E8F0EC]'
+                  }`}
+                >
+                  <TextInput
+                    ref={studentsInputRef}
+                    value={studentCount}
+                    onChangeText={(val) => setStudentCount(val.replace(/[^0-9]/g, ''))}
+                    keyboardType="number-pad"
+                    placeholder="0"
+                    placeholderTextColor="#6B7280"
+                    maxLength={3}
+                    multiline={false}
+                    style={{
+                      fontSize: 12,
+                      includeFontPadding: false,
+                      paddingVertical: 0,
+                    }}
+                    className={`text-center font-bold ${
+                      exceedsCapacity ? 'text-red-700' : 'text-gray-900'
+                    }`}
+                  />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={() => focusInput(groupsInputRef)}
+                className="flex-1 flex-row items-center justify-between bg-white border border-gray-200 rounded-2xl px-4 h-[50px]"
+              >
+                <View className="flex-row items-center">
+                  <Feather name="users" size={16} color="#4B5563" />
+                  <Text className="text-xs font-bold text-gray-800 ml-2">Grupos</Text>
+                </View>
+
+                <View
+                  pointerEvents="none"
+                  className="bg-[#E8F0EC] rounded-full px-3 h-7 justify-center min-w-[48px]"
+                >
+                  <TextInput
+                    ref={groupsInputRef}
+                    value={groupCount}
+                    onChangeText={(val) => setGroupCount(val.replace(/[^0-9]/g, ''))}
+                    keyboardType="number-pad"
+                    placeholder="0"
+                    placeholderTextColor="#6B7280"
+                    maxLength={2}
+                    multiline={false}
+                    style={{
+                      fontSize: 12,
+                      includeFontPadding: false,
+                      paddingVertical: 0,
+                    }}
+                    className="text-center font-bold text-gray-900"
+                  />
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {exceedsCapacity && (
+              <Text className="text-xs font-medium text-red-600 mt-1.5 ml-1">
+                A quantidade de alunos excede a capacidade do {selectedLab} ({maxLabCapacity}{' '}
+                lugares).
+              </Text>
+            )}
           </View>
         )}
 
@@ -347,7 +442,7 @@ export default function NewReservationScreen() {
           <View className="flex-1 pr-4">
             <Text className="text-sm font-bold text-gray-800">Prática Recorrente (Aula Fixa)</Text>
             <Text className="text-xs text-gray-500 mt-0.5">
-              Reserva este horário fixo semanalmente e contorna o limite de 24h
+              Reserva este horário semanalmente no mesmo dia da semana
             </Text>
           </View>
           <Switch
@@ -358,6 +453,7 @@ export default function NewReservationScreen() {
           />
         </View>
 
+        {/* Observações */}
         <View className="mb-6">
           <Text className="text-sm font-bold text-gray-800 mb-2">Observações</Text>
           <TouchableOpacity
@@ -374,7 +470,11 @@ export default function NewReservationScreen() {
                 placeholderTextColor="#9CA3AF"
                 multiline
                 textAlignVertical="top"
-                style={{ fontSize: 14, includeFontPadding: false, paddingVertical: 0 }}
+                style={{
+                  fontSize: 14,
+                  includeFontPadding: false,
+                  paddingVertical: 0,
+                }}
                 className="text-gray-900"
               />
             </View>
@@ -385,7 +485,7 @@ export default function NewReservationScreen() {
           <TouchableOpacity
             activeOpacity={0.7}
             disabled={isSubmitting}
-            onPress={() => router.back()}
+            onPress={handleCancel}
             className="flex-1 bg-[#E8ECE9] rounded-2xl py-4 items-center justify-center"
           >
             <Text className="text-gray-900 font-bold text-sm">Cancelar</Text>
@@ -416,9 +516,10 @@ export default function NewReservationScreen() {
       <TimeSlotModal
         visible={isTimeModalOpen}
         onClose={() => setIsTimeModalOpen(false)}
+        selectedDate={selectedDate}
         selectedSlots={selectedSlots}
         occupiedSlots={occupiedSlots}
-        onToggleSlot={handleToggleSlot}
+        onConfirmSlots={handleConfirmSlots}
         isLoading={isLoadingSlots}
       />
     </PageWrapper>

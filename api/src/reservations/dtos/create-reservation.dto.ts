@@ -58,6 +58,15 @@ export class CreateReservationDto {
   })
   quantidade_alunos?: number;
 
+  @ValidateIf(
+    (o: CreateReservationDto) => o.objetivo === ObjetivoReserva.AULA_PRATICA,
+  )
+  @IsInt({ message: 'A quantidade de grupos deve ser um número inteiro.' })
+  @Min(1, {
+    message: 'A reserva para aula prática deve ter pelo menos 1 grupo.',
+  })
+  quantidade_grupos?: number;
+
   @IsOptional()
   @IsString()
   observacoes?: string;
