@@ -181,10 +181,11 @@ model Equipamento {
   insumo_id String @unique
   insumo    Insumo @relation(fields: [insumo_id], references: [id], onDelete: Cascade)
 
-  marca             String?
-  modelo            String?
-  voltagem          String?
-  numero_patrimonio String?
+  marca        String?
+  modelo       String?
+  voltagem     String?
+  patrimonio   String?
+  uso_restrito Boolean @default(false)
 }
 
 model Vidraria {
