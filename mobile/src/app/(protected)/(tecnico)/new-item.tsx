@@ -30,6 +30,7 @@ export default function NewItemScreen() {
   const [model, setModel] = useState('');
   const [voltage, setVoltage] = useState('');
   const [capacity, setCapacity] = useState('');
+  const [isRestricted, setIsRestricted] = useState(false);
 
   const handleSave = async () => {
     const isEquipmentOrGlassware = category === 'EQUIPAMENTO' || category === 'VIDRARIA';
@@ -87,6 +88,7 @@ export default function NewItemScreen() {
       if (brand) payload.marca = brand;
       if (model) payload.modelo = model;
       if (voltage) payload.voltagem = voltage;
+      payload.uso_restrito = isRestricted;
     }
 
     try {
@@ -109,6 +111,7 @@ export default function NewItemScreen() {
         setModel('');
         setVoltage('');
         setCapacity('');
+        setIsRestricted(false);
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -130,7 +133,6 @@ export default function NewItemScreen() {
 
   return (
     <PageWrapper className="bg-[#F4F7F4]">
-      {/* Static Header */}
       <View className="flex-row items-center gap-4 px-4 pt-6 pb-4 bg-white border-b border-gray-200">
         <BackButton />
         <Text className="text-xl font-bold text-gray-900">Novo Item</Text>
@@ -198,6 +200,8 @@ export default function NewItemScreen() {
             setModel={setModel}
             voltage={voltage}
             setVoltage={setVoltage}
+            isRestricted={isRestricted}
+            setIsRestricted={setIsRestricted}
           />
         )}
 

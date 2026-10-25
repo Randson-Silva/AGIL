@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useFocusEffect } from 'expo-router';
 import Toast from 'react-native-toast-message';
+import axios from 'axios';
 import { getInventoryItems } from '../services/inventory.service';
 import { listMaterialRequests, createMaterialRequest } from '../services/material-request.service';
 import { useAuth } from './useAuth';
@@ -22,11 +23,7 @@ function parseDMYToISO(dmy: string): string | null {
   if (mm < 1 || mm > 12 || dd < 1 || dd > 31 || yyyy < 1900) return null;
 
   const dateObj = new Date(yyyy, mm - 1, dd);
-  if (
-    dateObj.getFullYear() !== yyyy ||
-    dateObj.getMonth() !== mm - 1 ||
-    dateObj.getDate() !== dd
-  ) {
+  if (dateObj.getFullYear() !== yyyy || dateObj.getMonth() !== mm - 1 || dateObj.getDate() !== dd) {
     return null;
   }
 
@@ -140,6 +137,19 @@ export function useMateriais() {
   const totalHistoryPages = Math.ceil(history.length / PAGE_SIZE) || 1;
 
   const handleIncrement = (itemId: string) => {
+    // US3.1.4 (CA-03 e Cenário #01): Bloqueia incremento de equipamento restrito ao local
+    const item = catalog.find((i) => i.id === itemId);
+    const isRestricted = Boolean(item?.equipamentoInfo?.uso_restrito ?? item?.uso_restrito);
+
+    if (isRestricted) {
+      Toast.show({
+        type: 'error',
+        text1: 'Uso restrito',
+        text2: 'Este equipamento não pode ser retirado do laboratório',
+      });
+      return;
+    }
+
     setCart((prev) => ({
       ...prev,
       [itemId]: (prev[itemId] || 0) + 1,
@@ -213,6 +223,20 @@ export function useMateriais() {
       return;
     }
 
+    const hasRestrictedItem = itemsSelected.some((itemSelected) => {
+      const item = catalog.find((i) => i.id === itemSelected.insumo_id);
+      return Boolean(item?.equipamentoInfo?.uso_restrito ?? item?.uso_restrito);
+    });
+
+    if (hasRestrictedItem) {
+      Toast.show({
+        type: 'error',
+        text1: 'Uso restrito',
+        text2: 'Este equipamento não pode ser retirado do laboratório',
+      });
+      return;
+    }
+
     if (!validateDates() || !withdrawalDateIso || !returnDateIso) return;
 
     try {
@@ -242,10 +266,17 @@ export function useMateriais() {
       setHistoryPage(1);
     } catch (error) {
       console.error('Erro ao solicitar materiais:', error);
+
+      let errorMessage = 'Não foi possível solicitar os materiais.';
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        const apiMessage = error.response.data.message;
+        errorMessage = Array.isArray(apiMessage) ? apiMessage[0] : apiMessage;
+      }
+
       Toast.show({
         type: 'error',
         text1: 'Erro',
-        text2: 'Não foi possível solicitar os materiais.',
+        text2: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -263,9 +294,7 @@ export function useMateriais() {
   };
 
   const selectedCalendarIsoDate =
-    calendarType === 'withdrawal'
-      ? withdrawalDateIso || ''
-      : returnDateIso || '';
+    calendarType === 'withdrawal' ? withdrawalDateIso || '' : returnDateIso || '';
 
   return {
     firstName,

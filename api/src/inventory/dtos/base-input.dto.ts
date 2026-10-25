@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   Min,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
@@ -63,7 +64,8 @@ export class CreateEquipmentDto extends BaseInputDto {
   @IsOptional() @IsString() marca?: string;
   @IsOptional() @IsString() modelo?: string;
   @IsOptional() @IsString() voltagem?: string;
-  @IsString() numero_patrimonio: string;
+  @IsOptional() @IsString() patrimonio?: string;
+  @IsOptional() @IsBoolean() uso_restrito?: boolean;
 }
 
 export class CreateGlasswareDto extends BaseInputDto {

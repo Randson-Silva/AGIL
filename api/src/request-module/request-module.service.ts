@@ -16,7 +16,36 @@ export class RequestModuleService {
     private readonly inventoryService: InventoryService,
   ) {}
 
+  private async validateRestrictedItems(
+    itens?: { insumo_id: string }[],
+  ): Promise<void> {
+    if (!itens || itens.length === 0) return;
+
+    const insumoIds = itens.map((item) => item.insumo_id);
+
+    const insumos = await this.prisma.insumo.findMany({
+      where: { id: { in: insumoIds } },
+      include: { equipamentoInfo: true },
+    });
+
+    for (const item of itens) {
+      const insumo = insumos.find((i) => i.id === item.insumo_id);
+
+      if (!insumo) {
+        throw new NotFoundException(`Insumo não encontrado.`);
+      }
+
+      if (insumo.equipamentoInfo?.uso_restrito) {
+        throw new BadRequestException(
+          'Este equipamento não pode ser retirado do laboratório',
+        );
+      }
+    }
+  }
+
   async create(solicitanteId: string, dto: CreateRequestDto) {
+    await this.validateRestrictedItems(dto.itens);
+
     return this.prisma.solicitacaoMaterial.create({
       data: {
         solicitante_id: solicitanteId,
@@ -75,6 +104,10 @@ export class RequestModuleService {
       );
     }
 
+    if (dto.itens) {
+      await this.validateRestrictedItems(dto.itens);
+    }
+
     return this.prisma.solicitacaoMaterial.update({
       where: { id },
       data: {
@@ -109,11 +142,7 @@ export class RequestModuleService {
         quantidade: Number(item.quantidade),
       }));
 
-      await this.inventoryService.updateStock(
-        itensFormatados,
-        tecnicoId,
-        id,
-      );
+      await this.inventoryService.updateStock(itensFormatados, tecnicoId, id);
     }
 
     return this.prisma.solicitacaoMaterial.update({

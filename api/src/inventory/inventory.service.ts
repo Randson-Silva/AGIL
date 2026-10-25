@@ -19,7 +19,6 @@ import {
 } from '../utils/inventory.utils.js';
 import { MailService } from '../mail/mail.service.js';
 import { Prisma, StatusInsumo } from '../generated/prisma/client.js';
-import { error } from 'console';
 
 @Injectable()
 export class InventoryService {
@@ -117,10 +116,11 @@ export class InventoryService {
         natureza_patrimonial: 'TOMBADO',
         equipamentoInfo: {
           create: {
-            numero_patrimonio: data.numero_patrimonio,
             marca: data.marca,
             modelo: data.modelo,
             voltagem: data.voltagem,
+            patrimonio: data.patrimonio,
+            uso_restrito: Boolean(data.uso_restrito),
           },
         },
       },
@@ -232,14 +232,21 @@ export class InventoryService {
       validateMeasurementUnit(unit, data.quantidade_minima);
     }
 
-    const { marca, modelo, voltagem, ...baseData } = data;
-    const childData = { marca, modelo, voltagem };
+    const { marca, modelo, voltagem, patrimonio, uso_restrito, ...baseData } =
+      data;
+    const childData = {
+      ...(marca !== undefined && { marca }),
+      ...(modelo !== undefined && { modelo }),
+      ...(voltagem !== undefined && { voltagem }),
+      ...(patrimonio !== undefined && { patrimonio }),
+      ...(uso_restrito !== undefined && { uso_restrito }),
+    };
 
     return this.prisma.insumo.update({
       where: { id },
       data: {
         ...baseData,
-        ...(hasValidUpdates(childData) && {
+        ...(Object.keys(childData).length > 0 && {
           equipamentoInfo: { update: childData },
         }),
       },
@@ -292,7 +299,6 @@ export class InventoryService {
         const saldoAnterior = insumo.quantidade_saldo.toNumber();
         const qtdSolicitada = item.quantidade;
         const saldoPosterior = saldoAnterior - qtdSolicitada;
-        // USA O HELPER AQUI
         await this.updateStockBalanceAndAlerts(
           tx,
           insumo.id,
@@ -560,7 +566,14 @@ export class InventoryService {
         : StatusInsumo.ESTAVEL;
 
     if (novoStatus !== statusAtual) {
-      await this.syncStockAlerts(tx, insumoId, insumoNome, novoStatus, saldoPosterior, quantidadeMinima);
+      await this.syncStockAlerts(
+        tx,
+        insumoId,
+        insumoNome,
+        novoStatus,
+        saldoPosterior,
+        quantidadeMinima,
+      );
     }
 
     return tx.insumo.update({
