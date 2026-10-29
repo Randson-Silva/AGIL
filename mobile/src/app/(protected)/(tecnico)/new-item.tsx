@@ -139,6 +139,7 @@ export default function NewItemScreen() {
       </View>
 
       <KeyboardAwareScrollView
+        style={{ backgroundColor: '#F4F7F4' }}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         keyboardShouldPersistTaps="handled"
         enableOnAndroid={true}
@@ -206,10 +207,11 @@ export default function NewItemScreen() {
         )}
 
         <TouchableOpacity
+          activeOpacity={0.8}
           onPress={handleSave}
-          className="bg-green-700 rounded-lg p-4 items-center justify-center mt-6 mb-8 shadow-sm"
+          className="bg-[#00623B] rounded-2xl py-4 items-center justify-center mt-6 mb-8 shadow-sm"
         >
-          <Text className="text-white font-bold text-lg">Cadastrar Item</Text>
+          <Text className="text-white font-bold text-sm">Cadastrar Item</Text>
         </TouchableOpacity>
       </KeyboardAwareScrollView>
     </PageWrapper>

@@ -24,7 +24,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
 }) => {
   return (
     <View className="mb-4">
-      <Text className="text-sm font-semibold mb-1 text-gray-600">{label}</Text>
+      <Text className="text-sm font-semibold mb-1 text-gray-700">{label}</Text>
       <View
         className={`border border-gray-300 rounded-lg overflow-hidden h-[50px] justify-center ${
           disabled ? 'bg-gray-100 opacity-70' : 'bg-white'
@@ -34,14 +34,15 @@ export const FormSelect: React.FC<FormSelectProps> = ({
           selectedValue={selectedValue}
           onValueChange={onValueChange}
           enabled={!disabled}
-          style={{ height: 50 }}
+          dropdownIconColor="#4B5563"
+          style={{ height: 50, color: disabled ? '#9CA3AF' : '#1F2937' }}
         >
           {options.map((option) => (
             <Picker.Item
               key={option.value}
               label={option.label}
               value={option.value}
-              color="#374151"
+              color="#1F2937"
             />
           ))}
         </Picker>
