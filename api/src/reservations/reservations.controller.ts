@@ -61,12 +61,18 @@ export class ReservationsController {
     user: {
       id: string;
       sub?: string;
+      role?: string;
       perfil?: string;
       profile?: string;
     },
   ) {
     const userId = user.id || user.sub!;
-    const profile = user.perfil || user.profile || 'PROFESSOR';
+    const profile = (
+      user.role ||
+      user.perfil ||
+      user.profile ||
+      'PROFESSOR'
+    ).toUpperCase();
     return this.reservationsService.listReservations(userId, profile);
   }
 
