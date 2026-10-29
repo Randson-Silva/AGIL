@@ -9,6 +9,29 @@ import { ListRequestDto } from './dto/list-request-module.dto.js';
 import { PrismaService } from '../db/prisma/prisma.service.js';
 import { InventoryService } from '../inventory/inventory.service.js';
 
+const REQUEST_RELATIONS = {
+  solicitante: {
+    select: {
+      id: true,
+      nome: true,
+      email: true,
+      perfil: true,
+    },
+  },
+  itens: {
+    include: {
+      insumo: {
+        select: {
+          id: true,
+          nome: true,
+          tipo_medida: true,
+          categoria: true,
+        },
+      },
+    },
+  },
+} as const;
+
 @Injectable()
 export class RequestModuleService {
   constructor(
@@ -51,6 +74,12 @@ export class RequestModuleService {
         solicitante_id: solicitanteId,
         finalidade: dto.finalidade,
         descricao: dto.descricao,
+        data_retirada: dto.data_retirada
+          ? new Date(dto.data_retirada)
+          : undefined,
+        data_devolucao: dto.data_devolucao
+          ? new Date(dto.data_devolucao)
+          : undefined,
         status: 'PENDENTE',
         itens: {
           create:
@@ -60,7 +89,7 @@ export class RequestModuleService {
             })) || [],
         },
       },
-      include: { itens: true },
+      include: REQUEST_RELATIONS,
     });
   }
 
@@ -78,14 +107,14 @@ export class RequestModuleService {
     return await this.prisma.solicitacaoMaterial.findMany({
       where,
       orderBy: { criada_em: filtros.ordem ?? 'desc' },
-      include: { itens: true },
+      include: REQUEST_RELATIONS,
     });
   }
 
   async findOne(id: string) {
     const solicitacao = await this.prisma.solicitacaoMaterial.findUnique({
       where: { id },
-      include: { itens: true },
+      include: REQUEST_RELATIONS,
     });
 
     if (!solicitacao) {
@@ -113,6 +142,14 @@ export class RequestModuleService {
       data: {
         finalidade: dto.finalidade,
         descricao: dto.descricao,
+        ...(dto.data_retirada !== undefined && {
+          data_retirada: dto.data_retirada ? new Date(dto.data_retirada) : null,
+        }),
+        ...(dto.data_devolucao !== undefined && {
+          data_devolucao: dto.data_devolucao
+            ? new Date(dto.data_devolucao)
+            : null,
+        }),
         ...(dto.itens
           ? {
               itens: {
@@ -125,7 +162,7 @@ export class RequestModuleService {
             }
           : {}),
       },
-      include: { itens: true },
+      include: REQUEST_RELATIONS,
     });
   }
 
@@ -152,6 +189,7 @@ export class RequestModuleService {
         tecnico_id: tecnicoId,
         aprovada_em: new Date(),
       },
+      include: REQUEST_RELATIONS,
     });
   }
 
@@ -169,12 +207,43 @@ export class RequestModuleService {
         tecnico_id: tecnicoId,
         motivo_rejeicao: motivo,
       },
+      include: REQUEST_RELATIONS,
+    });
+  }
+
+  async confirmReturn(id: string, tecnicoId: string) {
+    const solicitacao = await this.findOne(id);
+
+    if (solicitacao.status !== 'APROVADA') {
+      throw new BadRequestException(
+        'Apenas solicitações aprovadas podem ter a devolução confirmada.',
+      );
+    }
+
+    if (solicitacao.itens && solicitacao.itens.length > 0) {
+      const itensFormatados = solicitacao.itens.map((item) => ({
+        insumo_id: item.insumo_id,
+        quantidade: Number(item.quantidade),
+      }));
+
+      await this.inventoryService.returnStock(itensFormatados, tecnicoId, id);
+    }
+
+    return this.prisma.solicitacaoMaterial.update({
+      where: { id },
+      data: {
+        status: 'DEVOLVIDA',
+        devolvida_em: new Date(),
+      },
+      include: REQUEST_RELATIONS,
     });
   }
 
   async aceptRequest() {}
 
   async listResquets() {
-    return this.prisma.solicitacaoMaterial.findMany();
+    return this.prisma.solicitacaoMaterial.findMany({
+      include: REQUEST_RELATIONS,
+    });
   }
 }

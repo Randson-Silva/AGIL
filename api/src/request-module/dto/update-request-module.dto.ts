@@ -1,14 +1,20 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { ItemSolicitacaoDto } from './item-solicitacao.dto.js';
 
-// Como o enum pode não estar exportado no generated se o prisma generate estiver desatualizado,
-// usamos um union type temporário que reflete o banco, ou podemos importar se atualizado.
 export enum StatusSolicitacaoEnum {
   PENDENTE = 'PENDENTE',
   APROVADA = 'APROVADA',
   REJEITADA = 'REJEITADA',
-  CANCELADA = 'CANCELADA'
+  CANCELADA = 'CANCELADA',
+  DEVOLVIDA = 'DEVOLVIDA',
 }
 
 export class UpdateRequestDto {
@@ -19,6 +25,20 @@ export class UpdateRequestDto {
   @IsOptional()
   @IsString()
   descricao?: string;
+
+  @IsOptional()
+  @IsDateString(
+    {},
+    { message: 'A data de retirada deve ser uma data válida.' },
+  )
+  data_retirada?: string;
+
+  @IsOptional()
+  @IsDateString(
+    {},
+    { message: 'A data de devolução deve ser uma data válida.' },
+  )
+  data_devolucao?: string;
 
   @IsOptional()
   @IsArray()
