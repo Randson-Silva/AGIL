@@ -5,6 +5,7 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -15,6 +16,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ObjetivoReserva } from '../../generated/prisma/client.js';
+import { VALID_LABORATORIES } from '../../utils/reservation.utils.js';
 
 export class TimeSlotDto {
   @IsString()
@@ -35,6 +37,7 @@ export class TimeSlotDto {
 export class CreateReservationDto {
   @IsString()
   @IsNotEmpty({ message: 'O laboratório é obrigatório.' })
+  @IsIn(VALID_LABORATORIES, { message: 'Selecione um laboratório válido.' })
   local: string;
 
   @IsDateString({}, { message: 'Insira uma data válida para a reserva.' })
