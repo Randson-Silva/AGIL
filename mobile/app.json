@@ -4,14 +4,11 @@
     "slug": "AGIL",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "AGIL",
+    "scheme": "agil",
     "userInterfaceStyle": "automatic",
     "updates": {
       "fallbackToCacheTimeout": 0,
       "checkAutomatically": "ON_ERROR_RECOVERY"
-    },
-    "ios": {
-      "icon": "./assets/expo.icon"
     },
     "android": {
       "package": "com.agil.app",
@@ -31,8 +28,8 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 100
         }
       ],
       "@react-native-community/datetimepicker"
@@ -40,6 +37,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "70dbe9c1-1cff-4d9e-9325-1f200af974b2"
+      }
     }
   }
 }
