@@ -34,6 +34,7 @@ enum StatusSolicitacao {
   APROVADA
   REJEITADA
   CANCELADA
+  DEVOLVIDA
 }
 
 enum TipoMovimentacao {
@@ -108,6 +109,7 @@ model ReservaEspaco {
   observacoes        String?
   pratica_recorrente Boolean         @default(false)
   status             StatusReserva   @default(PENDENTE)
+  motivo_rejeicao    String?
 
   horarios   HorarioReserva[]
   created_at DateTime         @default(now())
@@ -207,13 +209,15 @@ model SolicitacaoMaterial {
 
   status StatusSolicitacao @default(PENDENTE)
 
-  tecnico_id    String?
-  tecnico       Usuario?                  @relation("SolicitacaoMaterial_Tecnico", fields: [tecnico_id], references: [id])
-  criada_em     DateTime                  @default(now())
-  aprovada_em   DateTime?
-  data_retirada DateTime?
-  itens         ItemSolicitacaoMaterial[]
-  historicos    HistoricoMovimentacao[]
+  tecnico_id     String?
+  tecnico        Usuario?                  @relation("SolicitacaoMaterial_Tecnico", fields: [tecnico_id], references: [id])
+  criada_em      DateTime                  @default(now())
+  aprovada_em    DateTime?
+  data_retirada  DateTime?
+  data_devolucao DateTime?
+  devolvida_em   DateTime?
+  itens          ItemSolicitacaoMaterial[]
+  historicos     HistoricoMovimentacao[]
 
   motivo_rejeicao String?
 }
