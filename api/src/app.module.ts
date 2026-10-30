@@ -8,6 +8,7 @@ import { InventoryModule } from './inventory/inventory.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { RequestModuleModule } from './request-module/request-module.module.js';
 import { ReservationsModule } from './reservations/reservations.module.js';
+import { BreakdownModule } from './breakdown/breakdown.modulle.js';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ReservationsModule } from './reservations/reservations.module.js';
     InventoryModule,
     NotificationsModule,
     RequestModuleModule,
+    BreakdownModule,
   ],
   controllers: [AppController],
   providers: [],

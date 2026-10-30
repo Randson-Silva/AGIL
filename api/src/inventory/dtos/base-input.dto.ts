@@ -33,11 +33,6 @@ export class BaseInputDto {
   quantidade_saldo: number;
 
   @IsOptional()
-  @Type(() => Date)
-  @IsDate({ message: 'Deve ser uma data válida' })
-  data_validade: Date;
-
-  @IsOptional()
   @IsString()
   localizacao?: string;
 
@@ -48,6 +43,11 @@ export class BaseInputDto {
 }
 
 export class CreateReagentDto extends BaseInputDto {
+  @IsNotEmpty({ message: 'A data de validade é obrigatória para reagentes' })
+  @Type(() => Date)
+  @IsDate({ message: 'Deve ser uma data válida' })
+  data_validade: Date;
+
   @IsOptional() @IsString() formula?: string;
   @IsOptional() @IsString() cas?: string;
   @IsOptional() @IsString() marca?: string;
@@ -55,6 +55,11 @@ export class CreateReagentDto extends BaseInputDto {
 }
 
 export class CreateSolutionDto extends BaseInputDto {
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate({ message: 'Deve ser uma data válida' })
+  data_validade?: Date;
+
   @IsOptional() @IsString() formula?: string;
   @IsOptional() @IsString() cas?: string;
   @IsOptional() @IsString() observacao?: string;

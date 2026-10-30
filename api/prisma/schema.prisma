@@ -77,6 +77,14 @@ enum NaturezaPatrimonial {
   CONSUMO
 }
 
+enum TipoAvaria {
+  QUEBRA
+  DEFEITO
+  CONTAMINACAO
+  EXTRAVIO
+  OUTRO
+}
+
 model Usuario {
   id                String    @id @default(uuid())
   nome              String
@@ -235,12 +243,17 @@ model ItemSolicitacaoMaterial {
 }
 
 model AvariaReportada {
-  id           String   @id @default(uuid())
-  usuario_id   String
-  usuario      Usuario  @relation(fields: [usuario_id], references: [id])
-  insumo_id    String
-  insumo       Insumo   @relation(fields: [insumo_id], references: [id])
-  descricao    String
+  id         String  @id @default(uuid())
+  usuario_id String
+  usuario    Usuario @relation(fields: [usuario_id], references: [id])
+  insumo_id  String
+  insumo     Insumo  @relation(fields: [insumo_id], references: [id])
+
+  quantidade      Decimal    @db.Decimal(10, 3)
+  tipo_ocorrencia TipoAvaria
+  descricao       String?
+  foto_url        String?
+
   data_reporte DateTime @default(now())
 }
 
