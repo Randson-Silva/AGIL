@@ -49,8 +49,7 @@ export function useDashboard() {
 
         let pendingMaterials = 0;
         if (requestsResult.status === 'fulfilled') {
-          const data =
-            requestsResult.value.data?.data || requestsResult.value.data;
+          const data = requestsResult.value.data;
           pendingMaterials = Array.isArray(data) ? data.length : 0;
         } else {
           console.error(
@@ -61,13 +60,10 @@ export function useDashboard() {
 
         let pendingReservations = 0;
         if (reservationsResult.status === 'fulfilled') {
-          const data =
-            reservationsResult.value.data?.data ||
-            reservationsResult.value.data;
+          const data = reservationsResult.value.data;
           if (Array.isArray(data)) {
             pendingReservations = data.filter(
-              (r: { status?: string }) =>
-                r.status === 'PENDENTE' || r.status === 'AVISO_SIMPLES',
+              (r) => r.status === 'PENDENTE' || r.status === 'AVISO_SIMPLES',
             ).length;
           }
         } else {
