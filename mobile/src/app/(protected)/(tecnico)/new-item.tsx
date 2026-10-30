@@ -1,8 +1,11 @@
+// mobile/src/app/(protected)/(tecnico)/new-item.tsx
 import axios from 'axios';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Platform, Text, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Toast from 'react-native-toast-message';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
 
 import { BaseForm } from '../../../components/input-form/base-form';
 import { EquipmentForm } from '../../../components/input-form/equipment-form';
@@ -10,19 +13,18 @@ import { GlasswareForm } from '../../../components/input-form/glassware-form';
 import { ReagentForm } from '../../../components/input-form/reagent-form';
 import { SolutionForm } from '../../../components/input-form/solution-form';
 import { createInventoryItem } from '../../../services/inventory.service';
-import { BackButton } from '../../../components/ui/Back-button';
 import { PageWrapper } from '../../../components/ui/page-wrapper';
 
 export default function NewItemScreen() {
-  const [category, setCategory] = useState('REAGENTE');
+  const router = useRouter();
 
+  const [category, setCategory] = useState('REAGENTE');
   const [name, setName] = useState('');
   const [currentQuantity, setCurrentQuantity] = useState('');
   const [minQuantity, setMinQuantity] = useState('');
   const [location, setLocation] = useState('');
   const [measurementUnit, setMeasurementUnit] = useState('UN');
   const [expirationDate, setExpirationDate] = useState('');
-
   const [formula, setFormula] = useState('');
   const [cas, setCas] = useState('');
   const [brand, setBrand] = useState('');
@@ -31,6 +33,26 @@ export default function NewItemScreen() {
   const [voltage, setVoltage] = useState('');
   const [capacity, setCapacity] = useState('');
   const [isRestricted, setIsRestricted] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      setCategory('REAGENTE');
+      setName('');
+      setCurrentQuantity('');
+      setMinQuantity('');
+      setLocation('');
+      setMeasurementUnit('UN');
+      setExpirationDate('');
+      setFormula('');
+      setCas('');
+      setBrand('');
+      setNotes('');
+      setModel('');
+      setVoltage('');
+      setCapacity('');
+      setIsRestricted(false);
+    }, []),
+  );
 
   const handleSave = async () => {
     const isEquipmentOrGlassware = category === 'EQUIPAMENTO' || category === 'VIDRARIA';
@@ -47,16 +69,17 @@ export default function NewItemScreen() {
 
     let finalExpirationDate = null;
     if (!isEquipmentOrGlassware) {
-      const parsedDate = new Date(expirationDate);
-      if (isNaN(parsedDate.getTime())) {
+      if (!expirationDate && category === 'REAGENTE') {
         Toast.show({
           type: 'error',
-          text1: 'Erro de Data',
-          text2: 'Por favor, insira uma data válida.',
+          text1: 'Erro de Validação',
+          text2: 'A data de validade é obrigatória para reagentes.',
         });
         return;
       }
-      finalExpirationDate = parsedDate.toISOString();
+      if (expirationDate) {
+        finalExpirationDate = `${expirationDate}T00:00:00.000Z`;
+      }
     }
 
     const payload: any = {
@@ -99,19 +122,7 @@ export default function NewItemScreen() {
           text1: 'Sucesso!',
           text2: 'Item cadastrado no inventário com sucesso.',
         });
-        setName('');
-        setCurrentQuantity('');
-        setMinQuantity('');
-        setExpirationDate('');
-        setLocation('');
-        setFormula('');
-        setCas('');
-        setBrand('');
-        setNotes('');
-        setModel('');
-        setVoltage('');
-        setCapacity('');
-        setIsRestricted(false);
+        router.push('/inventory');
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -134,7 +145,12 @@ export default function NewItemScreen() {
   return (
     <PageWrapper className="bg-[#F4F7F4]">
       <View className="flex-row items-center gap-4 px-4 pt-6 pb-4 bg-white border-b border-gray-200">
-        <BackButton />
+        <TouchableOpacity
+          onPress={() => router.push('/inventory')}
+          className="w-10 h-10 items-center justify-center rounded-full bg-gray-50"
+        >
+          <Feather name="arrow-left" size={20} color="#374151" />
+        </TouchableOpacity>
         <Text className="text-xl font-bold text-gray-900">Novo Item</Text>
       </View>
 

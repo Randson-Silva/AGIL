@@ -112,7 +112,7 @@ export class InventoryService {
         localizacao: data.localizacao,
         quantidade_minima: data.quantidade_minima,
         tipo_medida: data.tipo_medida,
-        data_validade: data.data_validade,
+        data_validade: null,
         natureza_patrimonial: 'TOMBADO',
         equipamentoInfo: {
           create: {
@@ -142,7 +142,7 @@ export class InventoryService {
         localizacao: data.localizacao,
         quantidade_minima: data.quantidade_minima,
         tipo_medida: data.tipo_medida,
-        data_validade: data.data_validade,
+        data_validade: null,
         vidrariaInfo: {
           create: {
             marca: data.marca,

@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { FormInput } from './form-input';
 import { FormSelect } from './form-select';
-import { FormDatePicker } from './form-date-picker';
+import { CalendarModal } from '../reservation/calendar-modal';
 
 const MEASUREMENT_UNITS = [
   { label: 'Miligrama (mg)', value: 'MG' },
@@ -59,11 +60,19 @@ export const BaseForm: React.FC<BaseFormProps> = ({
   const isUnit = measurementUnit === 'UN';
   const qtyPlaceholder = isUnit ? '0' : '0.0';
 
+  const [isCalendarVisible, setIsCalendarVisible] = useState(false);
+
   useEffect(() => {
     if (isEquipmentOrGlassware) {
       setMeasurementUnit('UN');
     }
   }, [category]);
+
+  const formatDateToBR = (isoString: string) => {
+    if (!isoString) return '';
+    const [y, m, d] = isoString.split('-');
+    return `${d}/${m}/${y}`;
+  };
 
   return (
     <View>
@@ -116,12 +125,32 @@ export const BaseForm: React.FC<BaseFormProps> = ({
             placeholder={`Ex.: ${qtyPlaceholder}`}
           />
         </View>
+
         {!isEquipmentOrGlassware && (
-          <View className="flex-1">
-            <FormDatePicker
-              label="VALIDADE *"
-              value={expirationDate}
-              onChange={setExpirationDate}
+          <View className="flex-1 mb-4">
+            <Text className="text-sm font-semibold mb-1 text-gray-700">
+              VALIDADE {category === 'REAGENTE' ? '*' : ''}
+            </Text>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => setIsCalendarVisible(true)}
+              className="flex-row items-center border border-gray-300 bg-white rounded-lg h-[50px] px-3"
+            >
+              <Text
+                className={`flex-1 text-base ${expirationDate ? 'text-gray-900' : 'text-gray-500'}`}
+              >
+                {expirationDate ? formatDateToBR(expirationDate) : 'DD/MM/AAAA'}
+              </Text>
+              <Feather name="calendar" size={18} color="#6B7280" />
+            </TouchableOpacity>
+
+            <CalendarModal
+              visible={isCalendarVisible}
+              onClose={() => setIsCalendarVisible(false)}
+              selectedDate={expirationDate}
+              onSelectDate={setExpirationDate}
+              allowPastDates={true}
+              title="Data de Validade"
             />
           </View>
         )}
