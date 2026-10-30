@@ -1,193 +1,164 @@
+import { useState, useCallback, useMemo } from 'react';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
+import axios from 'axios';
+import { useAuth } from './useAuth';
 import {
-  approveMaterialRequest,
-  confirmMaterialReturn,
-  listMaterialRequests,
-  rejectMaterialRequest,
-  MaterialRequestResponse,
-} from '../services/material-request.service';
-import {
-  approveReservation,
   getReservations,
-  registerReservationAbsence,
+  approveReservation,
   rejectReservation,
+  registerReservationAbsence,
   ReservationItem,
 } from '../services/reservation.service';
+import {
+  listMaterialRequests,
+  approveMaterialRequest,
+  rejectMaterialRequest,
+  confirmMaterialReturn,
+  MaterialRequestResponse,
+} from '../services/material-request.service';
 import { ApprovalTabOption } from '../components/approvals/approval-tabs';
 
-type RejectTarget =
-  | { type: 'RESERVA'; item: ReservationItem }
-  | { type: 'MATERIAL'; item: MaterialRequestResponse }
-  | null;
-
-function unwrapResponse<T>(response: { data: T | { data?: T } }): T {
-  const data = response.data;
-  if (
-    data &&
-    typeof data === 'object' &&
-    'data' in data &&
-    Array.isArray(data.data)
-  ) {
-    return data.data as T;
-  }
-  return data as T;
-}
-
-function reservationDate(item: ReservationItem): string {
-  return item.data_reserva.split('T')[0];
-}
-
-function localDate(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-    2,
-    '0',
-  )}-${String(date.getDate()).padStart(2, '0')}`;
-}
-
-function isStartedToday(item: ReservationItem, now: Date): boolean {
-  if (reservationDate(item) !== localDate(now)) return false;
-  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(
-    now.getMinutes(),
-  ).padStart(2, '0')}`;
-  return item.horarios.some((slot) => slot.hora_inicio <= currentTime);
-}
-
-function showError(message: string) {
-  Toast.show({ type: 'error', text1: 'Erro', text2: message });
+export interface RejectTarget {
+  id: string;
+  type: 'RESERVA' | 'MATERIAL';
+  protocol: string;
 }
 
 export function useAprovacoes() {
+  const { firstName, initials } = useAuth();
+
   const [activeTab, setActiveTab] = useState<ApprovalTabOption>('RESERVAS');
   const [reservations, setReservations] = useState<ReservationItem[]>([]);
-  const [materialRequests, setMaterialRequests] = useState<
-    MaterialRequestResponse[]
-  >([]);
+  const [materialRequests, setMaterialRequests] = useState<MaterialRequestResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
-  const [rejectTarget, setRejectTarget] = useState<RejectTarget>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+
+  // Modal de rejeição
+  const [rejectTarget, setRejectTarget] = useState<RejectTarget | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
 
-  const setProcessing = (id: string, processing: boolean) => {
-    setProcessingIds((current) => {
-      const next = new Set(current);
-      if (processing) next.add(id);
-      else next.delete(id);
-      return next;
-    });
-  };
-
-  const fetchApprovals = useCallback(async () => {
-    setIsLoading(true);
-    const [reservationsResult, materialsResult] = await Promise.allSettled([
-      getReservations(),
-      listMaterialRequests(),
-    ]);
-
-    if (reservationsResult.status === 'fulfilled') {
-      const data = unwrapResponse<ReservationItem[]>(reservationsResult.value);
-      setReservations(Array.isArray(data) ? data : []);
-    } else {
-      console.error('Erro ao buscar reservas para aprovação:', reservationsResult.reason);
-      setReservations([]);
-      showError('Não foi possível buscar as reservas.');
+  const fetchData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const [resReservas, resMateriais] = await Promise.all([
+        getReservations(),
+        listMaterialRequests(),
+      ]);
+      setReservations(resReservas.data || []);
+      setMaterialRequests(resMateriais.data || []);
+    } catch (error) {
+      console.error('Erro ao carregar aprovações:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Erro ao carregar',
+        text2: 'Não foi possível buscar as solicitações pendentes.',
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-    if (materialsResult.status === 'fulfilled') {
-      const data = unwrapResponse<MaterialRequestResponse[]>(
-        materialsResult.value,
-      );
-      setMaterialRequests(Array.isArray(data) ? data : []);
-    } else {
-      console.error(
-        'Erro ao buscar solicitações de materiais para aprovação:',
-        materialsResult.reason,
-      );
-      setMaterialRequests([]);
-      showError('Não foi possível buscar as solicitações de materiais.');
-    }
-
-    setIsLoading(false);
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      let isActive = true;
-      fetchApprovals().catch((error) => {
-        console.error('Erro ao carregar aprovações:', error);
-        if (isActive) showError('Não foi possível carregar as aprovações.');
-      });
-      return () => {
-        isActive = false;
-      };
-    }, [fetchApprovals]),
+      fetchData();
+    }, [fetchData]),
   );
 
-  const pendingReservations = useMemo(
-    () =>
-      reservations.filter(
-        (item) => item.status === 'PENDENTE' || item.status === 'AVISO_SIMPLES',
-      ),
-    [reservations],
-  );
-
-  const todayConfirmedReservations = useMemo(() => {
-    const now = new Date();
+  // Listas filtradas de Reservas
+  const pendingReservations = useMemo(() => {
     return reservations.filter(
-      (item) => item.status === 'APROVADA' && isStartedToday(item, now),
+      (r) => r.status === 'PENDENTE' || r.status === 'AVISO_SIMPLES',
     );
   }, [reservations]);
 
-  const approvedReservations = useMemo(
-    () => reservations.filter((item) => item.status === 'APROVADA'),
-    [reservations],
-  );
+  const todayIso = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }, []);
 
-  const pendingMaterialRequests = useMemo(
-    () => materialRequests.filter((item) => item.status === 'PENDENTE'),
-    [materialRequests],
-  );
+  const currentTime = useMemo(() => {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    return `${h}:${min}`;
+  }, []);
 
-  const withdrawnMaterialRequests = useMemo(
-    () => materialRequests.filter((item) => item.status === 'APROVADA'),
-    [materialRequests],
-  );
+  const todayConfirmedReservations = useMemo(() => {
+    return reservations.filter((r) => {
+      if (r.status !== 'APROVADA') return false;
+      const datePart = r.data_reserva?.split('T')[0];
+      const isToday = datePart === todayIso;
+      if (!isToday) return false;
 
-  const handleApproveReservation = async (id: string) => {
-    setProcessing(id, true);
-    try {
-      await approveReservation(id);
-      setReservations((items) =>
-        items.map((item) =>
-          item.id === id ? { ...item, status: 'APROVADA' } : item,
-        ),
+      // Horário já iniciado
+      if (!r.horarios || r.horarios.length === 0) return true;
+      const sorted = [...r.horarios].sort((a, b) =>
+        a.hora_inicio.localeCompare(b.hora_inicio),
       );
-      Toast.show({ type: 'success', text1: 'Reserva aprovada.' });
+      return sorted[0].hora_inicio <= currentTime;
+    });
+  }, [reservations, todayIso, currentTime]);
+
+  const approvedReservations = useMemo(() => {
+    return reservations.filter((r) => r.status === 'APROVADA');
+  }, [reservations]);
+
+  // Listas filtradas de Materiais
+  const pendingMaterialRequests = useMemo(() => {
+    return materialRequests.filter((m) => m.status === 'PENDENTE');
+  }, [materialRequests]);
+
+  const withdrawnMaterialRequests = useMemo(() => {
+    return materialRequests.filter((m) => m.status === 'APROVADA');
+  }, [materialRequests]);
+
+  // Ações de Reservas
+  const handleApproveReservation = async (id: string) => {
+    try {
+      setProcessingId(id);
+      await approveReservation(id);
+      Toast.show({
+        type: 'success',
+        text1: 'Reserva aprovada',
+        text2: 'A reserva de laboratório foi confirmada com sucesso.',
+      });
+      await fetchData();
     } catch (error) {
-      console.error('Erro ao aprovar reserva:', error);
-      showError('Não foi possível aprovar a reserva.');
+      const msg = axios.isAxiosError(error) && error.response?.data?.message;
+      Toast.show({
+        type: 'error',
+        text1: 'Erro ao aprovar',
+        text2: typeof msg === 'string' ? msg : 'Não foi possível aprovar a reserva.',
+      });
     } finally {
-      setProcessing(id, false);
+      setProcessingId(null);
     }
   };
 
   const handleRegisterAbsence = async (id: string) => {
-    setProcessing(id, true);
     try {
+      setProcessingId(id);
       await registerReservationAbsence(id);
-      setReservations((items) =>
-        items.map((item) =>
-          item.id === id ? { ...item, status: 'REJEITADA' } : item,
-        ),
-      );
-      Toast.show({ type: 'success', text1: 'Ausência registrada.' });
+      Toast.show({
+        type: 'success',
+        text1: 'Ausência registrada',
+        text2: 'A ausência do solicitante foi registrada no sistema.',
+      });
+      await fetchData();
     } catch (error) {
-      console.error('Erro ao registrar ausência:', error);
-      showError('Não foi possível registrar a ausência.');
+      const msg = axios.isAxiosError(error) && error.response?.data?.message;
+      Toast.show({
+        type: 'error',
+        text1: 'Erro ao registrar ausência',
+        text2: typeof msg === 'string' ? msg : 'Não foi possível registrar a ausência.',
+      });
     } finally {
-      setProcessing(id, false);
+      setProcessingId(null);
     }
   };
 
@@ -195,124 +166,141 @@ export function useAprovacoes() {
     Toast.show({
       type: 'info',
       text1: 'Em construção',
-      text2: 'A realocação de reservas estará disponível em breve.',
+      text2: 'A funcionalidade de realocação de reservas estará disponível em breve.',
     });
   };
 
+  // Ações de Materiais
   const handleApproveMaterial = async (id: string) => {
-    setProcessing(id, true);
     try {
+      setProcessingId(id);
       await approveMaterialRequest(id);
-      setMaterialRequests((items) =>
-        items.map((item) =>
-          item.id === id ? { ...item, status: 'APROVADA' } : item,
-        ),
-      );
-      Toast.show({ type: 'success', text1: 'Solicitação aprovada.' });
+      Toast.show({
+        type: 'success',
+        text1: 'Material aprovado',
+        text2: 'Solicitação aprovada e baixa realizada no estoque.',
+      });
+      await fetchData();
     } catch (error) {
-      console.error('Erro ao aprovar solicitação de material:', error);
-      showError('Não foi possível aprovar a solicitação.');
+      const msg = axios.isAxiosError(error) && error.response?.data?.message;
+      Toast.show({
+        type: 'error',
+        text1: 'Erro ao aprovar',
+        text2: typeof msg === 'string' ? msg : 'Não foi possível aprovar os materiais.',
+      });
     } finally {
-      setProcessing(id, false);
+      setProcessingId(null);
     }
   };
 
   const handleConfirmReturn = async (id: string) => {
-    setProcessing(id, true);
     try {
+      setProcessingId(id);
       await confirmMaterialReturn(id);
-      setMaterialRequests((items) =>
-        items.map((item) =>
-          item.id === id ? { ...item, status: 'DEVOLVIDA' } : item,
-        ),
-      );
-      Toast.show({ type: 'success', text1: 'Devolução confirmada.' });
+      Toast.show({
+        type: 'success',
+        text1: 'Devolução confirmada',
+        text2: 'Insumos devolvidos com sucesso e saldo de estoque atualizado.',
+      });
+      await fetchData();
     } catch (error) {
-      console.error('Erro ao confirmar devolução:', error);
-      showError('Não foi possível confirmar a devolução.');
+      const msg = axios.isAxiosError(error) && error.response?.data?.message;
+      Toast.show({
+        type: 'error',
+        text1: 'Erro ao devolver',
+        text2: typeof msg === 'string' ? msg : 'Não foi possível confirmar a devolução.',
+      });
     } finally {
-      setProcessing(id, false);
+      setProcessingId(null);
     }
   };
 
-  const openRejectModal = (target: RejectTarget) => {
-    setRejectTarget(target);
+  // Modal de Rejeição
+  const openRejectModal = (id: string, type: 'RESERVA' | 'MATERIAL', protocol: string) => {
+    setRejectTarget({ id, type, protocol });
     setRejectReason('');
   };
 
   const closeRejectModal = () => {
-    if (isRejecting) return;
     setRejectTarget(null);
     setRejectReason('');
   };
 
-  const confirmReject = async () => {
+  const handleConfirmReject = async () => {
     if (!rejectTarget) return;
-    const reason = rejectReason.trim();
-    if (!reason) {
-      showError('Informe o motivo da rejeição.');
+
+    if (!rejectReason.trim()) {
+      Toast.show({
+        type: 'error',
+        text1: 'Motivo obrigatório',
+        text2: 'Informe uma justificativa para a rejeição.',
+      });
       return;
     }
 
-    setIsRejecting(true);
-    setProcessing(rejectTarget.item.id, true);
     try {
+      setIsRejecting(true);
       if (rejectTarget.type === 'RESERVA') {
-        await rejectReservation(rejectTarget.item.id, {
-          motivo_rejeicao: reason,
+        await rejectReservation(rejectTarget.id, {
+          motivo_rejeicao: rejectReason.trim(),
         });
-        setReservations((items) =>
-          items.map((item) =>
-            item.id === rejectTarget.item.id
-              ? { ...item, status: 'REJEITADA', motivo_rejeicao: reason }
-              : item,
-          ),
-        );
+        Toast.show({
+          type: 'success',
+          text1: 'Reserva rejeitada',
+          text2: 'A reserva foi rejeitada e a justificativa foi gravada.',
+        });
       } else {
-        await rejectMaterialRequest(rejectTarget.item.id, {
-          motivo_rejeicao: reason,
+        await rejectMaterialRequest(rejectTarget.id, {
+          motivo_rejeicao: rejectReason.trim(),
         });
-        setMaterialRequests((items) =>
-          items.map((item) =>
-            item.id === rejectTarget.item.id
-              ? { ...item, status: 'REJEITADA', motivo_rejeicao: reason }
-              : item,
-          ),
-        );
+        Toast.show({
+          type: 'success',
+          text1: 'Solicitação rejeitada',
+          text2: 'A solicitação foi rejeitada e o solicitante notificado.',
+        });
       }
-      Toast.show({ type: 'success', text1: 'Rejeição registrada.' });
-      setRejectTarget(null);
-      setRejectReason('');
+      closeRejectModal();
+      await fetchData();
     } catch (error) {
-      console.error('Erro ao rejeitar solicitação:', error);
-      showError('Não foi possível registrar a rejeição.');
+      const msg = axios.isAxiosError(error) && error.response?.data?.message;
+      Toast.show({
+        type: 'error',
+        text1: 'Erro ao rejeitar',
+        text2: typeof msg === 'string' ? msg : 'Não foi possível rejeitar a solicitação.',
+      });
     } finally {
       setIsRejecting(false);
-      setProcessing(rejectTarget.item.id, false);
     }
   };
 
   return {
+    firstName,
+    initials,
     activeTab,
     setActiveTab,
     isLoading,
-    processingIds,
+    processingId,
+    // Reservas
     pendingReservations,
     todayConfirmedReservations,
     approvedReservations,
-    pendingMaterialRequests,
-    withdrawnMaterialRequests,
     handleApproveReservation,
     handleRegisterAbsence,
     handleReallocatePress,
+    // Materiais
+    pendingMaterialRequests,
+    withdrawnMaterialRequests,
     handleApproveMaterial,
     handleConfirmReturn,
+    // Rejeição
     rejectTarget,
     rejectReason,
     setRejectReason,
+    isRejecting,
     openRejectModal,
     closeRejectModal,
-    confirmReject,
-    isRejecting,
+    handleConfirmReject,
+    // Refresh
+    refresh: fetchData,
   };
 }
