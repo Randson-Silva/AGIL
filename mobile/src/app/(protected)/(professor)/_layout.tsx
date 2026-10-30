@@ -1,11 +1,6 @@
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  HomeIcon,
-  CalendarIcon,
-  CubeIcon,
-  ArchiveBoxIcon,
-} from 'react-native-heroicons/outline';
+import { HomeIcon, CalendarIcon, CubeIcon, ArchiveBoxIcon } from 'react-native-heroicons/outline';
 
 export default function ProfessorLayout() {
   const insets = useSafeAreaInsets();
@@ -35,36 +30,28 @@ export default function ProfessorLayout() {
         name="painel"
         options={{
           title: 'Início',
-          tabBarIcon: ({ color, size }) => (
-            <HomeIcon size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <HomeIcon size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="reservas"
         options={{
           title: 'Reservas',
-          tabBarIcon: ({ color, size }) => (
-            <CalendarIcon size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <CalendarIcon size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="materiais"
         options={{
           title: 'Materiais',
-          tabBarIcon: ({ color, size }) => (
-            <CubeIcon size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <CubeIcon size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="historico"
         options={{
           title: 'Histórico',
-          tabBarIcon: ({ color, size }) => (
-            <ArchiveBoxIcon size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <ArchiveBoxIcon size={size} color={color} />,
         }}
       />
       {/* Esconder abas internas de navegação que não fazem parte do bottom menu */}
@@ -76,6 +63,12 @@ export default function ProfessorLayout() {
       />
       <Tabs.Screen
         name="new-reservation"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="report-breakdown"
         options={{
           href: null,
         }}
