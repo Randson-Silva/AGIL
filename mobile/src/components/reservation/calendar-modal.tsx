@@ -1,3 +1,4 @@
+// mobile/src/components/ui/calendar-modal.tsx (Ajuste o caminho conforme seu projeto)
 import React, { useState, useMemo, useEffect } from 'react';
 import { Modal, View, Text, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
@@ -7,6 +8,8 @@ interface CalendarModalProps {
   onClose: () => void;
   selectedDate: string;
   onSelectDate: (dateIso: string) => void;
+  allowPastDates?: boolean;
+  title?: string;
 }
 
 const MONTHS = [
@@ -31,6 +34,8 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
   onClose,
   selectedDate,
   onSelectDate,
+  allowPastDates = false,
+  title = 'Selecionar Data',
 }) => {
   const todayInfo = useMemo(() => {
     const now = new Date();
@@ -71,12 +76,14 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
   }, [visible, initialDate]);
 
   const availableYears = useMemo(() => {
-    return Array.from({ length: 10 }, (_, i) => todayInfo.year + i);
-  }, [todayInfo.year]);
+    const baseYear = allowPastDates ? todayInfo.year - 5 : todayInfo.year;
+    const length = allowPastDates ? 15 : 10;
+    return Array.from({ length }, (_, i) => baseYear + i);
+  }, [todayInfo.year, allowPastDates]);
 
   const handleSelectYear = (yr: number) => {
     setViewYear(yr);
-    if (yr === todayInfo.year && viewMonth < todayInfo.month) {
+    if (!allowPastDates && yr === todayInfo.year && viewMonth < todayInfo.month) {
       setViewMonth(todayInfo.month);
     }
     setShowYearList(false);
@@ -140,7 +147,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
       <View className="flex-1 bg-black/50 justify-center items-center px-5">
         <View className="w-full bg-[#F8FBF9] rounded-[32px] p-5 border border-[#00623B]/20 shadow-lg">
           <View className="bg-[#E3F3EC] rounded-3xl py-5 px-4 items-center relative mb-4">
-            <Text className="text-xl font-bold text-[#064E3B] mb-4">Selecionar Reserva</Text>
+            <Text className="text-xl font-bold text-[#064E3B] mb-4">{title}</Text>
 
             <TouchableOpacity
               onPress={onClose}
@@ -179,7 +186,8 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
           {showMonthList && (
             <View className="flex-row flex-wrap justify-between bg-white p-3 rounded-2xl border border-gray-200 mb-3 gap-y-2">
               {MONTHS.map((m, idx) => {
-                const isPastMonth = viewYear === todayInfo.year && idx < todayInfo.month;
+                const isPastMonth =
+                  !allowPastDates && viewYear === todayInfo.year && idx < todayInfo.month;
                 const isSelectedMonth = viewMonth === idx;
 
                 return (
@@ -250,7 +258,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
               {calendarDays.map((item, index) => {
                 const isoDate = formatToIso(item.year, item.month, item.day);
                 const isSelected = selectedDate === isoDate;
-                const isPastDate = isoDate < todayInfo.iso;
+                const isPastDate = !allowPastDates && isoDate < todayInfo.iso;
 
                 return (
                   <TouchableOpacity

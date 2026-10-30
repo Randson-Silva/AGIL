@@ -16,7 +16,7 @@ export class RequestModuleService {
     private readonly inventoryService: InventoryService,
   ) {}
 
-  private async validateRestrictedItems(
+  private async validateRequestItems(
     itens?: { insumo_id: string }[],
   ): Promise<void> {
     if (!itens || itens.length === 0) return;
@@ -28,6 +28,9 @@ export class RequestModuleService {
       include: { equipamentoInfo: true },
     });
 
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
     for (const item of itens) {
       const insumo = insumos.find((i) => i.id === item.insumo_id);
 
@@ -37,14 +40,25 @@ export class RequestModuleService {
 
       if (insumo.equipamentoInfo?.uso_restrito) {
         throw new BadRequestException(
-          'Este equipamento não pode ser retirado do laboratório',
+          `O equipamento '${insumo.nome}' não pode ser retirado do laboratório`,
         );
+      }
+
+      if (insumo.categoria === 'REAGENTE' && insumo.data_validade) {
+        const dataValidade = new Date(insumo.data_validade);
+        dataValidade.setHours(0, 0, 0, 0);
+
+        if (dataValidade < hoje) {
+          throw new BadRequestException(
+            `O reagente '${insumo.nome}' está com a validade expirada e não pode ser solicitado.`,
+          );
+        }
       }
     }
   }
 
   async create(solicitanteId: string, dto: CreateRequestDto) {
-    await this.validateRestrictedItems(dto.itens);
+    await this.validateRequestItems(dto.itens);
 
     return this.prisma.solicitacaoMaterial.create({
       data: {
@@ -105,7 +119,7 @@ export class RequestModuleService {
     }
 
     if (dto.itens) {
-      await this.validateRestrictedItems(dto.itens);
+      await this.validateRequestItems(dto.itens);
     }
 
     return this.prisma.solicitacaoMaterial.update({

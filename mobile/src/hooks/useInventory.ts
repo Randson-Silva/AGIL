@@ -1,10 +1,11 @@
 import { useState, useCallback, useMemo } from 'react';
 import { getInventoryItems } from '../services/inventory.service';
+import { getExpirationStatus } from '../utils/date-utils';
 import { useAuth } from './useAuth';
 
 export type InventoryFilter =
   | 'Todos'
-  | 'Estoque crítico'
+  | 'Alerta Crítico'
   | 'Reagente'
   | 'Solução'
   | 'Vidraria'
@@ -12,7 +13,7 @@ export type InventoryFilter =
 
 export const INVENTORY_FILTERS: InventoryFilter[] = [
   'Todos',
-  'Estoque crítico',
+  'Alerta Crítico',
   'Reagente',
   'Solução',
   'Vidraria',
@@ -88,11 +89,22 @@ export function useInventory() {
     }
   }, [searchQuery]);
 
+  // Função auxiliar para determinar se um item exige atenção do Técnico
+  const isItemCritical = useCallback((item: InventoryItem) => {
+    const isLowStock = Number(item.quantidade_saldo) <= Number(item.quantidade_minima || 0);
+
+    let hasExpirationWarning = false;
+    if (item.categoria === 'REAGENTE' || item.categoria === 'SOLUCAO') {
+      const { isExpired, isExpiringSoon } = getExpirationStatus(item.data_validade);
+      hasExpirationWarning = isExpired || isExpiringSoon;
+    }
+
+    return isLowStock || hasExpirationWarning;
+  }, []);
+
   const criticalItemsCount = useMemo(() => {
-    return items.filter(
-      (item) => Number(item.quantidade_saldo) <= Number(item.quantidade_minima || 0),
-    ).length;
-  }, [items]);
+    return items.filter(isItemCritical).length;
+  }, [items, isItemCritical]);
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
@@ -109,8 +121,8 @@ export function useInventory() {
       }
 
       // Filtro de botões (categoria/estado)
-      if (activeFilter === 'Estoque crítico') {
-        return Number(item.quantidade_saldo) <= Number(item.quantidade_minima || 0);
+      if (activeFilter === 'Alerta Crítico') {
+        return isItemCritical(item);
       }
       if (activeFilter === 'Reagente') {
         return item.categoria === 'REAGENTE';
@@ -127,7 +139,7 @@ export function useInventory() {
 
       return true; // Todos
     });
-  }, [items, searchQuery, activeFilter]);
+  }, [items, searchQuery, activeFilter, isItemCritical]);
 
   return {
     items: filteredItems,

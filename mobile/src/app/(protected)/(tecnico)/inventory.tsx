@@ -94,7 +94,7 @@ export default function InventoryScreen() {
             )}
           </ScrollView>
         )}
-      </View>.
+      </View>
     </PageWrapper>
   );
 }
