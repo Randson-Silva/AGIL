@@ -96,7 +96,7 @@ export function useProfessorDashboard() {
       iconName: 'ExclamationTriangleIcon',
       label: 'Reportar avaria',
       description: 'Quebra, defeito ou contaminação',
-      onPress: () => router.push('/(protected)/(professor)/report-breakdown'), // Rota atualizada
+      onPress: () => router.push('/(protected)/(professor)/report-breakdown'),
     },
     {
       id: 'minhas_reservas',

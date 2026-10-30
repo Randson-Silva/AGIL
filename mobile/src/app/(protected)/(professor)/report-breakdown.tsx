@@ -7,6 +7,7 @@ import {
   ScrollView,
   TextInput,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
@@ -162,12 +163,14 @@ export default function ReportBreakdownScreen() {
       });
       router.back();
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 400) {
+      if (axios.isAxiosError(error)) {
+        const msg = error.response?.data?.message || 'Verifique sua conexão ou a rota da API.';
         Toast.show({
           type: 'error',
-          text1: 'Erro na requisição',
-          text2: error.response.data.message,
+          text1: `Erro ${error.response?.status || ''}`,
+          text2: Array.isArray(msg) ? msg.join('\n') : msg,
         });
+        console.log('DETALHES DO ERRO API:', error.response?.data);
       } else {
         Toast.show({ type: 'error', text1: 'Erro', text2: 'Não foi possível reportar a avaria.' });
       }
@@ -196,6 +199,8 @@ export default function ReportBreakdownScreen() {
         contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
         keyboardShouldPersistTaps="handled"
         enableOnAndroid={true}
+        extraScrollHeight={Platform.OS === 'ios' ? 20 : 100}
+        enableAutomaticScroll={true}
       >
         <View className="bg-[#FEF3C7] rounded-xl p-4 flex-row items-start mb-6 border border-[#FDE68A]">
           <Feather name="alert-triangle" size={20} color="#92400E" className="mt-0.5 mr-3" />
