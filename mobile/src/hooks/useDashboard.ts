@@ -2,6 +2,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useAuth } from './useAuth';
 import { listMaterialRequests } from '../services/material-request.service';
+import { getReservations } from '../services/reservation.service';
 import { getInventoryItems } from '../services/inventory.service';
 import {
   AlertItem,
@@ -26,6 +27,10 @@ export function useDashboard() {
     router.navigate('/(protected)/(tecnico)/new-item');
   };
 
+  const handleNavigateToAprovacoes = () => {
+    router.navigate('/(protected)/(tecnico)/aprovacoes');
+  };
+
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -33,28 +38,56 @@ export function useDashboard() {
       const fetchStats = async () => {
         setIsLoadingStats(true);
 
-        const [requestsResult, inventoryResult] = await Promise.allSettled([
-          listMaterialRequests({ status: 'PENDENTE' }),
-          getInventoryItems(),
-        ]);
+        const [requestsResult, reservationsResult, inventoryResult] =
+          await Promise.allSettled([
+            listMaterialRequests({ status: 'PENDENTE' }),
+            getReservations(),
+            getInventoryItems(),
+          ]);
 
         if (!isActive) return;
 
+        let pendingMaterials = 0;
         if (requestsResult.status === 'fulfilled') {
-          const data = requestsResult.value.data?.data || requestsResult.value.data;
-          setPendingCount(Array.isArray(data) ? data.length : 0);
+          const data =
+            requestsResult.value.data?.data || requestsResult.value.data;
+          pendingMaterials = Array.isArray(data) ? data.length : 0;
         } else {
-          console.error('Erro ao buscar aprovações pendentes:', requestsResult.reason);
-          setPendingCount(0);
+          console.error(
+            'Erro ao buscar aprovações pendentes de materiais:',
+            requestsResult.reason,
+          );
         }
 
+        let pendingReservations = 0;
+        if (reservationsResult.status === 'fulfilled') {
+          const data =
+            reservationsResult.value.data?.data ||
+            reservationsResult.value.data;
+          if (Array.isArray(data)) {
+            pendingReservations = data.filter(
+              (r: { status?: string }) =>
+                r.status === 'PENDENTE' || r.status === 'AVISO_SIMPLES',
+            ).length;
+          }
+        } else {
+          console.error(
+            'Erro ao buscar reservas pendentes:',
+            reservationsResult.reason,
+          );
+        }
+
+        setPendingCount(pendingMaterials + pendingReservations);
+
         if (inventoryResult.status === 'fulfilled') {
-          const data = inventoryResult.value.data?.data || inventoryResult.value.data;
+          const data =
+            inventoryResult.value.data?.data || inventoryResult.value.data;
           if (Array.isArray(data)) {
             setInventoryCount(data.length);
             const critical = data.filter(
               (item: { quantidade_saldo?: number; quantidade_minima?: number }) =>
-                Number(item.quantidade_saldo ?? 0) <= Number(item.quantidade_minima ?? 0),
+                Number(item.quantidade_saldo ?? 0) <=
+                Number(item.quantidade_minima ?? 0),
             ).length;
             setCriticalCount(critical);
           } else {
@@ -84,18 +117,21 @@ export function useDashboard() {
       count: pendingCount.toString().padStart(2, '0'),
       label: 'Aprovações\npendentes',
       iconName: 'ClipboardDocumentCheckIcon',
+      onPress: handleNavigateToAprovacoes,
     },
     {
       id: '2',
       count: criticalCount.toString().padStart(2, '0'),
       label: 'Itens\ncríticos',
       iconName: 'ExclamationTriangleIcon',
+      onPress: handleNavigateToInventory,
     },
     {
       id: '3',
       count: inventoryCount.toString().padStart(2, '0'),
       label: 'Itens no\ninventário',
       iconName: 'CubeIcon',
+      onPress: handleNavigateToInventory,
     },
   ];
 
@@ -105,7 +141,8 @@ export function useDashboard() {
       status: 'Avaria',
       timeAgo: 'há 12 min',
       title: 'Bureta 50 mL quebrada',
-      description: 'Reportado por Prof.ª Jaqueline Rocha — Lab. de Química Geral',
+      description:
+        'Reportado por Prof.ª Jaqueline Rocha — Lab. de Química Geral',
     },
     {
       id: '2',
