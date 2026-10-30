@@ -1,8 +1,16 @@
-import { Feather } from '@expo/vector-icons';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import React from 'react';
+import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import { PageWrapper } from '../../../components/ui/page-wrapper';
 import { HeaderDashboard } from '../../../components/dashboard/header-dashboard';
-import { BackButton } from '../../../components/ui/Back-button';
 import { ApprovalTabs } from '../../../components/approvals/approval-tabs';
 import { PendingReservationCard } from '../../../components/approvals/pending-reservation-card';
 import { TodayConfirmedReservationCard } from '../../../components/approvals/today-confirmed-reservation-card';
@@ -10,37 +18,35 @@ import { ApprovedReservationCard } from '../../../components/approvals/approved-
 import { MaterialRequestApprovalCard } from '../../../components/approvals/material-request-approval-card';
 import { RejectModal } from '../../../components/approvals/reject-modal';
 import { useAprovacoes } from '../../../hooks/useAprovacoes';
-import { useAuth } from '../../../hooks/useAuth';
 
 export default function AprovacoesScreen() {
-  const { firstName, initials } = useAuth();
+  const router = useRouter();
   const {
+    firstName,
+    initials,
     activeTab,
     setActiveTab,
     isLoading,
-    processingIds,
+    processingId,
     pendingReservations,
     todayConfirmedReservations,
     approvedReservations,
-    pendingMaterialRequests,
-    withdrawnMaterialRequests,
     handleApproveReservation,
     handleRegisterAbsence,
     handleReallocatePress,
+    pendingMaterialRequests,
+    withdrawnMaterialRequests,
     handleApproveMaterial,
     handleConfirmReturn,
     rejectTarget,
     rejectReason,
     setRejectReason,
+    isRejecting,
     openRejectModal,
     closeRejectModal,
-    confirmReject,
-    isRejecting,
+    handleConfirmReject,
+    refresh,
   } = useAprovacoes();
-
-  const approvedWithoutToday = approvedReservations.filter(
-    (item) => !todayConfirmedReservations.some((today) => today.id === item.id),
-  );
 
   return (
     <PageWrapper className="bg-[#F8FAF9]">
@@ -48,19 +54,36 @@ export default function AprovacoesScreen() {
         userName={firstName}
         initials={initials}
         title="Aprovações"
-        icon={<Feather name="check-circle" size={20} color="#FFF" />}
+        icon={<FontAwesome5 name="flask" size={18} color="#FFF" />}
         hasBorder
       />
 
-      <View className="flex-row items-center px-6 pt-4">
-        <BackButton />
-      </View>
-
       <ScrollView
-        className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 24, paddingTop: 16, paddingBottom: 40 }}
+        className="flex-1"
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={refresh}
+            colors={['#00623B']}
+            tintColor="#00623B"
+          />
+        }
       >
+        {/* Linha de retorno */}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => router.back()}
+          className="flex-row items-center mb-4 self-start"
+        >
+          <View className="w-8 h-8 rounded-full border border-gray-200 bg-white items-center justify-center mr-2 shadow-xs">
+            <Feather name="arrow-left" size={16} color="#00623B" />
+          </View>
+          <Text className="text-[#00623B] font-bold text-sm">Voltar</Text>
+        </TouchableOpacity>
+
+        {/* Abas de Aprovação */}
         <ApprovalTabs
           activeTab={activeTab}
           onChangeTab={setActiveTab}
@@ -68,125 +91,165 @@ export default function AprovacoesScreen() {
           hasPendingMaterials={pendingMaterialRequests.length > 0}
         />
 
-        {isLoading ? (
-          <View className="items-center py-16">
-            <ActivityIndicator size="large" color="#00623B" />
-          </View>
-        ) : activeTab === 'RESERVAS' ? (
-          <>
-            <SectionTitle title="RESERVAS PENDENTES" />
-            {pendingReservations.length === 0 ? (
-              <EmptyState text="Nenhuma reserva pendente." />
-            ) : (
+        {/* Conteúdo da Aba: RESERVAS */}
+        {activeTab === 'RESERVAS' && (
+          <View>
+            {/* Lista de Reservas Pendentes */}
+            {pendingReservations.length > 0 ? (
               pendingReservations.map((item) => (
                 <PendingReservationCard
                   key={item.id}
                   item={item}
-                  isProcessing={processingIds.has(item.id)}
+                  isProcessing={processingId === item.id}
                   onApprove={handleApproveReservation}
-                  onReject={(reservation) =>
-                    openRejectModal({ type: 'RESERVA', item: reservation })
+                  onReject={(res) =>
+                    openRejectModal(
+                      res.id,
+                      'RESERVA',
+                      `R-${res.id.substring(0, 4).toUpperCase()}`,
+                    )
                   }
                 />
               ))
-            )}
+            ) : !isLoading ? (
+              <View className="bg-white rounded-[24px] p-6 mb-6 items-center justify-center border border-gray-100">
+                <Text className="text-gray-500 text-sm font-medium">
+                  Nenhuma reserva pendente de aprovação.
+                </Text>
+              </View>
+            ) : null}
 
-            {todayConfirmedReservations.length > 0 && (
-              <>
-                <SectionTitle title="RESERVAS CONFIRMADAS DE HOJE" />
-                {todayConfirmedReservations.map((item) => (
+            {/* Seção: RESERVAS CONFIRMADAS DE HOJE */}
+            <View className="mt-2 mb-2">
+              <Text className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                RESERVAS CONFIRMADAS DE HOJE
+              </Text>
+              <Text className="text-xs text-gray-500 mb-4 leading-4">
+                Horário já iniciado. Registre a ausência caso o solicitante não tenha comparecido.
+              </Text>
+
+              {todayConfirmedReservations.length > 0 ? (
+                todayConfirmedReservations.map((item) => (
                   <TodayConfirmedReservationCard
                     key={item.id}
                     item={item}
-                    isProcessing={processingIds.has(item.id)}
+                    isProcessing={processingId === item.id}
                     onRegisterAbsence={handleRegisterAbsence}
                   />
-                ))}
-              </>
-            )}
+                ))
+              ) : (
+                <View className="bg-white/60 rounded-2xl p-4 mb-4 border border-dashed border-gray-200 items-center">
+                  <Text className="text-gray-400 text-xs">
+                    Nenhuma aula iniciada aguardando confirmação hoje.
+                  </Text>
+                </View>
+              )}
+            </View>
 
-            {approvedWithoutToday.length > 0 && (
-              <>
-                <SectionTitle title="RESERVAS APROVADAS" />
-                {approvedWithoutToday.map((item) => (
+            {/* Seção: RESERVAS APROVADAS */}
+            <View className="mt-4 mb-2">
+              <Text className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                RESERVAS APROVADAS
+              </Text>
+              <Text className="text-xs text-gray-500 mb-4 leading-4">
+                Se necessária mudanças na reserva, faça a realocação. O solicitante decide se aceita ou não.
+              </Text>
+
+              {approvedReservations.length > 0 ? (
+                approvedReservations.map((item) => (
                   <ApprovedReservationCard
                     key={item.id}
                     item={item}
                     onReallocatePress={handleReallocatePress}
                   />
-                ))}
-              </>
-            )}
-          </>
-        ) : (
-          <>
-            <SectionTitle title="SOLICITAÇÕES PENDENTES" />
-            {pendingMaterialRequests.length === 0 ? (
-              <EmptyState text="Nenhuma solicitação pendente." />
-            ) : (
+                ))
+              ) : (
+                <View className="bg-white/60 rounded-2xl p-4 mb-4 border border-dashed border-gray-200 items-center">
+                  <Text className="text-gray-400 text-xs">
+                    Nenhuma reserva aprovada no momento.
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* Conteúdo da Aba: MATERIAIS */}
+        {activeTab === 'MATERIAIS' && (
+          <View>
+            {/* Lista de Solicitações Pendentes */}
+            {pendingMaterialRequests.length > 0 ? (
               pendingMaterialRequests.map((item) => (
                 <MaterialRequestApprovalCard
                   key={item.id}
                   item={item}
                   mode="PENDING"
-                  isProcessing={processingIds.has(item.id)}
+                  isProcessing={processingId === item.id}
                   onApprove={handleApproveMaterial}
-                  onReject={(request) =>
-                    openRejectModal({ type: 'MATERIAL', item: request })
+                  onReject={(req) =>
+                    openRejectModal(
+                      req.id,
+                      'MATERIAL',
+                      `S-${req.id.substring(0, 4).toUpperCase()}`,
+                    )
                   }
                 />
               ))
-            )}
+            ) : !isLoading ? (
+              <View className="bg-white rounded-[24px] p-6 mb-6 items-center justify-center border border-gray-100">
+                <Text className="text-gray-500 text-sm font-medium">
+                  Nenhuma solicitação de material pendente.
+                </Text>
+              </View>
+            ) : null}
 
-            {withdrawnMaterialRequests.length > 0 && (
-              <>
-                <SectionTitle title="MATERIAIS RETIRADOS" />
-                {withdrawnMaterialRequests.map((item) => (
+            {/* Seção: HISTÓRICO DE MATERIAIS E INSUMOS RETIRADOS */}
+            <View className="mt-2 mb-2">
+              <Text className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                HISTÓRICO DE MATERIAIS E INSUMOS RETIRADOS
+              </Text>
+              <Text className="text-xs text-gray-500 mb-4 leading-4">
+                Materiais e insumos que foram disponibilizados para alunos e professores.
+              </Text>
+
+              {withdrawnMaterialRequests.length > 0 ? (
+                withdrawnMaterialRequests.map((item) => (
                   <MaterialRequestApprovalCard
                     key={item.id}
                     item={item}
                     mode="WITHDRAWN"
-                    isProcessing={processingIds.has(item.id)}
+                    isProcessing={processingId === item.id}
                     onConfirmReturn={handleConfirmReturn}
                   />
-                ))}
-              </>
-            )}
-          </>
+                ))
+              ) : (
+                <View className="bg-white/60 rounded-2xl p-4 mb-4 border border-dashed border-gray-200 items-center">
+                  <Text className="text-gray-400 text-xs">
+                    Nenhum material pendente de devolução.
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
+        {isLoading && (
+          <View className="py-6 items-center justify-center">
+            <ActivityIndicator size="small" color="#00623B" />
+          </View>
         )}
       </ScrollView>
 
+      {/* Modal de Rejeição (Reservas e Materiais) */}
       <RejectModal
-        visible={rejectTarget !== null}
-        protocol={
-          rejectTarget
-            ? `${rejectTarget.type === 'RESERVA' ? 'R' : 'S'}-${rejectTarget.item.id
-                .substring(0, 4)
-                .toUpperCase()}`
-            : 'XXXX'
-        }
+        visible={Boolean(rejectTarget)}
+        protocol={rejectTarget?.protocol || ''}
         reason={rejectReason}
         onChangeReason={setRejectReason}
         onClose={closeRejectModal}
-        onConfirm={confirmReject}
+        onConfirm={handleConfirmReject}
         isLoading={isRejecting}
       />
     </PageWrapper>
-  );
-}
-
-function SectionTitle({ title }: { title: string }) {
-  return (
-    <Text className="text-xs font-bold tracking-wider text-gray-500 mb-3 mt-2">
-      {title}
-    </Text>
-  );
-}
-
-function EmptyState({ text }: { text: string }) {
-  return (
-    <View className="bg-white rounded-2xl border border-gray-200 p-5 mb-5">
-      <Text className="text-sm text-gray-500 text-center">{text}</Text>
-    </View>
   );
 }
