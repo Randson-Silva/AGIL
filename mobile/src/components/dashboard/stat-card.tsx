@@ -1,5 +1,5 @@
 import * as OutlineIcons from 'react-native-heroicons/outline';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { StatItem } from './types';
 
 interface StatCardProps {
@@ -26,12 +26,17 @@ export function StatCard({ item }: StatCardProps) {
   };
 
   const Icon = (OutlineIcons as any)[item.iconName];
+  const Container = item.onPress ? TouchableOpacity : View;
 
   return (
-    <View className="bg-white rounded-3xl p-4 mr-3 border border-gray-100 shadow-sm w-[110px]">
+    <Container
+      activeOpacity={0.7}
+      onPress={item.onPress}
+      className="bg-white rounded-3xl p-4 mr-3 border border-gray-100 shadow-sm w-[110px]"
+    >
       {Icon && <Icon size={24} color={getIconColor()} className="mb-2" />}
       <Text className={`text-2xl font-bold mb-1 ${getTextColor()}`}>{item.count}</Text>
       <Text className="text-gray-500 text-xs leading-tight">{item.label}</Text>
-    </View>
+    </Container>
   );
 }
