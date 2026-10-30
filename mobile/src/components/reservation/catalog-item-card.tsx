@@ -1,4 +1,3 @@
-// mobile/src/components/catalog/catalog-item-card.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
@@ -21,7 +20,6 @@ export function CatalogItemCard({
 }: CatalogItemCardProps) {
   const isRestricted = Boolean(item.equipamentoInfo?.uso_restrito ?? item.uso_restrito);
 
-  // Validação de Vencimento
   const { isExpired } = getExpirationStatus(item.data_validade);
   const isExpiredReagent = item.categoria === 'REAGENTE' && isExpired;
 

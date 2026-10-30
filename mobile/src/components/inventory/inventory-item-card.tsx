@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
 import { UNIT_LABELS } from '../../utils/constants';
+import { getExpirationStatus } from '../../utils/date-utils';
 import { InventoryItem } from '../../hooks/useInventory';
 
 interface InventoryItemCardProps {
@@ -9,9 +11,15 @@ interface InventoryItemCardProps {
 }
 
 export const InventoryItemCard: React.FC<InventoryItemCardProps> = ({ item }) => {
-  const isCritical = Number(item.quantidade_saldo) <= Number(item.quantidade_minima || 0);
-
   const router = useRouter();
+
+  const isLowStock = Number(item.quantidade_saldo) <= Number(item.quantidade_minima || 0);
+
+  const { isExpired, isExpiringSoon, daysLeft } = getExpirationStatus(item.data_validade);
+  const showExpirationAlert = item.categoria === 'REAGENTE' || item.categoria === 'SOLUCAO';
+
+  const isCriticalAlert = isLowStock || (showExpirationAlert && isExpired);
+  const isWarningAlert = showExpirationAlert && isExpiringSoon;
 
   const formatDateToBR = (dateString?: string | null) => {
     if (!dateString) return 'Sem validade';
@@ -46,19 +54,29 @@ export const InventoryItemCard: React.FC<InventoryItemCardProps> = ({ item }) =>
   const unitLabel = UNIT_LABELS[item.tipo_medida] || item.tipo_medida;
 
   return (
-    <View className="bg-white border border-gray-200 rounded-2xl p-4 mb-3 shadow-sm">
-      <View className="flex-row justify-between items-center mb-1">
-        <Text className="text-[15px] font-extrabold text-gray-900 flex-1 mr-2" numberOfLines={1}>
+    <View className={`bg-white border rounded-2xl p-4 mb-3 shadow-sm ${isCriticalAlert ? 'border-red-200' : isWarningAlert ? 'border-orange-200' : 'border-gray-200'}`}>
+
+      <View className="flex-row justify-between items-start mb-1 gap-2">
+        <Text className="text-[15px] font-extrabold text-gray-900 flex-1" numberOfLines={2}>
           {item.nome}
         </Text>
         <View
-          className={`px-2.5 py-0.5 rounded-full border ${isCritical ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}
+          className={`px-2.5 py-0.5 rounded-full border ${isLowStock ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}
         >
-          <Text className={`text-[11px] font-bold ${isCritical ? 'text-red-600' : 'text-green-700'}`}>
-            {isCritical ? 'Crítico' : 'Estável'}
+          <Text className={`text-[11px] font-bold ${isLowStock ? 'text-red-600' : 'text-green-700'}`}>
+            {isLowStock ? 'Estoque Crítico' : 'Estoque Normal'}
           </Text>
         </View>
       </View>
+
+      {showExpirationAlert && (isExpired || isExpiringSoon) && (
+        <View className={`flex-row items-center self-start px-2 py-0.5 rounded-md mb-2 ${isExpired ? 'bg-red-100' : 'bg-orange-100'}`}>
+          <Feather name="alert-circle" size={12} color={isExpired ? '#B91C1C' : '#C2410C'} />
+          <Text className={`text-[11px] font-bold ml-1 ${isExpired ? 'text-red-700' : 'text-orange-700'}`}>
+            {isExpired ? 'Vencido' : `Vence em ${daysLeft} dias`}
+          </Text>
+        </View>
+      )}
 
       {specificInfoText ? (
         <Text className="text-gray-500 text-xs mb-3 font-medium">{specificInfoText}</Text>
@@ -73,7 +91,7 @@ export const InventoryItemCard: React.FC<InventoryItemCardProps> = ({ item }) =>
         </View>
 
         <View className="flex-row justify-between items-baseline mb-2">
-          <Text className="text-xl font-extrabold text-gray-900">
+          <Text className={`text-xl font-extrabold ${isLowStock ? 'text-red-600' : 'text-gray-900'}`}>
             {item.quantidade_saldo}{' '}
             <Text className="text-xs font-medium text-gray-500">{unitLabel}</Text>
           </Text>
