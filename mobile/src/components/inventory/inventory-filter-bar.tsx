@@ -56,7 +56,7 @@ export const InventoryFilterBar: React.FC<InventoryFilterBarProps> = ({
         >
           {filters.map((filter) => {
             const isActive = activeFilter === filter;
-            const isCriticalPill = filter === 'Estoque crítico';
+            const isCritical = filter === 'Alerta Crítico';
 
             return (
               <TouchableOpacity
@@ -77,7 +77,7 @@ export const InventoryFilterBar: React.FC<InventoryFilterBarProps> = ({
                   {filter}
                 </Text>
 
-                {isCriticalPill && hasCriticalItems && (
+                {isCritical && hasCriticalItems && (
                   <View
                     className={`w-2 h-2 rounded-full ml-1.5 ${
                       isActive ? 'bg-red-400 border border-white' : 'bg-red-500'
