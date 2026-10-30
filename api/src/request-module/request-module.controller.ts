@@ -5,7 +5,6 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
   Query,
   Req,
   UseGuards,
@@ -28,15 +27,15 @@ export class RequestModuleController {
   @Post()
   @Roles('PROFESSOR', 'ALUNO')
   create(@Body() createRequestDto: CreateRequestDto, @Req() req: any) {
-    const solicitanteId = req.user.id;
+    const solicitanteId = req.user.id || req.user.sub;
     return this.requestModuleService.create(solicitanteId, createRequestDto);
   }
 
   @Get()
   @Roles('PROFESSOR', 'ALUNO', 'TECNICO')
   findAll(@Query() filtros: ListRequestDto, @Req() req: any) {
-    const solicitanteId = req.user.id;
-    const role = req.user.role
+    const solicitanteId = req.user.id || req.user.sub;
+    const role = req.user.role || req.user.perfil || req.user.profile;
     return this.requestModuleService.findAll(solicitanteId, role, filtros);
   }
 
@@ -55,8 +54,15 @@ export class RequestModuleController {
   @Patch('/technician/approve/:id')
   @Roles('TECNICO')
   approve(@Param('id') id: string, @Req() req: any) {
-    const tecnicoId = req.user.id;
+    const tecnicoId = req.user.id || req.user.sub;
     return this.requestModuleService.approve(id, tecnicoId);
+  }
+
+  @Patch('/technician/return/:id')
+  @Roles('TECNICO')
+  confirmReturn(@Param('id') id: string, @Req() req: any) {
+    const tecnicoId = req.user.id || req.user.sub;
+    return this.requestModuleService.confirmReturn(id, tecnicoId);
   }
 
   @Patch('/:id/reject')
@@ -66,7 +72,7 @@ export class RequestModuleController {
     @Body() dto: DeleteRequestDto,
     @Req() req: any,
   ) {
-    const tecnicoId = req.user.id;
+    const tecnicoId = req.user.id || req.user.sub;
     return this.requestModuleService.reject(id, tecnicoId, dto.motivo_rejeicao);
   }
 }

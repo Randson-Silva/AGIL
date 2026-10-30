@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../db/prisma/prisma.service.js';
 import { ObjetivoReserva, StatusReserva } from '../generated/prisma/client.js';
 import {
@@ -14,6 +18,18 @@ const LOWER_PRIORITY_OBJECTIVES: ObjetivoReserva[] = [
   ObjetivoReserva.PESQUISA,
   ObjetivoReserva.TCC,
 ];
+
+const RESERVATION_RELATIONS = {
+  horarios: true,
+  professor: {
+    select: {
+      id: true,
+      nome: true,
+      email: true,
+      perfil: true,
+    },
+  },
+} as const;
 
 @Injectable()
 export class ReservationsService {
@@ -258,9 +274,7 @@ export class ReservationsService {
             })),
           },
         },
-        include: {
-          horarios: true,
-        },
+        include: RESERVATION_RELATIONS,
       });
     });
   }
@@ -272,16 +286,7 @@ export class ReservationsService {
     const reservations = await this.prisma.reservaEspaco.findMany({
       where: whereClause,
       orderBy: { data_reserva: 'asc' },
-      include: {
-        horarios: true,
-        professor: {
-          select: {
-            id: true,
-            nome: true,
-            email: true,
-          },
-        },
-      },
+      include: RESERVATION_RELATIONS,
     });
 
     const enriched = reservations.map((res) => {
@@ -331,6 +336,86 @@ export class ReservationsService {
         return a.prioridade_maxima ? -1 : 1;
       }
       return a.data_reserva.getTime() - b.data_reserva.getTime();
+    });
+  }
+
+  async approveReservation(id: string) {
+    const reservation = await this.prisma.reservaEspaco.findUnique({
+      where: { id },
+    });
+
+    if (!reservation) {
+      throw new NotFoundException('Reserva não encontrada.');
+    }
+
+    if (
+      reservation.status !== StatusReserva.PENDENTE &&
+      reservation.status !== StatusReserva.AVISO_SIMPLES
+    ) {
+      throw new BadRequestException(
+        'Apenas reservas pendentes podem ser aprovadas.',
+      );
+    }
+
+    return this.prisma.reservaEspaco.update({
+      where: { id },
+      data: {
+        status: StatusReserva.APROVADA,
+      },
+      include: RESERVATION_RELATIONS,
+    });
+  }
+
+  async rejectReservation(id: string, motivoRejeicao: string) {
+    const reservation = await this.prisma.reservaEspaco.findUnique({
+      where: { id },
+    });
+
+    if (!reservation) {
+      throw new NotFoundException('Reserva não encontrada.');
+    }
+
+    if (
+      reservation.status !== StatusReserva.PENDENTE &&
+      reservation.status !== StatusReserva.AVISO_SIMPLES
+    ) {
+      throw new BadRequestException(
+        'Apenas reservas pendentes podem ser rejeitadas.',
+      );
+    }
+
+    return this.prisma.reservaEspaco.update({
+      where: { id },
+      data: {
+        status: StatusReserva.REJEITADA,
+        motivo_rejeicao: motivoRejeicao,
+      },
+      include: RESERVATION_RELATIONS,
+    });
+  }
+
+  async registerAbsence(id: string) {
+    const reservation = await this.prisma.reservaEspaco.findUnique({
+      where: { id },
+    });
+
+    if (!reservation) {
+      throw new NotFoundException('Reserva não encontrada.');
+    }
+
+    if (reservation.status !== StatusReserva.APROVADA) {
+      throw new BadRequestException(
+        'Apenas reservas aprovadas podem ter ausência registrada.',
+      );
+    }
+
+    return this.prisma.reservaEspaco.update({
+      where: { id },
+      data: {
+        status: StatusReserva.REJEITADA,
+        motivo_rejeicao: 'Ausência registrada pelo técnico.',
+      },
+      include: RESERVATION_RELATIONS,
     });
   }
 }

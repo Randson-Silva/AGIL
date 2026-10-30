@@ -1,9 +1,19 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CurrentUser } from '../authz/current-user.decorator.js';
 import { Roles } from '../authz/roles.decorator.js';
 import { RolesGuard } from '../authz/roles.guard.js';
 import { CreateReservationDto } from './dtos/create-reservation.dto.js';
+import { RejectReservationDto } from './dtos/reject-reservation.dto.js';
 import { ReservationsService } from './reservations.service.js';
 
 @Controller('reservations')
@@ -51,12 +61,39 @@ export class ReservationsController {
     user: {
       id: string;
       sub?: string;
+      role?: string;
       perfil?: string;
       profile?: string;
     },
   ) {
     const userId = user.id || user.sub!;
-    const profile = user.perfil || user.profile || 'PROFESSOR';
+    const profile = (
+      user.role ||
+      user.perfil ||
+      user.profile ||
+      'PROFESSOR'
+    ).toUpperCase();
     return this.reservationsService.listReservations(userId, profile);
+  }
+
+  @Patch(':id/approve')
+  @Roles('TECNICO')
+  async approveReservation(@Param('id') id: string) {
+    return this.reservationsService.approveReservation(id);
+  }
+
+  @Patch(':id/reject')
+  @Roles('TECNICO')
+  async rejectReservation(
+    @Param('id') id: string,
+    @Body() dto: RejectReservationDto,
+  ) {
+    return this.reservationsService.rejectReservation(id, dto.motivo_rejeicao);
+  }
+
+  @Patch(':id/absence')
+  @Roles('TECNICO')
+  async registerAbsence(@Param('id') id: string) {
+    return this.reservationsService.registerAbsence(id);
   }
 }

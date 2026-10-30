@@ -321,6 +321,55 @@ export class InventoryService {
     });
   }
 
+  async returnStock(
+    itens: { insumo_id: string; quantidade: number }[],
+    tecnicoId: string,
+    solicitacaoId: string,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      for (const item of itens) {
+        const insumo = await tx.insumo.findUnique({
+          where: { id: item.insumo_id },
+        });
+
+        if (!insumo) {
+          throw new BadRequestException(
+            'O insumo solicitado não foi encontrado no sistema.',
+          );
+        }
+
+        const qtdDevolvida = Number(item.quantidade);
+        validateMeasurementUnit(insumo.tipo_medida, qtdDevolvida);
+
+        const saldoAnterior = insumo.quantidade_saldo.toNumber();
+        const saldoPosterior = saldoAnterior + qtdDevolvida;
+
+        await this.updateStockBalanceAndAlerts(
+          tx,
+          insumo.id,
+          insumo.nome,
+          insumo.statusInsumo,
+          saldoPosterior,
+          insumo.quantidade_minima.toNumber(),
+        );
+
+        await tx.historicoMovimentacao.create({
+          data: {
+            solicitacao_id: solicitacaoId,
+            insumo_id: item.insumo_id,
+            acao: 'DEVOLUCAO',
+            quantidade: qtdDevolvida,
+            saldo_anterior: saldoAnterior,
+            saldo_posterior: saldoPosterior,
+            usuarioId: tecnicoId,
+            observacao:
+              'Entrada gerada por confirmação de devolução de material',
+          },
+        });
+      }
+    });
+  }
+
   async incrementStock(id: string, amount: number) {
     return this.prisma.$transaction(async (tx) => {
       const insumo = await tx.insumo.findUnique({ where: { id } });

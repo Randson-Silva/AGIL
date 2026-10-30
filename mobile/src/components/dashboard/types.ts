@@ -5,6 +5,7 @@ export interface StatItem {
   count: string;
   label: string;
   iconName: string; // Assuming Feather icons
+  onPress?: () => void;
 }
 
 export interface AlertItem {

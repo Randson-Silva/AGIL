@@ -5,7 +5,13 @@ export interface TimeSlotInput {
   hora_fim: string;
 }
 
+
 const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+export const VALID_LABORATORIES = [
+  'Lab. de Química Geral',
+  'Lab. de Química Orgânica',
+] as const;
 
 export const LAB_CAPACITIES: Record<string, number> = {
   'Lab. de Química Geral': 30,
