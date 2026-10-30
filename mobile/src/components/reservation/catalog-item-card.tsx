@@ -1,8 +1,10 @@
+// mobile/src/components/catalog/catalog-item-card.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import { UNIT_LABELS } from '../../utils/constants';
+import { getExpirationStatus } from '../../utils/date-utils';
 
 interface CatalogItemCardProps {
   item: any;
@@ -18,6 +20,10 @@ export function CatalogItemCard({
   onDecrement,
 }: CatalogItemCardProps) {
   const isRestricted = Boolean(item.equipamentoInfo?.uso_restrito ?? item.uso_restrito);
+
+  // Validação de Vencimento
+  const { isExpired } = getExpirationStatus(item.data_validade);
+  const isExpiredReagent = item.categoria === 'REAGENTE' && isExpired;
 
   const unitLabel = UNIT_LABELS[item.tipo_medida] || item.tipo_medida || 'unidades';
 
@@ -43,8 +49,20 @@ export function CatalogItemCard({
       });
       return;
     }
+
+    if (isExpiredReagent) {
+      Toast.show({
+        type: 'error',
+        text1: 'Ação Bloqueada',
+        text2: 'Este reagente está vencido e não pode ser solicitado.',
+      });
+      return;
+    }
+
     onIncrement();
   };
+
+  const isAddDisabled = isRestricted || isExpiredReagent;
 
   return (
     <View className="bg-white border border-gray-100 shadow-sm rounded-[24px] p-5 mb-4 mx-6 flex-row justify-between items-center">
@@ -64,6 +82,13 @@ export function CatalogItemCard({
             </Text>
           </View>
         )}
+
+        {isExpiredReagent && (
+          <View className="flex-row items-center self-start bg-red-50 border border-red-200 px-2.5 py-1 rounded-full mt-2">
+            <Feather name="alert-triangle" size={12} color="#B91C1C" />
+            <Text className="text-[11px] font-bold text-red-700 ml-1.5">Validade Expirada</Text>
+          </View>
+        )}
       </View>
 
       <View className="flex-row items-center bg-gray-50 rounded-full border border-gray-200">
@@ -81,7 +106,7 @@ export function CatalogItemCard({
           className="w-10 h-10 items-center justify-center"
           onPress={handleIncrement}
         >
-          <Feather name="plus" size={18} color={isRestricted ? '#9CA3AF' : '#00623B'} />
+          <Feather name="plus" size={18} color={isAddDisabled ? '#9CA3AF' : '#00623B'} />
         </TouchableOpacity>
       </View>
     </View>
