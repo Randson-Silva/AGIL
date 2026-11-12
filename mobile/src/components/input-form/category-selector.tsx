@@ -1,12 +1,16 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Animated } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+
+export type CategoryType = 'REAGENTE' | 'SOLUCAO' | 'VIDRARIA' | 'EQUIPAMENTO';
 
 interface CategorySelectorProps {
   selectedCategory: string;
-  onSelect: (category: string) => void;
+  onSelect: (category: CategoryType) => void;
+  label?: string;
 }
 
-const CATEGORIES = [
+const CATEGORIES: { id: CategoryType; label: string }[] = [
   { id: 'REAGENTE', label: 'Reagente' },
   { id: 'SOLUCAO', label: 'Solução' },
   { id: 'VIDRARIA', label: 'Vidraria' },
@@ -16,71 +20,64 @@ const CATEGORIES = [
 export const CategorySelector: React.FC<CategorySelectorProps> = ({
   selectedCategory,
   onSelect,
+  label = 'Tipo de ocorrência',
 }) => {
-  const [containerWidth, setContainerWidth] = useState(0);
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  const [isOpen, setIsOpen] = useState(false);
 
-  const selectedIndex = CATEGORIES.findIndex((c) => c.id === selectedCategory);
+  const selectedLabel = CATEGORIES.find((c) => c.id === selectedCategory)?.label || 'Reagente';
 
-  useEffect(() => {
-    Animated.spring(slideAnim, {
-      toValue: selectedIndex,
-      useNativeDriver: true,
-      bounciness: 2,
-      speed: 12,
-    }).start();
-  }, [selectedIndex]);
+  const handleSelect = (categoryId: CategoryType) => {
+    onSelect(categoryId);
+    setIsOpen(false);
+  };
 
   return (
-    <View className="mb-6">
-      <Text className="text-sm font-semibold mb-2 text-gray-500 tracking-wider">CATEGORIA</Text>
+    <View className="mb-5 z-50" style={{ zIndex: 50, elevation: isOpen ? 50 : 0 }}>
+      {label ? <Text className="text-base font-bold text-gray-900 mb-2.5">{label}</Text> : null}
 
-      <View
-        className="flex-row bg-white rounded-full border border-gray-200 relative overflow-hidden h-[50px]"
-        onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
-      >
-        {containerWidth > 0 && (
-          <Animated.View
-            style={{
-              position: 'absolute',
-              width: containerWidth / 4,
-              height: '100%',
-              backgroundColor: 'green',
-              borderRadius: 9999,
-              transform: [
-                {
-                  translateX: slideAnim.interpolate({
-                    inputRange: [0, 1, 2, 3],
-                    outputRange: [
-                      0,
-                      containerWidth / 4,
-                      (containerWidth / 4) * 2,
-                      (containerWidth / 4) * 3,
-                    ],
-                  }),
-                },
-              ],
-            }}
-          />
+      <View className="relative self-start min-w-[175px]">
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => setIsOpen((prev) => !prev)}
+          className="bg-white border border-gray-200 rounded-2xl px-4 py-3 flex-row items-center justify-center relative shadow-sm"
+        >
+          <View className="absolute left-3.5">
+            <Feather name="chevron-down" size={18} color="#4B5563" />
+          </View>
+          <Text className="text-base font-bold text-[#111827] ml-4">{selectedLabel}</Text>
+        </TouchableOpacity>
+
+        {isOpen && (
+          <View
+            className="absolute top-0 left-0 right-0 bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-lg"
+            style={{ zIndex: 100, elevation: 12 }}
+          >
+            {CATEGORIES.map((cat, index) => {
+              const isFirst = index === 0;
+              const isLast = index === CATEGORIES.length - 1;
+
+              return (
+                <TouchableOpacity
+                  key={cat.id}
+                  activeOpacity={0.7}
+                  onPress={() => handleSelect(cat.id)}
+                  className={`px-4 py-3 flex-row items-center justify-center relative bg-white ${
+                    !isLast ? 'border-b border-gray-200' : ''
+                  }`}
+                >
+                  {isFirst && (
+                    <View className="absolute left-3.5">
+                      <Feather name="chevron-down" size={18} color="#4B5563" />
+                    </View>
+                  )}
+                  <Text className={`text-base font-bold text-[#111827] ${isFirst ? 'ml-4' : ''}`}>
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         )}
-
-        {CATEGORIES.map((cat) => {
-          const isSelected = selectedCategory === cat.id;
-          return (
-            <TouchableOpacity
-              key={cat.id}
-              activeOpacity={0.8}
-              onPress={() => onSelect(cat.id)}
-              className="flex-1 justify-center items-center z-10"
-            >
-              <Text
-                className={`font-semibold text-[13px] ${isSelected ? 'text-white' : 'text-gray-500'}`}
-              >
-                {cat.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
       </View>
     </View>
   );
