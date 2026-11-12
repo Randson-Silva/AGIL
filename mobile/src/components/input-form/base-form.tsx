@@ -92,7 +92,7 @@ export const BaseForm: React.FC<BaseFormProps> = ({
         placeholder="Ex.: Ácido Clorídrico 37%"
       />
 
-      <View className="flex-row gap-4">
+      <View className="flex-row gap-4" style={{ zIndex: 30, elevation: 30 }}>
         {!isEditing && (
           <View className="flex-1">
             <FormInput
@@ -115,7 +115,7 @@ export const BaseForm: React.FC<BaseFormProps> = ({
         </View>
       </View>
 
-      <View className="flex-row gap-4">
+      <View className="flex-row gap-4" style={{ zIndex: 10, elevation: 10 }}>
         <View className="flex-1">
           <FormInput
             label="QTD MÍNIMA"
