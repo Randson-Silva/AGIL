@@ -13,6 +13,7 @@ export function AlertBadge({ status }: AlertBadgeProps) {
       case 'Estoque baixo':
         return 'bg-orange-50 border-orange-200';
       case 'Reserva':
+      case 'Material':
         return 'bg-blue-50 border-blue-200';
       default:
         return 'bg-gray-50 border-gray-200';
@@ -26,6 +27,7 @@ export function AlertBadge({ status }: AlertBadgeProps) {
       case 'Estoque baixo':
         return 'text-orange-700';
       case 'Reserva':
+      case 'Material':
         return 'text-blue-600';
       default:
         return 'text-gray-600';

@@ -1,4 +1,4 @@
-export type AlertStatus = 'Avaria' | 'Estoque baixo' | 'Reserva';
+export type AlertStatus = 'Avaria' | 'Estoque baixo' | 'Reserva' | 'Material';
 
 export interface StatItem {
   id: string;
@@ -14,6 +14,7 @@ export interface AlertItem {
   timeAgo: string;
   title: string;
   description: string;
+  onPress?: () => void;
 }
 
 export interface QuickAccessItem {

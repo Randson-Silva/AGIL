@@ -73,6 +73,12 @@ export default function ProfessorLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="notificacoes"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
