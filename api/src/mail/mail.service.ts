@@ -13,6 +13,17 @@ export interface ReservationEmailPayload {
   motivoRejeicao?: string | null;
 }
 
+export interface BreakdownEmailPayload {
+  to: string[];
+  materialNome: string;
+  tipoOcorrencia: string;
+  quantidade: number;
+  unidadeMedida: string;
+  descricao?: string | null;
+  professorNome: string;
+  dataReporte: Date;
+}
+
 @Injectable()
 export class MailService {
   private transporter: nodemailer.Transporter;
@@ -149,6 +160,68 @@ export class MailService {
         `Erro ao enviar e-mail de status da reserva para ${to}`,
         error,
       );
+    }
+  }
+
+  async sendBreakdownAlertEmail(payload: BreakdownEmailPayload) {
+    const {
+      to,
+      materialNome,
+      tipoOcorrencia,
+      quantidade,
+      unidadeMedida,
+      descricao,
+      professorNome,
+      dataReporte,
+    } = payload;
+
+    if (!to || to.length === 0) {
+      this.logger.warn(
+        'Nenhum usuário com perfil TECNICO encontrado para envio de e-mail de avaria.',
+      );
+      return;
+    }
+
+    const formattedDate = new Date(dataReporte).toLocaleString('pt-BR', {
+      timeZone: 'America/Fortaleza',
+    });
+
+    const descriptionText = descricao?.trim()
+      ? descricao
+      : 'Nenhuma descrição adicional informada.';
+
+    try {
+      await this.transporter.sendMail({
+        from: `"AGIL - Alerta de Avaria" <${this.configService.get<string>('SMTP_USER')}>`,
+        to,
+        subject: `⚠️ Alerta de Avaria Reportada - ${materialNome}`,
+        text: `Um novo reporte de avaria foi registrado no sistema.\n\n- Material: ${materialNome}\n- Ocorrência: ${tipoOcorrencia}\n- Quantidade afetada: ${quantidade} ${unidadeMedida}\n- Professor responsável: ${professorNome}\n- Data/Hora: ${formattedDate}\n- Descrição do problema: ${descriptionText}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #1F2937; line-height: 1.5;">
+            <h2 style="color: #D97706;">⚠️ Novo Reporte de Avaria</h2>
+            <p>Um professor registrou um problema ou avaria de material no laboratório e o estoque foi atualizado automaticamente.</p>
+
+            <div style="background-color: #FFFBEB; padding: 16px; border-radius: 8px; border: 1px solid #FDE68A;">
+              <p style="margin: 4px 0;"><strong>Material afetado:</strong> ${materialNome}</p>
+              <p style="margin: 4px 0;"><strong>Tipo de ocorrência:</strong> ${tipoOcorrencia}</p>
+              <p style="margin: 4px 0;"><strong>Quantidade deduzida:</strong> ${quantidade} ${unidadeMedida}</p>
+              <p style="margin: 4px 0;"><strong>Professor responsável:</strong> ${professorNome}</p>
+              <p style="margin: 4px 0;"><strong>Data/Hora do reporte:</strong> ${formattedDate}</p>
+            </div>
+
+            <div style="margin-top: 16px; padding: 12px; background-color: #F8FAF9; border-left: 4px solid #00623B; border-radius: 4px;">
+              <p style="margin: 0; color: #111827;"><strong>Descrição do Problema:</strong> ${descriptionText}</p>
+            </div>
+
+            <p style="margin-top: 16px;">Acesse o Painel Administrativo do sistema AGIL para verificar os alertas pendentes e tomar as providências de reposição ou manutenção.</p>
+          </div>
+        `,
+      });
+      this.logger.log(
+        `Alerta de avaria (${materialNome}) enviado para: ${to.join(', ')}`,
+      );
+    } catch (error) {
+      this.logger.error('Erro ao enviar e-mail de alerta de avaria', error);
     }
   }
 }

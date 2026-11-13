@@ -1,5 +1,7 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+// api/src/breakdown/breakdown.controller.ts
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { CurrentUser } from '../authz/current-user.decorator.js';
 import { Roles } from '../authz/roles.decorator.js';
 import { RolesGuard } from '../authz/roles.guard.js';
 import { BreakdownService } from './breakdown.service.js';
@@ -10,10 +12,19 @@ import { CreateBreakdownDto } from './dto/create-breakdown.dto.js';
 export class BreakdownController {
   constructor(private readonly breakdownService: BreakdownService) {}
 
-  @Roles('PROFESSOR', 'TECNICO')
+  @Get()
+  @Roles('TECNICO')
+  async listBreakdowns() {
+    return this.breakdownService.listBreakdowns();
+  }
+
   @Post()
-  async createBreakdown(@Req() req: any, @Body() data: CreateBreakdownDto) {
-    const userId = req.user.id;
+  @Roles('PROFESSOR', 'TECNICO')
+  async createBreakdown(
+    @CurrentUser() user: { id: string; sub?: string },
+    @Body() data: CreateBreakdownDto,
+  ) {
+    const userId = user.id || user.sub!;
     return this.breakdownService.reportBreakdown(userId, data);
   }
 }

@@ -10,3 +10,7 @@ export interface CreateBreakdownPayload {
 export const createBreakdown = async (payload: CreateBreakdownPayload) => {
   return api.post('/breakdowns', payload);
 };
+
+export const getBreakdowns = async () => {
+  return api.get('/breakdowns');
+};
