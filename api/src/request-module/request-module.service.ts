@@ -260,4 +260,22 @@ export class RequestModuleService {
       include: REQUEST_RELATIONS,
     });
   }
+
+  async alertDevolution() {
+
+    const today = new Date();
+
+    const treeDaysFromNow = new Date(today);
+    treeDaysFromNow.setDate(today.getDate() + 3);
+
+    return this.prisma.solicitacaoMaterial.findMany({
+      where: {
+        status: 'APROVADA',
+        data_devolucao: {
+          gte: today,
+          lte: treeDaysFromNow,
+        },
+      },
+    });
+  }
 }
