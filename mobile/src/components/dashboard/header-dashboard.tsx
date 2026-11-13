@@ -2,6 +2,7 @@ import React from 'react';
 import { usePathname, useRouter } from 'expo-router';
 import { BellIcon, UserIcon } from 'react-native-heroicons/outline';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../../hooks/useAuth';
 
 interface HeaderDashboardProps {
   initials: string;
@@ -14,12 +15,24 @@ interface HeaderDashboardProps {
 export function HeaderDashboard({ userName, initials, title, icon, hasBorder }: HeaderDashboardProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { user } = useAuth();
 
   const isProfileScreen = pathname === '/perfil' || pathname.endsWith('/perfil');
+  const isNotificationScreen =
+    pathname === '/notificacoes' || pathname.endsWith('/notificacoes');
 
   const handleOpenProfile = () => {
     if (isProfileScreen) return;
     router.navigate('/(protected)/perfil');
+  };
+
+  const handleOpenNotifications = () => {
+    if (isNotificationScreen) return;
+    if (user?.profile === 'PROFESSOR') {
+      router.navigate('/(protected)/(professor)/notificacoes');
+    } else {
+      router.navigate('/(protected)/(tecnico)/notificacoes');
+    }
   };
 
   return (
@@ -40,11 +53,16 @@ export function HeaderDashboard({ userName, initials, title, icon, hasBorder }: 
 
       {/* Direita: Sino e Iniciais */}
       <View className="flex-row items-center">
-        <View className="relative mr-4 p-2 bg-white rounded-full border border-gray-100 shadow-sm">
+        <TouchableOpacity
+          activeOpacity={isNotificationScreen ? 1 : 0.7}
+          disabled={isNotificationScreen}
+          onPress={handleOpenNotifications}
+          className="relative mr-4 p-2 bg-white rounded-full border border-gray-100 shadow-sm"
+        >
           <BellIcon size={20} color="#6B7280" />
           {/* Bolinha vermelha de notificação */}
           <View className="absolute top-1 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
-        </View>
+        </TouchableOpacity>
         <TouchableOpacity
           activeOpacity={isProfileScreen ? 1 : 0.7}
           disabled={isProfileScreen}

@@ -37,3 +37,8 @@ export const incrementInventoryStock = async (id: string, amount: number) => {
 export const decrementInventoryStock = async (id: string, amount: number) => {
   return await api.patch(`/inventory/stock/${id}/decrement`, { amount });
 };
+
+export const getInventoryAlerts = async () => {
+  return await api.get('/inventory/alerts');
+};
+

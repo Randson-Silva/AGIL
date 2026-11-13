@@ -91,6 +91,12 @@ export default function TecnicoLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="notificacoes"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

@@ -7,8 +7,14 @@ import { QuickAccessCard } from '../../../components/dashboard/quick-access-card
 import { useDashboard } from '../../../hooks/useDashboard';
 
 export default function TecnicoPainelScreen() {
-  const { firstName, initials, stats, alertsMock, quickAccessMock } =
-    useDashboard();
+  const {
+    firstName,
+    initials,
+    stats,
+    alertsMock,
+    quickAccessMock,
+    handleNavigateToNotificacoes,
+  } = useDashboard();
 
   return (
     <PageWrapper className="bg-[#F8FAF9]">
@@ -36,16 +42,25 @@ export default function TecnicoPainelScreen() {
             <Text className="text-xl font-bold text-gray-900">
               Alertas pendentes
             </Text>
-            <TouchableOpacity activeOpacity={0.7}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handleNavigateToNotificacoes}
+            >
               <Text className="text-[#00623B] font-semibold text-sm">
                 Ver todos
               </Text>
             </TouchableOpacity>
           </View>
 
-          {alertsMock.map((alert) => (
-            <AlertCard key={alert.id} item={alert} />
-          ))}
+          {alertsMock.length > 0 ? (
+            alertsMock.map((alert) => (
+              <AlertCard key={alert.id} item={alert} />
+            ))
+          ) : (
+            <Text className="text-gray-400 text-sm">
+              Nenhum alerta pendente no momento.
+            </Text>
+          )}
         </View>
 
         {/* Acesso Rápido */}

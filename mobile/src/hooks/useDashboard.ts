@@ -52,6 +52,10 @@ export function useDashboard() {
     router.navigate('/(protected)/(tecnico)/aprovacoes');
   };
 
+  const handleNavigateToNotificacoes = () => {
+    router.navigate('/(protected)/(tecnico)/notificacoes');
+  };
+
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -89,6 +93,7 @@ export function useDashboard() {
                 timeAgo: formatTimeAgo(b.data_reporte),
                 title: `${b.insumo?.nome || 'Material'} — ${occurrenceLabel} (${qty} ${unit})`,
                 description: `Reportado por ${profName} — ${extraDetail}`,
+                onPress: handleNavigateToNotificacoes,
               });
             });
           }
@@ -100,6 +105,21 @@ export function useDashboard() {
         if (requestsResult.status === 'fulfilled') {
           const data = requestsResult.value.data;
           pendingMaterials = Array.isArray(data) ? data.length : 0;
+
+          if (pendingMaterials > 0) {
+            dynamicAlerts.push({
+              id: 'materiais-pendentes',
+              status: 'Material',
+              timeAgo: formatTimeAgo(data[0]?.criada_em),
+              title: `${pendingMaterials} ${
+                pendingMaterials === 1
+                  ? 'solicitação de material aguardando aprovação'
+                  : 'solicitações de materiais e insumos aguardando aprovação'
+              }`,
+              description: `${pendingMaterials} pedido(s) de insumos pendente(s) de liberação`,
+              onPress: handleNavigateToAprovacoes,
+            });
+          }
         } else {
           console.error('Erro ao buscar aprovações pendentes de materiais:', requestsResult.reason);
         }
@@ -129,6 +149,7 @@ export function useDashboard() {
                     : 'reservas aguardando aprovação'
                 }`,
                 description: `${practicalCount} aula(s) prática(s) e ${otherCount} outra(s) atividade(s)`,
+                onPress: handleNavigateToAprovacoes,
               });
             }
           }
@@ -158,6 +179,7 @@ export function useDashboard() {
                 description: `${Number(item.quantidade_saldo)} ${unit} em estoque · mínimo ${Number(item.quantidade_minima ?? 0)} ${unit}${
                   item.localizacao ? ` · ${item.localizacao}` : ''
                 }`,
+                onPress: handleNavigateToInventory,
               });
             });
           } else {
@@ -240,5 +262,6 @@ export function useDashboard() {
     isLoadingStats,
     alertsMock: alerts,
     quickAccessMock,
+    handleNavigateToNotificacoes,
   };
 }

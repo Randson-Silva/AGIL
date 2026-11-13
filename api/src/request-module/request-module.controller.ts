@@ -75,4 +75,9 @@ export class RequestModuleController {
     const tecnicoId = req.user.id || req.user.sub;
     return this.requestModuleService.reject(id, tecnicoId, dto.motivo_rejeicao);
   }
+
+  @Get('technician/devolution-alert')
+  alertDevolution() {
+    return this.requestModuleService.alertDevolution();
+  }
 }
