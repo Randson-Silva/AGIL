@@ -13,6 +13,7 @@ import {
   validateTimeSlots,
 } from '../utils/reservation.utils.js';
 import { CreateReservationDto } from './dtos/create-reservation.dto.js';
+import { MailService } from '../mail/mail.service.js';
 
 const LOWER_PRIORITY_OBJECTIVES: ObjetivoReserva[] = [
   ObjetivoReserva.PESQUISA,
@@ -33,7 +34,10 @@ const RESERVATION_RELATIONS = {
 
 @Injectable()
 export class ReservationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   async getOccupiedSlots(local: string, date: string, isRecurring = false) {
     if (!local || !date) {
@@ -357,13 +361,25 @@ export class ReservationsService {
       );
     }
 
-    return this.prisma.reservaEspaco.update({
+    const updatedReservation = await this.prisma.reservaEspaco.update({
       where: { id },
       data: {
         status: StatusReserva.APROVADA,
       },
       include: RESERVATION_RELATIONS,
     });
+
+    await this.mailService.sendReservationStatusEmail({
+      to: updatedReservation.professor.email,
+      professorNome: updatedReservation.professor.nome,
+      local: updatedReservation.local,
+      titulo: updatedReservation.titulo,
+      dataReserva: updatedReservation.data_reserva,
+      horarios: updatedReservation.horarios,
+      status: 'APROVADA',
+    });
+
+    return updatedReservation;
   }
 
   async rejectReservation(id: string, motivoRejeicao: string) {
@@ -384,7 +400,7 @@ export class ReservationsService {
       );
     }
 
-    return this.prisma.reservaEspaco.update({
+    const updatedReservation = await this.prisma.reservaEspaco.update({
       where: { id },
       data: {
         status: StatusReserva.REJEITADA,
@@ -392,6 +408,19 @@ export class ReservationsService {
       },
       include: RESERVATION_RELATIONS,
     });
+
+    await this.mailService.sendReservationStatusEmail({
+      to: updatedReservation.professor.email,
+      professorNome: updatedReservation.professor.nome,
+      local: updatedReservation.local,
+      titulo: updatedReservation.titulo,
+      dataReserva: updatedReservation.data_reserva,
+      horarios: updatedReservation.horarios,
+      status: 'REJEITADA',
+      motivoRejeicao,
+    });
+
+    return updatedReservation;
   }
 
   async registerAbsence(id: string) {
