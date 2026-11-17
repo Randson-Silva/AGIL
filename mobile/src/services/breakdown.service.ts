@@ -1,4 +1,4 @@
-import { api } from './api';
+import {api} from './api';
 
 export interface CreateBreakdownPayload {
   insumo_id: string;
@@ -13,4 +13,8 @@ export const createBreakdown = async (payload: CreateBreakdownPayload) => {
 
 export const getBreakdowns = async () => {
   return api.get('/breakdowns');
+};
+
+export const getEligibleBreakdownMaterials = async () => {
+  return api.get('/breakdowns/eligible-materials');
 };

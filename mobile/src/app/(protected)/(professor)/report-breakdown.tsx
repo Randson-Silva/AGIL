@@ -12,8 +12,10 @@ import { CategorySelector, CategoryType } from '../../../components/input-form/c
 import { BreakdownMaterialCard } from '../../../components/breakdown/breakdown-material-card';
 import { useAuth } from '../../../hooks/useAuth';
 import { InventoryItem } from '../../../hooks/useInventory';
-import { getInventoryItems } from '../../../services/inventory.service';
-import { createBreakdown } from '../../../services/breakdown.service';
+import {
+  createBreakdown,
+  getEligibleBreakdownMaterials,
+} from '../../../services/breakdown.service';
 
 type OccurrenceType = 'QUEBRA' | 'DEFEITO' | 'EXTRAVIO' | 'CONTAMINACAO';
 
@@ -34,8 +36,8 @@ export default function ReportBreakdownScreen() {
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
-  const [isLoadingInventory, setIsLoadingInventory] = useState(false);
+  const [eligibleMaterials, setEligibleMaterials] = useState<InventoryItem[]>([]);
+  const [isLoadingMaterials, setIsLoadingMaterials] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -46,23 +48,30 @@ export default function ReportBreakdownScreen() {
       setSelectedQuantities({});
       setDescription('');
 
-      const fetchItems = async () => {
-        setIsLoadingInventory(true);
+      const fetchEligibleItems = async () => {
+        setIsLoadingMaterials(true);
         try {
-          const res = await getInventoryItems();
+          const res = await getEligibleBreakdownMaterials();
           if (isActive) {
-            setInventoryItems(res.data || []);
+            setEligibleMaterials(res.data || []);
           }
         } catch (error) {
-          console.error('Erro ao buscar inventário:', error);
+          console.error('Erro ao buscar materiais elegíveis para avaria:', error);
+          if (isActive) {
+            Toast.show({
+              type: 'error',
+              text1: 'Erro ao carregar materiais',
+              text2: 'Não foi possível buscar seus materiais solicitados.',
+            });
+          }
         } finally {
           if (isActive) {
-            setIsLoadingInventory(false);
+            setIsLoadingMaterials(false);
           }
         }
       };
 
-      fetchItems();
+      fetchEligibleItems();
 
       return () => {
         isActive = false;
@@ -71,8 +80,8 @@ export default function ReportBreakdownScreen() {
   );
 
   const filteredMaterials = useMemo(() => {
-    return inventoryItems.filter((item) => item.categoria === category);
-  }, [inventoryItems, category]);
+    return eligibleMaterials.filter((item) => item.categoria === category);
+  }, [eligibleMaterials, category]);
 
   const handleToggleMaterial = (itemId: string) => {
     setSelectedQuantities((prev) => {
@@ -108,7 +117,7 @@ export default function ReportBreakdownScreen() {
     const payloadsToCreate = [];
 
     for (const id of selectedIds) {
-      const item = inventoryItems.find((i) => i.id === id);
+      const item = eligibleMaterials.find((i) => i.id === id);
       if (!item) continue;
 
       const rawQty = selectedQuantities[id]?.trim() || '';
@@ -243,7 +252,7 @@ export default function ReportBreakdownScreen() {
 
         <Text className="text-base font-bold text-gray-900 mb-2.5">Material afetado</Text>
         <View className="mb-4">
-          {isLoadingInventory ? (
+          {isLoadingMaterials ? (
             <ActivityIndicator size="small" color="#00623B" className="my-6" />
           ) : filteredMaterials.length > 0 ? (
             filteredMaterials.map((item) => (
@@ -258,8 +267,8 @@ export default function ReportBreakdownScreen() {
             ))
           ) : (
             <View className="bg-white border border-gray-200 rounded-2xl p-6 items-center">
-              <Text className="text-gray-500 text-xs font-medium">
-                Nenhum item desta categoria cadastrado no estoque.
+              <Text className="text-gray-500 text-xs font-medium text-center">
+                Nenhum material desta categoria foi solicitado por você anteriormente.
               </Text>
             </View>
           )}
