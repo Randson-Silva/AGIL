@@ -96,4 +96,20 @@ export class ReservationsController {
   async registerAbsence(@Param('id') id: string) {
     return this.reservationsService.registerAbsence(id);
   }
+
+  @Get('history')
+  @Roles('TECNICO')
+  async listReservationHistory(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.reservationsService.listReservationHistory({
+      startDate,
+      endDate,
+      status,
+      search,
+    });
+  }
 }

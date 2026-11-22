@@ -52,7 +52,7 @@ export default function InventoryScreen() {
 
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => router.push('/new-item')}
+            onPress={() => router.push('/(protected)/new-item')}
             className="flex-1 h-12 bg-[#00623B] rounded-xl px-4 items-center flex-row justify-center shadow-sm"
           >
             <Feather name="plus" size={18} color="#FFF" style={{ marginRight: 8 }} />
