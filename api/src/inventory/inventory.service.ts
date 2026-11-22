@@ -673,10 +673,10 @@ export class InventoryService {
 
     const dateFilter: Prisma.DateTimeFilter = {};
     if (startDate) {
-      dateFilter.gte = new Date(`${startDate}T00:00:00.000Z`);
+      dateFilter.gte = new Date(`${startDate}T00:00:00.000-03:00`);
     }
     if (endDate) {
-      dateFilter.lte = new Date(`${endDate}T23:59:59.999Z`);
+      dateFilter.lte = new Date(`${endDate}T23:59:59.999-03:00`);
     }
     const hasDateFilter = Boolean(startDate || endDate);
 

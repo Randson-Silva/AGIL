@@ -402,12 +402,12 @@ export default function TecnicoHistoricoScreen() {
                     <Text numberOfLines={1} className="text-sm font-bold text-gray-900 mb-0.5">
                       {res.local}
                     </Text>
-                    <Text numberOfLines={1} className="text-xs text-gray-700 mb-0.5">
-                      {res.titulo}
-                    </Text>
                     <Text numberOfLines={1} className="text-xs text-gray-500">
                       {res.professor?.nome || 'Professor'} ·{' '}
-                      {formatReservationDateUtc(res.data_reserva)}
+                      {formatRelativeDateTime(res.analisada_em || res.created_at)}
+                    </Text>
+                    <Text numberOfLines={1} className="text-[11px] text-gray-500 mt-0.5">
+                      {res.titulo} · Aula: {formatReservationDateUtc(res.data_reserva)}
                       {slots ? `, ${slots}` : ''}
                     </Text>
                     {!isAccepted && res.motivo_rejeicao ? (

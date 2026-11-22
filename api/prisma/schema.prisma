@@ -118,6 +118,7 @@ model ReservaEspaco {
   pratica_recorrente Boolean         @default(false)
   status             StatusReserva   @default(PENDENTE)
   motivo_rejeicao    String?
+  analisada_em       DateTime?
 
   horarios   HorarioReserva[]
   created_at DateTime         @default(now())
@@ -264,7 +265,7 @@ model HistoricoMovimentacao {
   insumo_id      String
   insumo         Insumo               @relation(fields: [insumo_id], references: [id])
   acao           TipoMovimentacao
-  quantidade     Decimal             @db.Decimal(10, 3)
+  quantidade     Decimal              @db.Decimal(10, 3)
 
   saldo_anterior  Decimal @db.Decimal(10, 3)
   saldo_posterior Decimal @db.Decimal(10, 3)

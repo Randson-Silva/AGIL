@@ -104,6 +104,7 @@ export interface ReservationHistoryItem {
   objetivo: string;
   data_reserva: string;
   created_at: string;
+  analisada_em?: string | null;
   status: 'APROVADA' | 'REJEITADA' | 'CANCELADA';
   motivo_rejeicao?: string | null;
   professor: {
