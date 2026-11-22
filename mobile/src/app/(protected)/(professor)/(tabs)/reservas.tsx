@@ -1,14 +1,14 @@
 import React from 'react';
 import { View, ScrollView, ActivityIndicator, Text } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { PageWrapper } from '../../../components/ui/page-wrapper';
-import { Button } from '../../../components/ui/Button';
-import { FilterPills, FilterOption } from '../../../components/reservation/filter-pills';
-import { ReservationCard } from '../../../components/reservation/reservation-card';
-import { CancelReservationModal } from '../../../components/reservation/cancel-reservation-modal';
-import { useReservas } from '../../../hooks/useReservas';
+import { PageWrapper } from '../../../../components/ui/page-wrapper';
+import { Button } from '../../../../components/ui/Button';
+import { FilterPills, FilterOption } from '../../../../components/reservation/filter-pills';
+import { ReservationCard } from '../../../../components/reservation/reservation-card';
+import { CancelReservationModal } from '../../../../components/reservation/cancel-reservation-modal';
+import { useReservas } from '../../../../hooks/useReservas';
 
-import { HeaderDashboard } from '../../../components/dashboard/header-dashboard';
+import { HeaderDashboard } from '../../../../components/dashboard/header-dashboard';
 
 export default function ReservasScreen() {
   const {
