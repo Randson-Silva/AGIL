@@ -1,10 +1,10 @@
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { PageWrapper } from '../../../components/ui/page-wrapper';
-import { HeaderDashboard } from '../../../components/dashboard/header-dashboard';
-import { StatCard } from '../../../components/dashboard/stat-card';
-import { AlertCard } from '../../../components/dashboard/alert-card';
-import { QuickAccessCard } from '../../../components/dashboard/quick-access-card';
-import { useDashboard } from '../../../hooks/useDashboard';
+import { PageWrapper } from '../../../../components/ui/page-wrapper';
+import { HeaderDashboard } from '../../../../components/dashboard/header-dashboard';
+import { StatCard } from '../../../../components/dashboard/stat-card';
+import { AlertCard } from '../../../../components/dashboard/alert-card';
+import { QuickAccessCard } from '../../../../components/dashboard/quick-access-card';
+import { useDashboard } from '../../../../hooks/useDashboard';
 
 export default function TecnicoPainelScreen() {
   const {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Modal, Pressable, Keyboard } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Pressable, Keyboard, type ViewInstance } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
 interface Option {
@@ -31,8 +31,8 @@ export const FormSelect: React.FC<FormSelectProps> = ({
   disabled = false,
 }) => {
   const selectId = useRef(Symbol('FormSelect')).current;
-  const triggerRef = useRef<View>(null);
-  const overlayRef = useRef<View>(null);
+  const triggerRef = useRef<ViewInstance>(null);
+  const overlayRef = useRef<ViewInstance>(null);
 
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPos, setDropdownPos] = useState({

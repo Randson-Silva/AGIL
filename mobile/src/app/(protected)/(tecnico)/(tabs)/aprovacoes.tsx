@@ -9,15 +9,15 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
-import { PageWrapper } from '../../../components/ui/page-wrapper';
-import { HeaderDashboard } from '../../../components/dashboard/header-dashboard';
-import { ApprovalTabs } from '../../../components/approvals/approval-tabs';
-import { PendingReservationCard } from '../../../components/approvals/pending-reservation-card';
-import { TodayConfirmedReservationCard } from '../../../components/approvals/today-confirmed-reservation-card';
-import { ApprovedReservationCard } from '../../../components/approvals/approved-reservation-card';
-import { MaterialRequestApprovalCard } from '../../../components/approvals/material-request-approval-card';
-import { RejectModal } from '../../../components/approvals/reject-modal';
-import { useAprovacoes } from '../../../hooks/useAprovacoes';
+import { PageWrapper } from '../../../../components/ui/page-wrapper';
+import { HeaderDashboard } from '../../../../components/dashboard/header-dashboard';
+import { ApprovalTabs } from '../../../../components/approvals/approval-tabs';
+import { PendingReservationCard } from '../../../../components/approvals/pending-reservation-card';
+import { TodayConfirmedReservationCard } from '../../../../components/approvals/today-confirmed-reservation-card';
+import { ApprovedReservationCard } from '../../../../components/approvals/approved-reservation-card';
+import { MaterialRequestApprovalCard } from '../../../../components/approvals/material-request-approval-card';
+import { RejectModal } from '../../../../components/approvals/reject-modal';
+import { useAprovacoes } from '../../../../hooks/useAprovacoes';
 
 export default function AprovacoesScreen() {
   const router = useRouter();

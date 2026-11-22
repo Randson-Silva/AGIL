@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native';
-import { PageWrapper } from '../../../components/ui/page-wrapper';
+import { PageWrapper } from '../../../../components/ui/page-wrapper';
 import { WrenchScrewdriverIcon } from 'react-native-heroicons/outline';
 
 export default function ProfessorHistoricoScreen() {

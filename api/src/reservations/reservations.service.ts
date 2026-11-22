@@ -346,6 +346,7 @@ export class ReservationsService {
   async approveReservation(id: string) {
     const reservation = await this.prisma.reservaEspaco.findUnique({
       where: { id },
+      include: { horarios: true},
     });
 
     if (!reservation) {
@@ -360,6 +361,8 @@ export class ReservationsService {
         'Apenas reservas pendentes podem ser aprovadas.',
       );
     }
+    
+    validateNotPastReservation(reservation.data_reserva.toISOString(), reservation.horarios);
 
     const updatedReservation = await this.prisma.reservaEspaco.update({
       where: { id },

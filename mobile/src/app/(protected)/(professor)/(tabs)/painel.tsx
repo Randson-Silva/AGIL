@@ -1,9 +1,9 @@
 import { ScrollView, Text, View, ActivityIndicator } from 'react-native';
-import { PageWrapper } from '../../../components/ui/page-wrapper';
-import { HeaderDashboard } from '../../../components/dashboard/header-dashboard';
-import { ProfessorActionCard } from '../../../components/dashboard/professor-action-card';
-import { NextReservationCard } from '../../../components/dashboard/next-reservation-card';
-import { useProfessorDashboard } from '../../../hooks/useProfessorDashboard';
+import { PageWrapper } from '../../../../components/ui/page-wrapper';
+import { HeaderDashboard } from '../../../../components/dashboard/header-dashboard';
+import { ProfessorActionCard } from '../../../../components/dashboard/professor-action-card';
+import { NextReservationCard } from '../../../../components/dashboard/next-reservation-card';
+import { useProfessorDashboard } from '../../../../hooks/useProfessorDashboard';
 
 export default function ProfessorPainelScreen() {
   const { firstName, initials, nextReservation, isLoading, actions } = useProfessorDashboard();

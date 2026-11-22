@@ -4,6 +4,7 @@ import {
   Text,
   TouchableOpacity,
   TextInput,
+  type TextInputInstance,
   Platform,
   Switch,
   ActivityIndicator,
@@ -30,10 +31,10 @@ export default function NewReservationScreen() {
     initialDate?: string;
   }>();
 
-  const titleInputRef = useRef<TextInput>(null);
-  const studentsInputRef = useRef<TextInput>(null);
-  const groupsInputRef = useRef<TextInput>(null);
-  const notesInputRef = useRef<TextInput>(null);
+  const titleInputRef = useRef<TextInputInstance>(null);
+  const studentsInputRef = useRef<TextInputInstance>(null);
+  const groupsInputRef = useRef<TextInputInstance>(null);
+  const notesInputRef = useRef<TextInputInstance>(null);
 
   const [selectedLab, setSelectedLab] = useState(initialLab || LABORATORIES[0].name);
   const [selectedDate, setSelectedDate] = useState(initialDate || '');
@@ -76,7 +77,7 @@ export default function NewReservationScreen() {
     }, [initialLab, initialDate, resetForm]),
   );
 
-  const focusInput = (inputRef: React.RefObject<TextInput | null>) => {
+  const focusInput = (inputRef: React.RefObject<TextInputInstance | null>) => {
     if (!inputRef.current) return;
     if (inputRef.current.isFocused()) {
       inputRef.current.blur();

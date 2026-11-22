@@ -7,13 +7,13 @@ import Toast from 'react-native-toast-message';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 
-import { BaseForm } from '../../components/input-form/base-form';
-import { EquipmentForm } from '../../components/input-form/equipment-form';
-import { GlasswareForm } from '../../components/input-form/glassware-form';
-import { ReagentForm } from '../../components/input-form/reagent-form';
-import { SolutionForm } from '../../components/input-form/solution-form';
-import { createInventoryItem } from '../../services/inventory.service';
-import { PageWrapper } from '../../components/ui/page-wrapper';
+import { BaseForm } from '../../../components/input-form/base-form';
+import { EquipmentForm } from '../../../components/input-form/equipment-form';
+import { GlasswareForm } from '../../../components/input-form/glassware-form';
+import { ReagentForm } from '../../../components/input-form/reagent-form';
+import { SolutionForm } from '../../../components/input-form/solution-form';
+import { createInventoryItem } from '../../../services/inventory.service';
+import { PageWrapper } from '../../../components/ui/page-wrapper';
 
 export default function NewItemScreen() {
   console.log('[NEW-ITEM] montou!');
@@ -124,7 +124,7 @@ export default function NewItemScreen() {
           text1: 'Sucesso!',
           text2: 'Item cadastrado no inventário com sucesso.',
         });
-        router.push('/inventory');
+        router.back();
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 400) {
@@ -148,7 +148,7 @@ export default function NewItemScreen() {
     <PageWrapper className="bg-[#F4F7F4]">
       <View className="flex-row items-center gap-4 px-4 pt-6 pb-4 bg-white border-b border-gray-200">
         <TouchableOpacity
-          onPress={() => router.push('/inventory')}
+          onPress={() => router.back()}
           className="w-10 h-10 items-center justify-center rounded-full bg-gray-50"
         >
           <Feather name="arrow-left" size={20} color="#374151" />
