@@ -6,7 +6,11 @@ import {
 import { PrismaService } from '../db/prisma/prisma.service.js';
 import { MailService } from '../mail/mail.service.js';
 import { CreateBreakdownDto } from './dto/create-breakdown.dto.js';
-import { Perfil, StatusInsumo } from '../generated/prisma/enums.js';
+import {
+  Perfil,
+  StatusInsumo,
+  StatusSolicitacao,
+} from '../generated/prisma/enums.js';
 
 @Injectable()
 export class BreakdownService {
@@ -39,6 +43,42 @@ export class BreakdownService {
     });
   }
 
+  async listEligibleMaterials(userId: string) {
+    const requestedItems = await this.prisma.itemSolicitacaoMaterial.findMany({
+      where: {
+        solicitacao: {
+          solicitante_id: userId,
+          status: {
+            in: [StatusSolicitacao.APROVADA, StatusSolicitacao.DEVOLVIDA],
+          },
+        },
+      },
+      select: {
+        insumo_id: true,
+      },
+      distinct: ['insumo_id'],
+    });
+
+    const eligibleIds = requestedItems.map((item) => item.insumo_id);
+
+    if (eligibleIds.length === 0) {
+      return [];
+    }
+
+    return this.prisma.insumo.findMany({
+      where: {
+        id: { in: eligibleIds },
+      },
+      orderBy: { nome: 'asc' },
+      include: {
+        reagenteInfo: true,
+        solucaoInfo: true,
+        equipamentoInfo: true,
+        vidrariaInfo: true,
+      },
+    });
+  }
+
   async reportBreakdown(userId: string, dto: CreateBreakdownDto) {
     const insumo = await this.prisma.insumo.findUnique({
       where: { id: dto.insumo_id },
@@ -46,6 +86,26 @@ export class BreakdownService {
 
     if (!insumo) {
       throw new NotFoundException('Material não encontrado no inventário.');
+    }
+
+    const previousRequest = await this.prisma.itemSolicitacaoMaterial.findFirst(
+      {
+        where: {
+          insumo_id: dto.insumo_id,
+          solicitacao: {
+            solicitante_id: userId,
+            status: {
+              in: [StatusSolicitacao.APROVADA, StatusSolicitacao.DEVOLVIDA],
+            },
+          },
+        },
+      },
+    );
+
+    if (!previousRequest) {
+      throw new BadRequestException(
+        'Você só pode reportar avarias em materiais que foram solicitados por você anteriormente.',
+      );
     }
 
     const currentBalance = Number(insumo.quantidade_saldo);
