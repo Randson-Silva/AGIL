@@ -1,4 +1,5 @@
-import { makeRedirectUri } from 'expo-auth-session';
+import Constants from 'expo-constants';
+import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { api } from './api';
 
@@ -21,19 +22,25 @@ export const authService = {
   },
 
   async loginWithGoogle() {
-    const redirectUrl = makeRedirectUri({
-      path: 'oauth-success',
-    });
+    const hostUri = Constants.expoConfig?.hostUri;
+    const isExpoGo = Boolean(Constants.expoGoConfig);
+
+    const redirectUrl =
+      isExpoGo && hostUri
+        ? `exp://${hostUri}/--/oauth-success`
+        : Linking.createURL('oauth-success');
+
+    console.log('REDIRECT URI:', redirectUrl);
 
     const backendAuthUrl = `${api.defaults.baseURL}/auth/google?state=${encodeURIComponent(redirectUrl)}`;
 
     const result = await WebBrowser.openAuthSessionAsync(backendAuthUrl, redirectUrl);
 
     if (result.type === 'success' && result.url) {
-      const urlObj = new URL(result.url);
-      const token = urlObj.searchParams.get('token');
+      const parsed = Linking.parse(result.url);
+      const token = parsed.queryParams?.token;
 
-      if (!token) {
+      if (!token || typeof token !== 'string') {
         throw new Error('Token não retornado pelo servidor');
       }
 
