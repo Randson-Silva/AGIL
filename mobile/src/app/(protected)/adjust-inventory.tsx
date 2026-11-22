@@ -8,10 +8,10 @@ import axios from 'axios';
 import {
   incrementInventoryStock,
   decrementInventoryStock,
-} from '../../../services/inventory.service';
-import { BackButton } from '../../../components/ui/Back-button';
-import { PageWrapper } from '../../../components/ui/page-wrapper';
-import { UNIT_LABELS } from '../../../utils/constants';
+} from '../../services/inventory.service';
+import { BackButton } from '../../components/ui/Back-button';
+import { PageWrapper } from '../../components/ui/page-wrapper';
+import { UNIT_LABELS } from '../../utils/constants';
 
 export default function AdjustStockScreen() {
   const router = useRouter();
@@ -35,6 +35,7 @@ export default function AdjustStockScreen() {
       setCurrentQuantity(parsed.quantidade_saldo);
       setMinQuantity(parsed.quantidade_minima);
       setMeasurementUnit(UNIT_LABELS[parsed.tipo_medida] || parsed.tipo_medida);
+      setAdjustmentValue('');
     }
   }, [itemData]);
 

@@ -45,7 +45,7 @@ export function useDashboard() {
   };
 
   const handleNavigateToNewItem = () => {
-    router.navigate('/(protected)/(tecnico)/new-item');
+    router.push('/(protected)/new-item');
   };
 
   const handleNavigateToAprovacoes = () => {

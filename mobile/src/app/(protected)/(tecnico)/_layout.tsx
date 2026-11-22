@@ -1,4 +1,5 @@
-import { Tabs } from 'expo-router';
+import { Tabs, usePathname, useSegments } from 'expo-router';
+import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -10,9 +11,16 @@ import {
 
 export default function TecnicoLayout() {
   const insets = useSafeAreaInsets();
+  const pathname = usePathname();
+  const segments = useSegments();
+
+  useEffect(() => {
+    console.log('[TECNICO ROUTE]', { pathname, segments });
+  }, [pathname, segments]);
 
   return (
     <Tabs
+      backBehavior="history"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#00623B',
@@ -39,58 +47,32 @@ export default function TecnicoLayout() {
         name="painel"
         options={{
           title: 'Painel',
-          tabBarIcon: ({ color, size }) => (
-            <ClockIcon size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <ClockIcon size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="aprovacoes"
         options={{
           title: 'Aprovações',
-          tabBarIcon: ({ color, size }) => (
-            <CalendarIcon size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <CalendarIcon size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="inventory"
         options={{
           title: 'Inventário',
-          tabBarIcon: ({ color, size }) => (
-            <BeakerIcon size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <BeakerIcon size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="historico"
         options={{
           title: 'Histórico',
-          tabBarIcon: ({ color, size }) => (
-            <ArchiveBoxIcon size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <ArchiveBoxIcon size={size} color={color} />,
         }}
       />
 
       {/* Abas Ocultas (Navegação via Botões na Tela) */}
-      <Tabs.Screen
-        name="new-item"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="adjust-inventory"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="edit-item"
-        options={{
-          href: null,
-        }}
-      />
       <Tabs.Screen
         name="notificacoes"
         options={{

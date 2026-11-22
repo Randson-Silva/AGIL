@@ -54,8 +54,9 @@ export const InventoryItemCard: React.FC<InventoryItemCardProps> = ({ item }) =>
   const unitLabel = UNIT_LABELS[item.tipo_medida] || item.tipo_medida;
 
   return (
-    <View className={`bg-white border rounded-2xl p-4 mb-3 shadow-sm ${isCriticalAlert ? 'border-red-200' : isWarningAlert ? 'border-orange-200' : 'border-gray-200'}`}>
-
+    <View
+      className={`bg-white border rounded-2xl p-4 mb-3 shadow-sm ${isCriticalAlert ? 'border-red-200' : isWarningAlert ? 'border-orange-200' : 'border-gray-200'}`}
+    >
       <View className="flex-row justify-between items-start mb-1 gap-2">
         <Text className="text-[15px] font-extrabold text-gray-900 flex-1" numberOfLines={2}>
           {item.nome}
@@ -63,16 +64,22 @@ export const InventoryItemCard: React.FC<InventoryItemCardProps> = ({ item }) =>
         <View
           className={`px-2.5 py-0.5 rounded-full border ${isLowStock ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}
         >
-          <Text className={`text-[11px] font-bold ${isLowStock ? 'text-red-600' : 'text-green-700'}`}>
+          <Text
+            className={`text-[11px] font-bold ${isLowStock ? 'text-red-600' : 'text-green-700'}`}
+          >
             {isLowStock ? 'Estoque Crítico' : 'Estoque Normal'}
           </Text>
         </View>
       </View>
 
       {showExpirationAlert && (isExpired || isExpiringSoon) && (
-        <View className={`flex-row items-center self-start px-2 py-0.5 rounded-md mb-2 ${isExpired ? 'bg-red-100' : 'bg-orange-100'}`}>
+        <View
+          className={`flex-row items-center self-start px-2 py-0.5 rounded-md mb-2 ${isExpired ? 'bg-red-100' : 'bg-orange-100'}`}
+        >
           <Feather name="alert-circle" size={12} color={isExpired ? '#B91C1C' : '#C2410C'} />
-          <Text className={`text-[11px] font-bold ml-1 ${isExpired ? 'text-red-700' : 'text-orange-700'}`}>
+          <Text
+            className={`text-[11px] font-bold ml-1 ${isExpired ? 'text-red-700' : 'text-orange-700'}`}
+          >
             {isExpired ? 'Vencido' : `Vence em ${daysLeft} dias`}
           </Text>
         </View>
@@ -91,7 +98,9 @@ export const InventoryItemCard: React.FC<InventoryItemCardProps> = ({ item }) =>
         </View>
 
         <View className="flex-row justify-between items-baseline mb-2">
-          <Text className={`text-xl font-extrabold ${isLowStock ? 'text-red-600' : 'text-gray-900'}`}>
+          <Text
+            className={`text-xl font-extrabold ${isLowStock ? 'text-red-600' : 'text-gray-900'}`}
+          >
             {item.quantidade_saldo}{' '}
             <Text className="text-xs font-medium text-gray-500">{unitLabel}</Text>
           </Text>
@@ -105,7 +114,10 @@ export const InventoryItemCard: React.FC<InventoryItemCardProps> = ({ item }) =>
         <View className="flex-row gap-2">
           <TouchableOpacity
             onPress={() =>
-              router.push({ pathname: '/edit-item', params: { itemData: JSON.stringify(item) } })
+              router.push({
+                pathname: '/(protected)/edit-item',
+                params: { itemData: JSON.stringify(item) },
+              })
             }
             className="flex-1 border border-gray-300 rounded-full py-2.5 items-center justify-center"
           >
@@ -115,7 +127,7 @@ export const InventoryItemCard: React.FC<InventoryItemCardProps> = ({ item }) =>
           <TouchableOpacity
             onPress={() =>
               router.push({
-                pathname: '/adjust-inventory',
+                pathname: '/(protected)/adjust-inventory',
                 params: { itemData: JSON.stringify(item) },
               })
             }
