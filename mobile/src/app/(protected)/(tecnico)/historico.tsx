@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { CalendarModal } from '../../../components/reservation/calendar-modal';
 import { Feather, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { PageWrapper } from '../../../components/ui/page-wrapper';
@@ -53,6 +53,18 @@ function formatReservationDateUtc(dateStr: string): string {
   return `${day}/${month}`;
 }
 
+function dateToIso(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function isoToLocalDate(iso: string): Date {
+  const [year, month, day] = iso.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export default function TecnicoHistoricoScreen() {
   const {
     firstName,
@@ -83,16 +95,12 @@ export default function TecnicoHistoricoScreen() {
 
   const [activeDatePicker, setActiveDatePicker] = useState<'start' | 'end' | null>(null);
 
-  const onDateChange = (event: DateTimePickerEvent, selected?: Date) => {
-    if (Platform.OS === 'android') {
-      setActiveDatePicker(null);
-    }
-    if (event.type === 'set' && selected) {
-      if (activeDatePicker === 'start') {
-        handleChangeStartDate(selected);
-      } else if (activeDatePicker === 'end') {
-        handleChangeEndDate(selected);
-      }
+  const handleSelectCalendarDate = (dateIso: string) => {
+    const selected = isoToLocalDate(dateIso);
+    if (activeDatePicker === 'start') {
+      handleChangeStartDate(selected);
+    } else if (activeDatePicker === 'end') {
+      handleChangeEndDate(selected);
     }
   };
 
@@ -211,24 +219,14 @@ export default function TecnicoHistoricoScreen() {
           </View>
         </View>
 
-        {activeDatePicker && (
-          <View className="mb-4 bg-white rounded-2xl border border-gray-200 p-2">
-            <DateTimePicker
-              value={activeDatePicker === 'start' ? startDate : endDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={onDateChange}
-            />
-            {Platform.OS === 'ios' && (
-              <TouchableOpacity
-                onPress={() => setActiveDatePicker(null)}
-                className="self-end px-4 py-2"
-              >
-                <Text className="text-[#00623B] font-bold text-sm">Concluir</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
+        <CalendarModal
+          visible={activeDatePicker !== null}
+          onClose={() => setActiveDatePicker(null)}
+          selectedDate={activeDatePicker === 'start' ? dateToIso(startDate) : dateToIso(endDate)}
+          onSelectDate={handleSelectCalendarDate}
+          allowPastDates
+          title={activeDatePicker === 'start' ? 'Data inicial' : 'Data final'}
+        />
 
         <View className="flex-row items-center mb-4">
           <TouchableOpacity

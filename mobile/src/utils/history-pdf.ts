@@ -1,5 +1,4 @@
 import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
 import { UsageHistoryItem } from '../services/inventory.service';
 import { ReservationHistoryItem } from '../services/reservation.service';
 
@@ -36,6 +35,18 @@ function escapeHtml(text: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+async function openPrintPreview(html: string) {
+  try {
+    await Print.printAsync({ html });
+  } catch (error: any) {
+    const message = String(error?.message || '').toLowerCase();
+    if (message.includes('cancel') || message.includes('did not complete')) {
+      return;
+    }
+    throw error;
+  }
 }
 
 export async function generateUsageHistoryPdf(params: {
@@ -115,16 +126,7 @@ export async function generateUsageHistoryPdf(params: {
     </html>
   `;
 
-  const { uri } = await Print.printToFileAsync({ html });
-  const canShare = await Sharing.isAvailableAsync();
-  if (canShare) {
-    await Sharing.shareAsync(uri, {
-      mimeType: 'application/pdf',
-      dialogTitle: 'Exportar Histórico de Uso (PDF)',
-      UTI: 'com.adobe.pdf',
-    });
-  }
-  return uri;
+  await openPrintPreview(html);
 }
 
 export async function generateReservationHistoryPdf(params: {
@@ -149,6 +151,7 @@ export async function generateReservationHistoryPdf(params: {
           <td><strong>${escapeHtml(res.local)}</strong><div class="sub">${escapeHtml(res.titulo)}</div></td>
           <td>${escapeHtml(res.professor?.nome || 'Professor')}</td>
           <td>${formatDateOnlyUtc(res.data_reserva)}<div class="sub">${slots}</div></td>
+          <td>${formatDateTimeBr(res.analisada_em || res.created_at)}</td>
           <td>
             <span class="badge ${isAccepted ? 'badge-aceita' : 'badge-recusada'}">
               ${isAccepted ? 'Aceita' : 'Recusada'}
@@ -198,7 +201,8 @@ export async function generateReservationHistoryPdf(params: {
             <tr>
               <th>Laboratório / Atividade</th>
               <th>Professor</th>
-              <th>Data / Horário</th>
+              <th>Aula / Horário</th>
+              <th>Analisada em</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -209,14 +213,5 @@ export async function generateReservationHistoryPdf(params: {
     </html>
   `;
 
-  const { uri } = await Print.printToFileAsync({ html });
-  const canShare = await Sharing.isAvailableAsync();
-  if (canShare) {
-    await Sharing.shareAsync(uri, {
-      mimeType: 'application/pdf',
-      dialogTitle: 'Exportar Histórico de Reservas (PDF)',
-      UTI: 'com.adobe.pdf',
-    });
-  }
-  return uri;
+  await openPrintPreview(html);
 }
