@@ -1,6 +1,6 @@
 import { authService } from '@/services/authService';
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Text, TextInput, type TextInputInstance, TouchableOpacity, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 const MAX_ATTEMPTS = 5;
@@ -27,7 +27,7 @@ export function VerifyCodeForm({
   const [loading, setLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
 
-  const inputsRef = useRef<Array<TextInput | null>>([]);
+  const inputsRef = useRef<Array<TextInputInstance | null>>([]);
   const isBlocked = attempts >= MAX_ATTEMPTS;
 
   function handleChangeText(text: string, index: number) {
