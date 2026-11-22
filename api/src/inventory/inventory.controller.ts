@@ -26,6 +26,7 @@ import {
 } from './dtos/update.input.dto.js';
 import { ListAlertsDto } from './dtos/filter.dto.js';
 import { InventoryService } from './inventory.service.js';
+import { CurrentUser } from '../authz/current-user.decorator.js';
 
 @Controller('inventory')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -89,16 +90,20 @@ export class InventoryController {
   async incrementStock(
     @Param('id') id: string,
     @Body('amount') amount: number,
+    @CurrentUser() user: { id: string; sub?: string },
   ) {
-    return this.inventoryService.incrementStock(id, amount);
+    const tecnicoId = user?.id || user?.sub;
+    return this.inventoryService.incrementStock(id, amount, tecnicoId);
   }
 
   @Patch('stock/:id/decrement')
   async decrementStock(
     @Param('id') id: string,
     @Body('amount') amount: number,
+    @CurrentUser() user: { id: string; sub?: string },
   ) {
-    return this.inventoryService.decrementStock(id, amount);
+    const tecnicoId = user?.id || user?.sub;
+    return this.inventoryService.decrementStock(id, amount, tecnicoId);
   }
 
   @Delete(':id')
@@ -116,5 +121,21 @@ export class InventoryController {
   @Get('story-alerts')
   async listStoryAlerts(@Query() filters: ListAlertsDto) {
     return this.inventoryService.listStoryAlerts(filters);
+  }
+
+  @Roles('TECNICO')
+  @Get('usage-history')
+  async listUsageHistory(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('type') type?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.inventoryService.listUsageHistory({
+      startDate,
+      endDate,
+      type,
+      search,
+    });
   }
 }

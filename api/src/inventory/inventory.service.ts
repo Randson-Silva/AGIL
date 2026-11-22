@@ -370,7 +370,7 @@ export class InventoryService {
     });
   }
 
-  async incrementStock(id: string, amount: number) {
+  async incrementStock(id: string, amount: number, tecnicoId?: string) {
     return this.prisma.$transaction(async (tx) => {
       const insumo = await tx.insumo.findUnique({ where: { id } });
       if (!insumo)
@@ -381,9 +381,10 @@ export class InventoryService {
       const numericAmount = Number(amount);
 
       validateMeasurementUnit(insumo.tipo_medida, amount);
-      const saldoPosterior = insumo.quantidade_saldo.toNumber() + numericAmount;
+      const saldoAnterior = insumo.quantidade_saldo.toNumber();
+      const saldoPosterior = saldoAnterior + numericAmount;
 
-      return this.updateStockBalanceAndAlerts(
+      const updated = await this.updateStockBalanceAndAlerts(
         tx,
         insumo.id,
         insumo.nome,
@@ -391,10 +392,24 @@ export class InventoryService {
         saldoPosterior,
         insumo.quantidade_minima.toNumber(),
       );
+
+      await tx.historicoMovimentacao.create({
+        data: {
+          insumo_id: insumo.id,
+          acao: 'ENTRADA',
+          quantidade: numericAmount,
+          saldo_anterior: saldoAnterior,
+          saldo_posterior: saldoPosterior,
+          usuarioId: tecnicoId ?? null,
+          observacao: 'Entrada manual de estoque',
+        },
+      });
+
+      return updated;
     });
   }
 
-  async decrementStock(id: string, amount: number) {
+  async decrementStock(id: string, amount: number, tecnicoId?: string) {
     return this.prisma.$transaction(async (tx) => {
       const insumo = await tx.insumo.findUnique({ where: { id } });
       if (!insumo)
@@ -413,7 +428,7 @@ export class InventoryService {
 
       const saldoPosterior = saldoAtual - amount;
 
-      return this.updateStockBalanceAndAlerts(
+      const updated = await this.updateStockBalanceAndAlerts(
         tx,
         insumo.id,
         insumo.nome,
@@ -421,6 +436,20 @@ export class InventoryService {
         saldoPosterior,
         insumo.quantidade_minima.toNumber(),
       );
+
+      await tx.historicoMovimentacao.create({
+        data: {
+          insumo_id: insumo.id,
+          acao: 'SAIDA',
+          quantidade: amount,
+          saldo_anterior: saldoAtual,
+          saldo_posterior: saldoPosterior,
+          usuarioId: tecnicoId ?? null,
+          observacao: 'Baixa manual de estoque',
+        },
+      });
+
+      return updated;
     });
   }
 
@@ -632,5 +661,147 @@ export class InventoryService {
         statusInsumo: novoStatus,
       },
     });
+  }
+
+  async listUsageHistory(filters: {
+    startDate?: string;
+    endDate?: string;
+    type?: string;
+    search?: string;
+  }) {
+    const { startDate, endDate, type = 'TODOS', search } = filters;
+
+    const dateFilter: Prisma.DateTimeFilter = {};
+    if (startDate) {
+      dateFilter.gte = new Date(`${startDate}T00:00:00.000-03:00`);
+    }
+    if (endDate) {
+      dateFilter.lte = new Date(`${endDate}T23:59:59.999-03:00`);
+    }
+    const hasDateFilter = Boolean(startDate || endDate);
+
+    const normalizedType = type.toUpperCase();
+    const shouldFetchMovements =
+      normalizedType === 'TODOS' ||
+      normalizedType === 'ENTRADA' ||
+      normalizedType === 'BAIXA';
+    const shouldFetchBreakdowns =
+      normalizedType === 'TODOS' || normalizedType === 'AVARIA';
+
+    const movementActions =
+      normalizedType === 'ENTRADA'
+        ? (['ENTRADA', 'DEVOLUCAO'] as const)
+        : normalizedType === 'BAIXA'
+          ? (['SAIDA'] as const)
+          : (['ENTRADA', 'DEVOLUCAO', 'SAIDA'] as const);
+
+    const [movements, breakdowns] = await Promise.all([
+      shouldFetchMovements
+        ? this.prisma.historicoMovimentacao.findMany({
+            where: {
+              acao: { in: [...movementActions] },
+              ...(hasDateFilter && { data_evento: dateFilter }),
+            },
+            include: {
+              insumo: {
+                select: {
+                  id: true,
+                  nome: true,
+                  tipo_medida: true,
+                  categoria: true,
+                },
+              },
+              usuario: {
+                select: { id: true, nome: true, perfil: true },
+              },
+              solicitacao: {
+                select: {
+                  id: true,
+                  finalidade: true,
+                  solicitante: {
+                    select: { id: true, nome: true, perfil: true },
+                  },
+                },
+              },
+            },
+            orderBy: { data_evento: 'desc' },
+          })
+        : Promise.resolve([]),
+
+      shouldFetchBreakdowns
+        ? this.prisma.avariaReportada.findMany({
+            where: {
+              ...(hasDateFilter && { data_reporte: dateFilter }),
+            },
+            include: {
+              insumo: {
+                select: {
+                  id: true,
+                  nome: true,
+                  tipo_medida: true,
+                  categoria: true,
+                },
+              },
+              usuario: {
+                select: { id: true, nome: true, perfil: true },
+              },
+            },
+            orderBy: { data_reporte: 'desc' },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const normalizedMovements = movements.map((m) => {
+      const isEntry = m.acao === 'ENTRADA' || m.acao === 'DEVOLUCAO';
+      const responsible = m.solicitacao?.solicitante ??
+        m.usuario ?? { nome: 'Sistema' };
+
+      return {
+        id: `mov-${m.id}`,
+        tipo: isEntry ? ('ENTRADA' as const) : ('BAIXA' as const),
+        materialId: m.insumo.id,
+        materialNome: m.insumo.nome,
+        unidadeMedida: m.insumo.tipo_medida,
+        quantidade: Number(m.quantidade),
+        sinal: isEntry ? ('+' as const) : ('-' as const),
+        usuarioNome: responsible.nome,
+        dataEvento: m.data_evento,
+        detalhes: m.observacao || m.solicitacao?.finalidade || null,
+      };
+    });
+
+    const normalizedBreakdowns = breakdowns.map((b) => ({
+      id: `avaria-${b.id}`,
+      tipo: 'AVARIA' as const,
+      materialId: b.insumo.id,
+      materialNome: b.insumo.nome,
+      unidadeMedida: b.insumo.tipo_medida,
+      quantidade: Number(b.quantidade),
+      sinal: '-' as const,
+      usuarioNome: b.usuario.nome,
+      dataEvento: b.data_reporte,
+      detalhes: b.descricao
+        ? `${b.tipo_ocorrencia} · ${b.descricao}`
+        : b.tipo_ocorrencia,
+    }));
+
+    let combined = [...normalizedMovements, ...normalizedBreakdowns];
+
+    if (search && search.trim()) {
+      const term = search.trim().toLowerCase();
+      combined = combined.filter(
+        (item) =>
+          item.materialNome.toLowerCase().includes(term) ||
+          item.usuarioNome.toLowerCase().includes(term) ||
+          (item.detalhes && item.detalhes.toLowerCase().includes(term)),
+      );
+    }
+
+    combined.sort(
+      (a, b) =>
+        new Date(b.dataEvento).getTime() - new Date(a.dataEvento).getTime(),
+    );
+
+    return combined;
   }
 }

@@ -7,15 +7,17 @@ import Toast from 'react-native-toast-message';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 
-import { BaseForm } from '../../../components/input-form/base-form';
-import { EquipmentForm } from '../../../components/input-form/equipment-form';
-import { GlasswareForm } from '../../../components/input-form/glassware-form';
-import { ReagentForm } from '../../../components/input-form/reagent-form';
-import { SolutionForm } from '../../../components/input-form/solution-form';
-import { createInventoryItem } from '../../../services/inventory.service';
-import { PageWrapper } from '../../../components/ui/page-wrapper';
+import { BaseForm } from '../../components/input-form/base-form';
+import { EquipmentForm } from '../../components/input-form/equipment-form';
+import { GlasswareForm } from '../../components/input-form/glassware-form';
+import { ReagentForm } from '../../components/input-form/reagent-form';
+import { SolutionForm } from '../../components/input-form/solution-form';
+import { createInventoryItem } from '../../services/inventory.service';
+import { PageWrapper } from '../../components/ui/page-wrapper';
 
 export default function NewItemScreen() {
+  console.log('[NEW-ITEM] montou!');
+
   const router = useRouter();
 
   const [category, setCategory] = useState('REAGENTE');
