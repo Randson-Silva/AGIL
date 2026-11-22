@@ -8,10 +8,10 @@ import axios from 'axios';
 import {
   incrementInventoryStock,
   decrementInventoryStock,
-} from '../../services/inventory.service';
-import { BackButton } from '../../components/ui/Back-button';
-import { PageWrapper } from '../../components/ui/page-wrapper';
-import { UNIT_LABELS } from '../../utils/constants';
+} from '../../../services/inventory.service';
+import { BackButton } from '../../../components/ui/Back-button';
+import { PageWrapper } from '../../../components/ui/page-wrapper';
+import { UNIT_LABELS } from '../../../utils/constants';
 
 export default function AdjustStockScreen() {
   const router = useRouter();

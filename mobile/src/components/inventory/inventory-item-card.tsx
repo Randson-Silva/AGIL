@@ -115,7 +115,7 @@ export const InventoryItemCard: React.FC<InventoryItemCardProps> = ({ item }) =>
           <TouchableOpacity
             onPress={() =>
               router.push({
-                pathname: '/(protected)/edit-item',
+                pathname: '/(protected)/(tecnico)/edit-item',
                 params: { itemData: JSON.stringify(item) },
               })
             }
@@ -127,7 +127,7 @@ export const InventoryItemCard: React.FC<InventoryItemCardProps> = ({ item }) =>
           <TouchableOpacity
             onPress={() =>
               router.push({
-                pathname: '/(protected)/adjust-inventory',
+                pathname: '/(protected)/(tecnico)/adjust-inventory',
                 params: { itemData: JSON.stringify(item) },
               })
             }
