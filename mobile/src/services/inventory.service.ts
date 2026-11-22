@@ -42,3 +42,24 @@ export const getInventoryAlerts = async () => {
   return await api.get('/inventory/alerts');
 };
 
+export interface UsageHistoryItem {
+  id: string;
+  tipo: 'ENTRADA' | 'BAIXA' | 'AVARIA';
+  materialId: string;
+  materialNome: string;
+  unidadeMedida: string;
+  quantidade: number;
+  sinal: '+' | '-';
+  usuarioNome: string;
+  dataEvento: string;
+  detalhes: string | null;
+}
+
+export const getUsageHistory = async (params?: {
+  startDate?: string;
+  endDate?: string;
+  type?: 'TODOS' | 'ENTRADA' | 'BAIXA' | 'AVARIA';
+  search?: string;
+}) => {
+  return api.get<UsageHistoryItem[]>('/inventory/usage-history', { params });
+};

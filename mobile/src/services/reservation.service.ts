@@ -2,11 +2,7 @@ import { api } from './api';
 import { ReservationObjective, TimeSlot } from '../utils/constants';
 
 export type ReservationStatus =
-  | 'PENDENTE'
-  | 'AVISO_SIMPLES'
-  | 'APROVADA'
-  | 'REJEITADA'
-  | 'CANCELADA';
+  'PENDENTE' | 'AVISO_SIMPLES' | 'APROVADA' | 'REJEITADA' | 'CANCELADA';
 
 export interface ReservationUser {
   id: string;
@@ -69,11 +65,7 @@ export interface OccupiedSlotDetail {
   professor_nome: string;
 }
 
-export const getOccupiedTimeSlots = async (
-  local: string,
-  date: string,
-  isRecurring?: boolean,
-) => {
+export const getOccupiedTimeSlots = async (local: string, date: string, isRecurring?: boolean) => {
   return api.get<TimeSlot[]>('/reservations/occupied-slots', {
     params: { local, date, isRecurring },
   });
@@ -97,13 +89,40 @@ export const approveReservation = async (id: string) => {
   return api.patch<ReservationItem>(`/reservations/${id}/approve`, {});
 };
 
-export const rejectReservation = async (
-  id: string,
-  payload: RejectReservationPayload,
-) => {
+export const rejectReservation = async (id: string, payload: RejectReservationPayload) => {
   return api.patch<ReservationItem>(`/reservations/${id}/reject`, payload);
 };
 
 export const registerReservationAbsence = async (id: string) => {
   return api.patch<ReservationItem>(`/reservations/${id}/absence`, {});
+};
+
+export interface ReservationHistoryItem {
+  id: string;
+  local: string;
+  titulo: string;
+  objetivo: string;
+  data_reserva: string;
+  created_at: string;
+  status: 'APROVADA' | 'REJEITADA' | 'CANCELADA';
+  motivo_rejeicao?: string | null;
+  professor: {
+    id: string;
+    nome: string;
+    email: string;
+  };
+  horarios: Array<{
+    id: string;
+    hora_inicio: string;
+    hora_fim: string;
+  }>;
+}
+
+export const getReservationHistory = async (params?: {
+  startDate?: string;
+  endDate?: string;
+  status?: 'TODAS' | 'ACEITAS' | 'RECUSADAS';
+  search?: string;
+}) => {
+  return api.get<ReservationHistoryItem[]>('/reservations/history', { params });
 };
