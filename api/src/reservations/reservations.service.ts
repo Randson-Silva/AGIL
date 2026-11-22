@@ -23,6 +23,7 @@ import {
 } from '../utils/reservation.utils.js';
 import { CreateReservationDto } from './dtos/create-reservation.dto.js';
 import { CreateUsageLogDto } from './dtos/create-usage-log.dto.js';
+import { UpdateUsageLogDto } from './dtos/update-usage-log.dto.js';
 
 const LOWER_PRIORITY_OBJECTIVES: ObjetivoReserva[] = [
   ObjetivoReserva.PESQUISA,
@@ -682,5 +683,101 @@ export class ReservationsService {
     dataFim.setHours(horas, minutos, 0, 0);
 
     return dataFim;
+  }
+
+  async listUsageLogs(user: { id: string; role: Perfil }) {
+    const whereClause =
+      user.role === Perfil.PROFESSOR
+        ? { reserva: { professor_id: user.id } }
+        : {};
+
+    return this.prisma.ataUso.findMany({
+      where: whereClause,
+      orderBy: { criadoEm: 'desc' },
+      include: {
+        reserva: {
+          select: {
+            id: true,
+            local: true,
+            data_reserva: true,
+            titulo: true,
+            status: true,
+            horarios: true,
+            professor: {
+              select: {
+                id: true,
+                nome: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async updateUsageLog(
+    reservaId: string,
+    user: { id: string; role: Perfil },
+    dto: UpdateUsageLogDto,
+  ) {
+    const reserva = await this.prisma.reservaEspaco.findUnique({
+      where: { id: reservaId },
+      include: { ataUso: true },
+    });
+
+    if (!reserva) {
+      throw new NotFoundException('Reserva não encontrada.');
+    }
+
+    if (user.role !== Perfil.TECNICO && reserva.professor_id !== user.id) {
+      throw new ForbiddenException('Sem permissão para editar esta ata.');
+    }
+
+    if (!reserva.ataUso) {
+      throw new NotFoundException('Nenhuma ata registrada para esta reserva.');
+    }
+
+    return this.prisma.ataUso.update({
+      where: { reservaId: reserva.id },
+      data: {
+        ...(dto.nomePratica !== undefined && {
+          nomePratica: dto.nomePratica.trim(),
+        }),
+        ...(dto.professorResponsavel !== undefined && {
+          professorResponsavel: dto.professorResponsavel.trim(),
+        }),
+        ...(dto.numeroAlunos !== undefined && {
+          numeroAlunos: dto.numeroAlunos,
+        }),
+      },
+    });
+  }
+
+  async deleteUsageLog(reservaId: string) {
+    const reserva = await this.prisma.reservaEspaco.findUnique({
+      where: { id: reservaId },
+      include: { ataUso: true },
+    });
+
+    if (!reserva) {
+      throw new NotFoundException('Reserva não encontrada.');
+    }
+
+    if (!reserva.ataUso) {
+      throw new NotFoundException('Nenhuma ata registrada para esta reserva.');
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.ataUso.delete({
+        where: { reservaId: reserva.id },
+      }),
+      this.prisma.reservaEspaco.update({
+        where: { id: reserva.id },
+        data: { status: StatusReserva.APROVADA },
+      }),
+    ]);
+
+    return { message: 'Ata removida com sucesso.' };
   }
 }

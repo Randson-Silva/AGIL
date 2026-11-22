@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -16,6 +17,7 @@ import { Perfil } from '../generated/prisma/enums.js';
 import { CreateReservationDto } from './dtos/create-reservation.dto.js';
 import { CreateUsageLogDto } from './dtos/create-usage-log.dto.js';
 import { RejectReservationDto } from './dtos/reject-reservation.dto.js';
+import { UpdateUsageLogDto } from './dtos/update-usage-log.dto.js';
 import { ReservationsService } from './reservations.service.js';
 
 @Controller('reservations')
@@ -136,5 +138,27 @@ export class ReservationsController {
     @CurrentUser() user: { id: string; role: Perfil },
   ) {
     return await this.reservationsService.getUsageLog(reservaId, user);
+  }
+
+  @Get('usage-logs')
+  @Roles('PROFESSOR', 'TECNICO')
+  listUsageLogs(@CurrentUser() user: { id: string; role: Perfil }) {
+    return this.reservationsService.listUsageLogs(user);
+  }
+
+  @Patch(':id/usage-log')
+  @Roles('PROFESSOR', 'TECNICO')
+  updateUsageLog(
+    @Param('id') reservaId: string,
+    @CurrentUser() user: { id: string; role: Perfil },
+    @Body() dto: UpdateUsageLogDto,
+  ) {
+    return this.reservationsService.updateUsageLog(reservaId, user, dto);
+  }
+
+  @Delete(':id/usage-log')
+  @Roles('TECNICO')
+  deleteUsageLog(@Param('id') reservaId: string) {
+    return this.reservationsService.deleteUsageLog(reservaId);
   }
 }
