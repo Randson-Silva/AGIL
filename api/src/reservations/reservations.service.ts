@@ -447,4 +447,54 @@ export class ReservationsService {
       include: RESERVATION_RELATIONS,
     });
   }
+
+  async listReservationHistory(filters: {
+    startDate?: string;
+    endDate?: string;
+    status?: string;
+    search?: string;
+  }) {
+    const { startDate, endDate, status = 'TODAS', search } = filters;
+
+    const normalizedStatus = status.toUpperCase();
+    const allowedStatuses: StatusReserva[] =
+      normalizedStatus === 'ACEITAS'
+        ? [StatusReserva.APROVADA]
+        : normalizedStatus === 'RECUSADAS'
+          ? [StatusReserva.REJEITADA, StatusReserva.CANCELADA]
+          : [
+              StatusReserva.APROVADA,
+              StatusReserva.REJEITADA,
+              StatusReserva.CANCELADA,
+            ];
+
+    const dateFilter: { gte?: Date; lte?: Date } = {};
+    if (startDate) {
+      dateFilter.gte = new Date(`${startDate}T00:00:00.000Z`);
+    }
+    if (endDate) {
+      dateFilter.lte = new Date(`${endDate}T23:59:59.999Z`);
+    }
+
+    const reservations = await this.prisma.reservaEspaco.findMany({
+      where: {
+        status: { in: allowedStatuses },
+        ...(startDate || endDate ? { data_reserva: dateFilter } : {}),
+      },
+      include: RESERVATION_RELATIONS,
+      orderBy: [{ data_reserva: 'desc' }, { created_at: 'desc' }],
+    });
+
+    if (search && search.trim()) {
+      const term = search.trim().toLowerCase();
+      return reservations.filter(
+        (res) =>
+          res.local.toLowerCase().includes(term) ||
+          res.titulo.toLowerCase().includes(term) ||
+          res.professor.nome.toLowerCase().includes(term),
+      );
+    }
+
+    return reservations;
+  }
 }
