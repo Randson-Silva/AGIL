@@ -5,11 +5,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { BreakdownService } from '../breakdown/breakdown.service.js';
 import { PrismaService } from '../db/prisma/prisma.service.js';
 import {
   ObjetivoReserva,
   Perfil,
   StatusReserva,
+  TipoAvaria,
 } from '../generated/prisma/client.js';
 import { MailService } from '../mail/mail.service.js';
 import {
@@ -29,6 +31,7 @@ const LOWER_PRIORITY_OBJECTIVES: ObjetivoReserva[] = [
 
 const RESERVATION_RELATIONS = {
   horarios: true,
+  ataUso: true,
   professor: {
     select: {
       id: true,
@@ -44,6 +47,7 @@ export class ReservationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
+    private readonly breakdownService: BreakdownService,
   ) {}
 
   async getOccupiedSlots(local: string, date: string, isRecurring = false) {
@@ -571,6 +575,25 @@ export class ReservationsService {
       );
     }
 
+    // valida se os insumos das avarias existem no inventário
+    if (dto.avarias?.length) {
+      const insumoIds = [
+        ...new Set<string>(
+          dto.avarias.map((avaria: { insumo_id: string }) => avaria.insumo_id),
+        ),
+      ];
+      const encontrados = await this.prisma.insumo.count({
+        where: { id: { in: insumoIds } },
+      });
+
+      if (encontrados !== insumoIds.length) {
+        throw new NotFoundException(
+          'Um ou mais materiais selecionados para avaria não foram encontrados no inventário.',
+        );
+      }
+    }
+
+    // cria a ata e atualiza o status da reserva atomicamente
     const [ata] = await this.prisma.$transaction([
       this.prisma.ataUso.create({
         data: {
@@ -586,7 +609,34 @@ export class ReservationsService {
       }),
     ]);
 
-    return ata;
+    // registra as avarias no módulo de breakdown
+    const avariasRegistradas: Awaited<
+      ReturnType<BreakdownService['reportBreakdown']>
+    >[] = [];
+    if (dto.avarias?.length) {
+      for (const avaria of dto.avarias) {
+        const descricaoFormatada = avaria.descricao?.trim()
+          ? `[Ata: ${dto.nomePratica.trim()}] ${avaria.descricao.trim()}`
+          : `[Ata: ${dto.nomePratica.trim()}] Avaria registrada durante a prática.`;
+
+        const registro = await this.breakdownService.reportBreakdown(
+          professorId,
+          {
+            insumo_id: avaria.insumo_id,
+            quantidade: avaria.quantidade ?? 1,
+            tipo_ocorrencia: avaria.tipo_ocorrencia ?? TipoAvaria.OUTRO,
+            descricao: descricaoFormatada,
+          },
+        );
+
+        avariasRegistradas.push(registro);
+      }
+    }
+
+    return {
+      ...ata,
+      avarias: avariasRegistradas,
+    };
   }
 
   async getUsageLog(reservaId: string, user: { id: string; role: Perfil }) {
