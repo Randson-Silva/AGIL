@@ -13,8 +13,6 @@ export default function OAuthSuccessScreen() {
       if (token) {
         try {
           await signInWithToken(token);
-
-          router.replace('/(protected)/dashboard');
         } catch (error) {
           console.error('Erro ao processar login OAuth:', error);
           router.replace('/(public)/login');
