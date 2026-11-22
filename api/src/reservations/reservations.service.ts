@@ -1,10 +1,17 @@
 import {
   BadRequestException,
+  ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../db/prisma/prisma.service.js';
-import { ObjetivoReserva, StatusReserva } from '../generated/prisma/client.js';
+import {
+  ObjetivoReserva,
+  Perfil,
+  StatusReserva,
+} from '../generated/prisma/client.js';
+import { MailService } from '../mail/mail.service.js';
 import {
   hasTimeOverlap,
   normalizeDateRange,
@@ -13,7 +20,7 @@ import {
   validateTimeSlots,
 } from '../utils/reservation.utils.js';
 import { CreateReservationDto } from './dtos/create-reservation.dto.js';
-import { MailService } from '../mail/mail.service.js';
+import { CreateUsageLogDto } from './dtos/create-usage-log.dto.js';
 
 const LOWER_PRIORITY_OBJECTIVES: ObjetivoReserva[] = [
   ObjetivoReserva.PESQUISA,
@@ -513,5 +520,117 @@ export class ReservationsService {
     });
 
     return reservations;
+  }
+
+  async createUsageLog(
+    reservaId: string,
+    professorId: string,
+    dto: CreateUsageLogDto,
+  ) {
+    const reserva = await this.prisma.reservaEspaco.findUnique({
+      where: { id: reservaId },
+      include: {
+        horarios: true,
+        ataUso: true,
+      },
+    });
+
+    if (!reserva) {
+      throw new NotFoundException('Reserva não encontrada.');
+    }
+
+    if (reserva.professor_id !== professorId) {
+      throw new ForbiddenException(
+        'Você só pode preencher a ata das suas próprias reservas.',
+      );
+    }
+
+    if (reserva.ataUso || reserva.status === StatusReserva.CONCLUIDA_COM_ATA) {
+      throw new ConflictException('Esta reserva já possui uma ata registrada.');
+    }
+
+    const statusPermitidos: StatusReserva[] = [
+      StatusReserva.APROVADA,
+      StatusReserva.AVISO_SIMPLES,
+    ];
+    if (!statusPermitidos.includes(reserva.status)) {
+      throw new BadRequestException(
+        'Apenas reservas aprovadas ou confirmadas podem receber ata de uso.',
+      );
+    }
+
+    // só permitir após o término do último horário reservado
+    const dataFimReserva = this.getReservationEndDateTime(
+      reserva.data_reserva,
+      reserva.horarios,
+    );
+
+    if (new Date() < dataFimReserva) {
+      throw new BadRequestException(
+        'A ata digital só pode ser preenchida após a conclusão do horário reservado.',
+      );
+    }
+
+    const [ata] = await this.prisma.$transaction([
+      this.prisma.ataUso.create({
+        data: {
+          reservaId: reserva.id,
+          nomePratica: dto.nomePratica.trim(),
+          professorResponsavel: dto.professorResponsavel.trim(),
+          numeroAlunos: dto.numeroAlunos,
+        },
+      }),
+      this.prisma.reservaEspaco.update({
+        where: { id: reserva.id },
+        data: { status: StatusReserva.CONCLUIDA_COM_ATA },
+      }),
+    ]);
+
+    return ata;
+  }
+
+  async getUsageLog(reservaId: string, user: { id: string; role: Perfil }) {
+    const reserva = await this.prisma.reservaEspaco.findUnique({
+      where: { id: reservaId },
+      include: { ataUso: true },
+    });
+
+    if (!reserva) {
+      throw new NotFoundException('Reserva não encontrada.');
+    }
+
+    // tecnico passa direto, se for prof verifica o id correspondente
+    if (user.role !== Perfil.TECNICO && reserva.professor_id !== user.id) {
+      throw new ForbiddenException('Sem permissão para visualizar esta ata.');
+    }
+
+    if (!reserva.ataUso) {
+      throw new NotFoundException('Nenhuma ata registrada para esta reserva.');
+    }
+
+    return reserva.ataUso;
+  }
+
+  private getReservationEndDateTime(
+    dataReserva: Date,
+    horarios: { hora_fim: string }[],
+  ): Date {
+    // aqui pega o maior hora_fim da reserva (ex: "17:30")
+    const ultimoHorario = horarios
+      .map((h) => h.hora_fim)
+      .sort()
+      .pop();
+
+    const dataFim = new Date(dataReserva);
+
+    if (!ultimoHorario) {
+      dataFim.setHours(23, 59, 59, 999);
+      return dataFim;
+    }
+
+    const [horas, minutos] = ultimoHorario.split(':').map(Number);
+    dataFim.setHours(horas, minutos, 0, 0);
+
+    return dataFim;
   }
 }
