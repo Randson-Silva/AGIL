@@ -28,7 +28,8 @@ export class RequestModuleController {
   @Roles('PROFESSOR', 'ALUNO')
   create(@Body() createRequestDto: CreateRequestDto, @Req() req: any) {
     const solicitanteId = req.user.id || req.user.sub;
-    return this.requestModuleService.create(solicitanteId, createRequestDto);
+    const role = req.user.role
+    return this.requestModuleService.create(solicitanteId, createRequestDto, role);
   }
 
   @Get()

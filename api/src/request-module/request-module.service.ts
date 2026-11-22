@@ -80,7 +80,7 @@ export class RequestModuleService {
     }
   }
 
-  async create(solicitanteId: string, dto: CreateRequestDto) {
+  async create(solicitanteId: string, dto: CreateRequestDto, role: string) {
     await this.validateRequestItems(dto.itens);
 
     return this.prisma.solicitacaoMaterial.create({
@@ -187,6 +187,14 @@ export class RequestModuleService {
       throw new BadRequestException('Esta solicitação não está pendente.');
     }
 
+    if (solicitacao.solicitante.perfil === 'ALUNO') {
+      const intensForValidate = solicitacao.itens.map((item) => ({
+        insumo_id: item.insumo_id,
+        quantidade: Number(item.quantidade),
+      }));
+      await this.validateRequestForStudent(intensForValidate);
+    }
+
     if (solicitacao.itens && solicitacao.itens.length > 0) {
       const itensFormatados = solicitacao.itens.map((item) => ({
         insumo_id: item.insumo_id,
@@ -205,6 +213,56 @@ export class RequestModuleService {
       },
       include: REQUEST_RELATIONS,
     });
+  }
+
+  private async validateRequestForStudent(
+    itensRequestStudent: { insumo_id: string; quantidade: number }[],
+  ) {
+    const insumoIds = itensRequestStudent.map((i) => i.insumo_id);
+
+    const insumos = await this.prisma.insumo.findMany({
+      where: { id: { in: insumoIds } },
+      select: { id: true, nome: true, quantidade_saldo: true },
+    });
+
+    const requestTeacher = await this.prisma.itemSolicitacaoMaterial.findMany({
+      where: {
+        insumo_id: { in: insumoIds },
+        solicitacao: {
+          status: 'PENDENTE',
+          solicitante: {
+            perfil: 'PROFESSOR',
+          },
+        },
+      },
+      select: {
+        insumo_id: true,
+        quantidade: true,
+      },
+    });
+
+    const allRequestTeacher = new Map<string, number>();
+    for (const item of requestTeacher) {
+      const current = allRequestTeacher.get(item.insumo_id) || 0; // ele pega a quantidade daquele insumo_id, se não tiver ele pega 0
+      allRequestTeacher.set(item.insumo_id, current + Number(item.quantidade)); //ele soma todas as quantidades diante das solicitacoes daquele insumo_id e coloca no map, com a chave sendo o insumo_id e o valor sendo a quantidade total
+    }
+
+    for (const item of itensRequestStudent) {
+      const insumo = insumos.find((i) => i.id === item.insumo_id);
+      if (!insumo) continue;
+
+      const currentBalance = Number(insumo.quantidade_saldo);
+      const requestTeacher = allRequestTeacher.get(item.insumo_id) || 0; // aqui ele pega a quantidade total do insumo_id
+      const availableBalance = currentBalance - requestTeacher;
+
+      if (item.quantidade > availableBalance) {
+        throw new BadRequestException(
+          `Não é possível aprovar a solicitação do aluno. O item '${insumo.nome}' possui ` +
+            `${currentBalance} em estoque, mas ${requestTeacher} já estão reservados para solicitações pendentes de professores. ` +
+            `Saldo livre disponível para alunos: ${Math.max(0, availableBalance)}`,
+        );
+      }
+    }
   }
 
   async reject(id: string, tecnicoId: string, motivo: string) {
@@ -262,7 +320,6 @@ export class RequestModuleService {
   }
 
   async alertDevolution() {
-
     const today = new Date();
 
     const treeDaysFromNow = new Date(today);
