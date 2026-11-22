@@ -3,12 +3,12 @@ import { useCallback } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
 
-import { InventoryItemCard } from '../../../components/inventory/inventory-item-card';
-import { InventoryFilterBar } from '../../../components/inventory/inventory-filter-bar';
-import { useInventory } from '../../../hooks/useInventory';
-import { PageWrapper } from '../../../components/ui/page-wrapper';
-import { BackButton } from '../../../components/ui/Back-button';
-import { HeaderDashboard } from '../../../components/dashboard/header-dashboard';
+import { InventoryItemCard } from '../../../../components/inventory/inventory-item-card';
+import { InventoryFilterBar } from '../../../../components/inventory/inventory-filter-bar';
+import { useInventory } from '../../../../hooks/useInventory';
+import { PageWrapper } from '../../../../components/ui/page-wrapper';
+import { BackButton } from '../../../../components/ui/Back-button';
+import { HeaderDashboard } from '../../../../components/dashboard/header-dashboard';
 
 export default function InventoryScreen() {
   const router = useRouter();
@@ -52,7 +52,7 @@ export default function InventoryScreen() {
 
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => router.push('/(protected)/new-item')}
+            onPress={() => router.push('/(protected)/(tecnico)/new-item')}
             className="flex-1 h-12 bg-[#00623B] rounded-xl px-4 items-center flex-row justify-center shadow-sm"
           >
             <Feather name="plus" size={18} color="#FFF" style={{ marginRight: 8 }} />

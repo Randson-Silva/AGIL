@@ -9,19 +9,19 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { CalendarModal } from '../../../components/reservation/calendar-modal';
+import { CalendarModal } from '../../../../components/reservation/calendar-modal';
 import { Feather, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { PageWrapper } from '../../../components/ui/page-wrapper';
-import { HeaderDashboard } from '../../../components/dashboard/header-dashboard';
-import { BackButton } from '../../../components/ui/Back-button';
+import { PageWrapper } from '../../../../components/ui/page-wrapper';
+import { HeaderDashboard } from '../../../../components/dashboard/header-dashboard';
+import { BackButton } from '../../../../components/ui/Back-button';
 import {
   formatBrDate,
   formatRelativeDateTime,
   ReservationFilterStatus,
   UsageFilterType,
   useTecnicoHistorico,
-} from '../../../hooks/useTecnicoHistorico';
+} from '../../../../hooks/useTecnicoHistorico';
 
 const UNIT_LABELS: Record<string, string> = {
   MG: 'mg',
