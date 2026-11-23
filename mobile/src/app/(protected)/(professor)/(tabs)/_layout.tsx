@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
+import { ArchiveBoxIcon, CalendarIcon, CubeIcon, HomeIcon } from 'react-native-heroicons/outline';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { HomeIcon, CalendarIcon, CubeIcon, ArchiveBoxIcon } from 'react-native-heroicons/outline';
 
 export default function ProfessorTabsLayout() {
   const insets = useSafeAreaInsets();
@@ -48,10 +48,23 @@ export default function ProfessorTabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="historico"
+        name="historico-atas"
         options={{
-          title: 'Histórico',
+          title: 'Atas',
           tabBarIcon: ({ color, size }) => <ArchiveBoxIcon size={size} color={color} />,
+        }}
+      />
+      {/* tem que registrar cada buceta aqui */}
+      <Tabs.Screen
+        name="ata-form"
+        options={{
+          tabBarItemStyle: { display: 'none' }
+        }}
+      />
+      <Tabs.Screen
+        name="ata-relatorio"
+        options={{
+          tabBarItemStyle: { display: 'none' }
         }}
       />
     </Tabs>

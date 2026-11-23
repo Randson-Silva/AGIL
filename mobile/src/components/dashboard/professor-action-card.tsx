@@ -19,7 +19,7 @@ export function ProfessorActionCard({ item }: ProfessorActionCardProps) {
   return (
     <TouchableOpacity
       activeOpacity={0.7}
-      onPress={item.onPress}
+      onPress={() => item.onPress()}
       className="bg-white rounded-3xl p-5 mb-4 border border-gray-100 shadow-sm flex-row items-center w-full"
     >
       <View className="mr-4 w-12 h-12 rounded-full bg-emerald-50 items-center justify-center">

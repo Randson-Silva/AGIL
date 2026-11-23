@@ -1,8 +1,8 @@
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { useAuth } from './useAuth';
-import { getReservations } from '../services/reservation.service';
 import { ProfessorActionItem } from '../components/dashboard/professor-action-card';
+import { getReservations } from '../services/reservation.service';
+import { useAuth } from './useAuth';
 
 export function useProfessorDashboard() {
   const { firstName, initials } = useAuth();
@@ -82,14 +82,14 @@ export function useProfessorDashboard() {
       iconName: 'DocumentTextIcon',
       label: 'Registrar ata de aula',
       description: 'Relate o que aconteceu na aula prática',
-      onPress: () => console.log('Navegar para Registrar Ata'),
+      onPress: () => console.log('debug: clicou registrar ata (campo a ser removido futuramente)'),
     },
     {
       id: 'solicitar_materiais',
       iconName: 'CubeIcon',
       label: 'Solicitar materiais',
       description: 'Monte sua cesta e defina o prazo',
-      onPress: () => router.push('/(protected)/(professor)/materiais'),
+      onPress: () => router.push('/(protected)/(professor)/(tabs)/materiais'),
     },
     {
       id: 'reportar_avaria',
@@ -103,7 +103,7 @@ export function useProfessorDashboard() {
       iconName: 'ClipboardDocumentListIcon',
       label: 'Minhas reservas',
       description: 'Acompanhe status e cancele',
-      onPress: () => router.push('/(protected)/(professor)/reservas'),
+      onPress: () => router.push('/(protected)/(professor)/(tabs)/reservas'),
     },
     {
       id: 'meu_historico',

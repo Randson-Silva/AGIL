@@ -28,15 +28,15 @@ export default function ProfessorPainelScreen() {
       const year = d.getFullYear();
       const hours = String(d.getHours()).padStart(2, '0');
       const mins = String(d.getMinutes()).padStart(2, '0');
-      
+
       return `${day}/${month}/${year} · ${hours}:${mins}`;
     } catch {
       return isoDate;
     }
   };
 
-  const formattedDate = nextReservation?.data_reserva 
-    ? formatDateTime(nextReservation.data_reserva) 
+  const formattedDate = nextReservation?.data_reserva
+    ? formatDateTime(nextReservation.data_reserva)
     : '';
 
   return (
@@ -53,15 +53,13 @@ export default function ProfessorPainelScreen() {
           {/* Badge Perfil: Professor */}
           <View className="mb-6 self-start">
             <View className="bg-emerald-100/50 px-3 py-1.5 rounded-full">
-              <Text className="text-[#00623B] font-medium text-xs">
-                Perfil: Professor
-              </Text>
+              <Text className="text-[#00623B] font-medium text-xs">Perfil: Professor</Text>
             </View>
           </View>
 
           {/* Próxima Reserva ou Vazio */}
           {nextReservation ? (
-            <NextReservationCard 
+            <NextReservationCard
               title={nextReservation.local}
               dateStr={formattedDate}
               classNameLabel={nextReservation.objetivo || 'Reserva Confirmada'}
@@ -75,15 +73,12 @@ export default function ProfessorPainelScreen() {
           )}
 
           {/* O que você quer fazer? */}
-          <Text className="text-xl font-bold text-gray-900 mb-4">
-            O que você quer fazer?
-          </Text>
+          <Text className="text-xl font-bold text-gray-900 mb-4">O que você quer fazer?</Text>
 
           {/* Cards de Ação */}
           {actions.map((action) => (
             <ProfessorActionCard key={action.id} item={action} />
           ))}
-
         </View>
       </ScrollView>
     </PageWrapper>

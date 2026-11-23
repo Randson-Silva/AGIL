@@ -58,6 +58,7 @@ enum StatusReserva {
   APROVADA
   REJEITADA
   CANCELADA
+  CONCLUIDA_COM_ATA
 }
 
 enum StatusAlerta {
@@ -122,6 +123,8 @@ model ReservaEspaco {
 
   horarios   HorarioReserva[]
   created_at DateTime         @default(now())
+
+  ataUso AtaUso?
 }
 
 model HorarioReserva {
@@ -288,4 +291,15 @@ model AlertaEstoque {
   // Campos para histórico de resolução
   data_resolucao       DateTime?
   quantidade_resolucao Decimal?  @db.Decimal(10, 3)
+}
+
+model AtaUso {
+  id                   String        @id @default(uuid())
+  reservaId            String        @unique
+  reserva              ReservaEspaco @relation(fields: [reservaId], references: [id], onDelete: Cascade)
+  nomePratica          String
+  professorResponsavel String
+  numeroAlunos         Int
+  criadoEm             DateTime      @default(now())
+  atualizadoEm         DateTime      @updatedAt
 }

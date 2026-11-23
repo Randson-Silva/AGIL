@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -12,8 +13,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { CurrentUser } from '../authz/current-user.decorator.js';
 import { Roles } from '../authz/roles.decorator.js';
 import { RolesGuard } from '../authz/roles.guard.js';
+import { Perfil } from '../generated/prisma/enums.js';
 import { CreateReservationDto } from './dtos/create-reservation.dto.js';
+import { CreateUsageLogDto } from './dtos/create-usage-log.dto.js';
 import { RejectReservationDto } from './dtos/reject-reservation.dto.js';
+import { UpdateUsageLogDto } from './dtos/update-usage-log.dto.js';
 import { ReservationsService } from './reservations.service.js';
 
 @Controller('reservations')
@@ -111,5 +115,50 @@ export class ReservationsController {
       status,
       search,
     });
+  }
+
+  @Post(':id/usage-log')
+  @Roles('PROFESSOR')
+  async createUsageLog(
+    @Param('id') reservaId: string,
+    @CurrentUser() user: { id: string; role: Perfil },
+    @Body() dto: CreateUsageLogDto,
+  ) {
+    return await this.reservationsService.createUsageLog(
+      reservaId,
+      user.id,
+      dto,
+    );
+  }
+
+  @Get(':id/usage-log')
+  @Roles('PROFESSOR', 'TECNICO')
+  async getUsageLog(
+    @Param('id') reservaId: string,
+    @CurrentUser() user: { id: string; role: Perfil },
+  ) {
+    return await this.reservationsService.getUsageLog(reservaId, user);
+  }
+
+  @Get('usage-logs')
+  @Roles('PROFESSOR', 'TECNICO')
+  listUsageLogs(@CurrentUser() user: { id: string; role: Perfil }) {
+    return this.reservationsService.listUsageLogs(user);
+  }
+
+  @Patch(':id/usage-log')
+  @Roles('PROFESSOR', 'TECNICO')
+  updateUsageLog(
+    @Param('id') reservaId: string,
+    @CurrentUser() user: { id: string; role: Perfil },
+    @Body() dto: UpdateUsageLogDto,
+  ) {
+    return this.reservationsService.updateUsageLog(reservaId, user, dto);
+  }
+
+  @Delete(':id/usage-log')
+  @Roles('TECNICO')
+  deleteUsageLog(@Param('id') reservaId: string) {
+    return this.reservationsService.deleteUsageLog(reservaId);
   }
 }

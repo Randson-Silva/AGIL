@@ -1,14 +1,13 @@
-import React from 'react';
-import { View, ScrollView, ActivityIndicator, Text } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { PageWrapper } from '../../../../components/ui/page-wrapper';
-import { Button } from '../../../../components/ui/Button';
-import { FilterPills, FilterOption } from '../../../../components/reservation/filter-pills';
-import { ReservationCard } from '../../../../components/reservation/reservation-card';
-import { CancelReservationModal } from '../../../../components/reservation/cancel-reservation-modal';
-import { useReservas } from '../../../../hooks/useReservas';
-
+import { useRouter } from 'expo-router';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { HeaderDashboard } from '../../../../components/dashboard/header-dashboard';
+import { CancelReservationModal } from '../../../../components/reservation/cancel-reservation-modal';
+import { FilterOption, FilterPills } from '../../../../components/reservation/filter-pills';
+import { ReservationCard } from '../../../../components/reservation/reservation-card';
+import { Button } from '../../../../components/ui/Button';
+import { PageWrapper } from '../../../../components/ui/page-wrapper';
+import { useReservas } from '../../../../hooks/useReservas';
 
 export default function ReservasScreen() {
   const {
@@ -26,6 +25,8 @@ export default function ReservasScreen() {
     initials,
   } = useReservas();
 
+  const router = useRouter();
+
   const FILTER_OPTIONS: FilterOption[] = ['Todas', 'Pendente', 'Aprovada', 'Encerradas'];
 
   const protocoloModal = reservationToCancel?.id
@@ -34,11 +35,11 @@ export default function ReservasScreen() {
 
   return (
     <PageWrapper className="bg-[#F8FAF9]">
-      <HeaderDashboard 
+      <HeaderDashboard
         userName={firstName}
-        initials={initials} 
-        title="Minhas Reservas" 
-        icon={<Feather name="calendar" size={20} color="#FFF" />} 
+        initials={initials}
+        title="Minhas Reservas"
+        icon={<Feather name="calendar" size={20} color="#FFF" />}
         hasBorder
       />
 
@@ -74,6 +75,18 @@ export default function ReservasScreen() {
                 key={item.id}
                 item={item}
                 onCancelPress={handleOpenCancelModal}
+                onSendUsageLog={(res) => {
+                  router.push({
+                    pathname: '/(protected)/(professor)/(tabs)/ata-form',
+                    params: { reservation: JSON.stringify(res) },
+                  });
+                }}
+                onViewUsageLog={(res) =>
+                  router.push({
+                    pathname: '/(protected)/(professor)/(tabs)/ata-relatorio',
+                    params: { reservationId: res.id },
+                  })
+                }
               />
             ))
           )}

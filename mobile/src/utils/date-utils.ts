@@ -1,3 +1,5 @@
+import { ReservationItem } from '../services/reservation.service';
+
 export function getExpirationStatus(expirationDateIso: string | null | undefined) {
   if (!expirationDateIso) {
     return { isExpired: false, isExpiringSoon: false, daysLeft: null };
