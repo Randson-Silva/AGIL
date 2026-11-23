@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CurrentUser } from '../authz/current-user.decorator.js';
 import { Roles } from '../authz/roles.decorator.js';
@@ -34,5 +34,21 @@ export class BreakdownController {
   ) {
     const userId = user.id || user.sub!;
     return this.breakdownService.reportBreakdown(userId, data);
+  }
+
+  @Get('my-history')
+  @Roles('PROFESSOR', 'ALUNO')
+  async listMyBreakdowns(
+    @CurrentUser() user: { id: string; sub?: string },
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('search') search?: string,
+  ) {
+    const userId = user.id || user.sub!;
+    return this.breakdownService.listMyBreakdowns(userId, {
+      startDate,
+      endDate,
+      search,
+    });
   }
 }

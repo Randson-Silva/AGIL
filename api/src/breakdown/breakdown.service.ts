@@ -189,4 +189,72 @@ export class BreakdownService {
 
     return newBreakdown;
   }
+
+  async listMyBreakdowns(
+    userId: string,
+    filters: {
+      startDate?: string;
+      endDate?: string;
+      search?: string;
+    },
+  ) {
+    const { startDate, endDate, search } = filters;
+
+    const totalCount = await this.prisma.avariaReportada.count({
+      where: { usuario_id: userId },
+    });
+
+    const dateFilter: { gte?: Date; lte?: Date } = {};
+    if (startDate) {
+      dateFilter.gte = new Date(`${startDate}T00:00:00.000-03:00`);
+    }
+    if (endDate) {
+      dateFilter.lte = new Date(`${endDate}T23:59:59.999-03:00`);
+    }
+
+    const breakdowns = await this.prisma.avariaReportada.findMany({
+      where: {
+        usuario_id: userId,
+        ...(startDate || endDate ? { data_reporte: dateFilter } : {}),
+      },
+      orderBy: { data_reporte: 'desc' },
+      include: {
+        insumo: {
+          select: {
+            id: true,
+            nome: true,
+            categoria: true,
+            tipo_medida: true,
+            localizacao: true,
+          },
+        },
+        usuario: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    let items = breakdowns;
+
+    if (search && search.trim()) {
+      const term = search.trim().toLowerCase();
+      items = items.filter(
+        (b) =>
+          b.insumo.nome.toLowerCase().includes(term) ||
+          b.tipo_ocorrencia.toLowerCase().includes(term) ||
+          (b.descricao && b.descricao.toLowerCase().includes(term)) ||
+          (b.insumo.localizacao &&
+            b.insumo.localizacao.toLowerCase().includes(term)),
+      );
+    }
+
+    return {
+      hasAnyHistory: totalCount > 0,
+      items,
+    };
+  }
 }

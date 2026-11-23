@@ -335,4 +335,105 @@ export class RequestModuleService {
       },
     });
   }
+
+  async listMyHistory(
+    solicitanteId: string,
+    filters: {
+      startDate?: string;
+      endDate?: string;
+      status?: string;
+      search?: string;
+    },
+  ) {
+    const { startDate, endDate, status = 'TODOS', search } = filters;
+
+    const allFinalStatuses: ('APROVADA' | 'DEVOLVIDA' | 'REJEITADA')[] = [
+      'APROVADA',
+      'DEVOLVIDA',
+      'REJEITADA',
+    ];
+
+    const normalizedStatus = status.toUpperCase();
+    const selectedStatuses: ('APROVADA' | 'DEVOLVIDA' | 'REJEITADA')[] =
+      normalizedStatus === 'APROVADA' || normalizedStatus === 'APROVADOS'
+        ? ['APROVADA']
+        : normalizedStatus === 'DEVOLVIDA' || normalizedStatus === 'DEVOLVIDOS'
+          ? ['DEVOLVIDA']
+          : normalizedStatus === 'REJEITADA' ||
+              normalizedStatus === 'REJEITADOS'
+            ? ['REJEITADA']
+            : allFinalStatuses;
+
+    const totalHistoryCount = await this.prisma.solicitacaoMaterial.count({
+      where: {
+        solicitante_id: solicitanteId,
+        status: { in: allFinalStatuses },
+      },
+    });
+
+    const requests = await this.prisma.solicitacaoMaterial.findMany({
+      where: {
+        solicitante_id: solicitanteId,
+        status: { in: selectedStatuses },
+      },
+      include: REQUEST_RELATIONS,
+      orderBy: { criada_em: 'desc' },
+    });
+
+    const startBound = startDate
+      ? new Date(`${startDate}T00:00:00.000-03:00`).getTime()
+      : null;
+    const endBound = endDate
+      ? new Date(`${endDate}T23:59:59.999-03:00`).getTime()
+      : null;
+
+    let items = requests.flatMap((req) => {
+      const eventDate = req.devolvida_em ?? req.aprovada_em ?? req.criada_em;
+
+      return req.itens.map((item) => ({
+        id: `${req.id}-${item.id}`,
+        solicitacaoId: req.id,
+        materialId: item.insumo.id,
+        materialNome: item.insumo.nome,
+        categoria: item.insumo.categoria,
+        unidadeMedida: item.insumo.tipo_medida,
+        quantidade: Number(item.quantidade),
+        status: req.status as 'APROVADA' | 'DEVOLVIDA' | 'REJEITADA',
+        finalidade: req.finalidade,
+        motivoRejeicao: req.motivo_rejeicao,
+        criadaEm: req.criada_em,
+        aprovadaEm: req.aprovada_em,
+        devolvidaEm: req.devolvida_em,
+        dataEvento: eventDate,
+      }));
+    });
+
+    if (startBound !== null || endBound !== null) {
+      items = items.filter((item) => {
+        const time = new Date(item.dataEvento).getTime();
+        if (startBound !== null && time < startBound) return false;
+        if (endBound !== null && time > endBound) return false;
+        return true;
+      });
+    }
+
+    if (search && search.trim()) {
+      const term = search.trim().toLowerCase();
+      items = items.filter(
+        (item) =>
+          item.materialNome.toLowerCase().includes(term) ||
+          item.finalidade.toLowerCase().includes(term),
+      );
+    }
+
+    items.sort(
+      (a, b) =>
+        new Date(b.dataEvento).getTime() - new Date(a.dataEvento).getTime(),
+    );
+
+    return {
+      hasAnyHistory: totalHistoryCount > 0,
+      items,
+    };
+  }
 }

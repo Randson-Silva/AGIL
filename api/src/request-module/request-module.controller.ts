@@ -28,8 +28,12 @@ export class RequestModuleController {
   @Roles('PROFESSOR', 'ALUNO')
   create(@Body() createRequestDto: CreateRequestDto, @Req() req: any) {
     const solicitanteId = req.user.id || req.user.sub;
-    const role = req.user.role
-    return this.requestModuleService.create(solicitanteId, createRequestDto, role);
+    const role = req.user.role;
+    return this.requestModuleService.create(
+      solicitanteId,
+      createRequestDto,
+      role,
+    );
   }
 
   @Get()
@@ -38,6 +42,24 @@ export class RequestModuleController {
     const solicitanteId = req.user.id || req.user.sub;
     const role = req.user.role || req.user.perfil || req.user.profile;
     return this.requestModuleService.findAll(solicitanteId, role, filtros);
+  }
+
+  @Get('my-history')
+  @Roles('PROFESSOR', 'ALUNO')
+  listMyHistory(
+    @Req() req: any,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+  ) {
+    const solicitanteId = req.user.id || req.user.sub;
+    return this.requestModuleService.listMyHistory(solicitanteId, {
+      startDate,
+      endDate,
+      status,
+      search,
+    });
   }
 
   @Get('/:id')
