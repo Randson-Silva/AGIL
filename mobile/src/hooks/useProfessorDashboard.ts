@@ -110,7 +110,7 @@ export function useProfessorDashboard() {
       iconName: 'ClockIcon',
       label: 'Meu histórico',
       description: 'Uso por período e material',
-      onPress: () => console.log('Navegar para Meu Histórico'),
+      onPress: () => router.push('/(protected)/(professor)/historico'),
     },
   ];
 
