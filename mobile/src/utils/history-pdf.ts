@@ -1,6 +1,8 @@
 import * as Print from 'expo-print';
 import { UsageHistoryItem } from '../services/inventory.service';
 import { ReservationHistoryItem } from '../services/reservation.service';
+import { MyMaterialHistoryItem } from '../services/material-request.service';
+import { MyBreakdownHistoryItem } from '../services/breakdown.service';
 
 const UNIT_LABELS: Record<string, string> = {
   MG: 'mg',
@@ -204,6 +206,184 @@ export async function generateReservationHistoryPdf(params: {
               <th>Aula / Horário</th>
               <th>Analisada em</th>
               <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        <div class="footer">Documento gerado automaticamente pelo sistema AGIL.</div>
+      </body>
+    </html>
+  `;
+
+  await openPrintPreview(html);
+}
+
+const OCCURRENCE_LABELS: Record<string, string> = {
+  QUEBRA: 'Quebra',
+  DEFEITO: 'Defeito',
+  CONTAMINACAO: 'Contaminação',
+  EXTRAVIO: 'Extravio',
+  OUTRO: 'Outro',
+};
+
+export async function generateMyMaterialHistoryPdf(params: {
+  items: MyMaterialHistoryItem[];
+  periodLabel: string;
+  filterLabel: string;
+  searchQuery?: string;
+  generatedBy: string;
+}) {
+  const { items, periodLabel, filterLabel, searchQuery, generatedBy } = params;
+
+  const rowsHtml = items
+    .map((item) => {
+      const unit = UNIT_LABELS[item.unidadeMedida] || item.unidadeMedida;
+      const statusLabel =
+        item.status === 'DEVOLVIDA'
+          ? 'Devolvido'
+          : item.status === 'APROVADA'
+            ? 'Aprovado'
+            : 'Rejeitado';
+      const badgeClass =
+        item.status === 'DEVOLVIDA'
+          ? 'badge-entrada'
+          : item.status === 'APROVADA'
+            ? 'badge-baixa'
+            : 'badge-avaria';
+
+      return `
+        <tr>
+          <td>
+            <strong>${escapeHtml(item.materialNome)}</strong>
+            <div class="sub">${escapeHtml(item.finalidade)}</div>
+          </td>
+          <td>${formatDateTimeBr(item.criadaEm)}</td>
+          <td><strong>${item.quantidade} ${unit}</strong></td>
+          <td>
+            <span class="badge ${badgeClass}">${statusLabel}</span>
+            ${
+              item.status === 'REJEITADA' && item.motivoRejeicao
+                ? `<div class="sub">${escapeHtml(item.motivoRejeicao)}</div>`
+                : ''
+            }
+          </td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8" />
+        <style>
+          body { font-family: Arial, Helvetica, sans-serif; color: #1F2937; padding: 24px; }
+          h1 { color: #00623B; font-size: 20px; margin-bottom: 4px; }
+          .meta { font-size: 12px; color: #4B5563; margin-bottom: 18px; line-height: 1.6; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th { background-color: #E3F3EC; color: #00623B; text-align: left; padding: 8px; border-bottom: 2px solid #00623B; }
+          td { padding: 8px; border-bottom: 1px solid #E5E7EB; vertical-align: top; }
+          .sub { font-size: 10px; color: #6B7280; margin-top: 2px; }
+          .badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
+          .badge-entrada { background: #E3F3EC; color: #00623B; }
+          .badge-baixa { background: #F3F4F6; color: #374151; }
+          .badge-avaria { background: #FEE2E2; color: #DC2626; }
+          .footer { margin-top: 24px; font-size: 10px; color: #9CA3AF; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <h1>AGIL — Meu Histórico de Materiais</h1>
+        <div class="meta">
+          <div><strong>Período:</strong> ${escapeHtml(periodLabel)}</div>
+          <div><strong>Status:</strong> ${escapeHtml(filterLabel)}${
+            searchQuery ? ` · <strong>Busca:</strong> ${escapeHtml(searchQuery)}` : ''
+          }</div>
+          <div><strong>Solicitante:</strong> ${escapeHtml(generatedBy)} · Gerado em ${formatDateTimeBr(new Date().toISOString())}</div>
+          <div><strong>Total de registros:</strong> ${items.length}</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Material / Finalidade</th>
+              <th>Solicitado em</th>
+              <th>Quantidade</th>
+              <th>Status final</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        <div class="footer">Documento gerado automaticamente pelo sistema AGIL.</div>
+      </body>
+    </html>
+  `;
+
+  await openPrintPreview(html);
+}
+
+export async function generateMyBreakdownHistoryPdf(params: {
+  items: MyBreakdownHistoryItem[];
+  periodLabel: string;
+  searchQuery?: string;
+  generatedBy: string;
+}) {
+  const { items, periodLabel, searchQuery, generatedBy } = params;
+
+  const rowsHtml = items
+    .map((item) => {
+      const unit = UNIT_LABELS[item.insumo.tipo_medida] || item.insumo.tipo_medida;
+      const ocorr = OCCURRENCE_LABELS[item.tipo_ocorrencia] || item.tipo_ocorrencia;
+      const reportCode = `A-${item.id.substring(0, 4).toUpperCase()}`;
+
+      return `
+        <tr>
+          <td>
+            <strong>${escapeHtml(item.insumo.nome)}</strong>
+            <div class="sub">${reportCode} · ${escapeHtml(item.insumo.localizacao || 'Sem localização')}</div>
+          </td>
+          <td><span class="badge badge-avaria">${escapeHtml(ocorr)}</span></td>
+          <td><strong>${Number(item.quantidade)} ${unit}</strong></td>
+          <td>${formatDateTimeBr(item.data_reporte)}</td>
+          <td>${escapeHtml(item.descricao || '-')}</td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8" />
+        <style>
+          body { font-family: Arial, Helvetica, sans-serif; color: #1F2937; padding: 24px; }
+          h1 { color: #00623B; font-size: 20px; margin-bottom: 4px; }
+          .meta { font-size: 12px; color: #4B5563; margin-bottom: 18px; line-height: 1.6; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th { background-color: #E3F3EC; color: #00623B; text-align: left; padding: 8px; border-bottom: 2px solid #00623B; }
+          td { padding: 8px; border-bottom: 1px solid #E5E7EB; vertical-align: top; }
+          .sub { font-size: 10px; color: #6B7280; margin-top: 2px; }
+          .badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
+          .badge-avaria { background: #FEE2E2; color: #DC2626; }
+          .footer { margin-top: 24px; font-size: 10px; color: #9CA3AF; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <h1>AGIL — Meu Histórico de Avarias</h1>
+        <div class="meta">
+          <div><strong>Período:</strong> ${escapeHtml(periodLabel)}</div>
+          ${searchQuery ? `<div><strong>Busca:</strong> ${escapeHtml(searchQuery)}</div>` : ''}
+          <div><strong>Responsável:</strong> ${escapeHtml(generatedBy)} · Gerado em ${formatDateTimeBr(new Date().toISOString())}</div>
+          <div><strong>Total de reportes:</strong> ${items.length}</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Material / Código</th>
+              <th>Ocorrência</th>
+              <th>Quantidade</th>
+              <th>Reportado em</th>
+              <th>Relato</th>
             </tr>
           </thead>
           <tbody>${rowsHtml}</tbody>

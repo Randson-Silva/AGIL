@@ -2,11 +2,7 @@ import { AxiosResponse } from 'axios';
 import { api } from './api';
 
 export type MaterialRequestStatus =
-  | 'PENDENTE'
-  | 'APROVADA'
-  | 'REJEITADA'
-  | 'CANCELADA'
-  | 'DEVOLVIDA';
+  'PENDENTE' | 'APROVADA' | 'REJEITADA' | 'CANCELADA' | 'DEVOLVIDA';
 
 export interface ItemSolicitacao {
   insumo_id: string;
@@ -114,10 +110,7 @@ export const updateMaterialRequest = async (
 export const approveMaterialRequest = async (
   id: string,
 ): Promise<AxiosResponse<MaterialRequestResponse>> => {
-  return api.patch<MaterialRequestResponse>(
-    `/request/technician/approve/${id}`,
-    {},
-  );
+  return api.patch<MaterialRequestResponse>(`/request/technician/approve/${id}`, {});
 };
 
 /** Rejeita uma solicitação pendente (apenas técnico). */
@@ -132,8 +125,36 @@ export const rejectMaterialRequest = async (
 export const confirmMaterialReturn = async (
   id: string,
 ): Promise<AxiosResponse<MaterialRequestResponse>> => {
-  return api.patch<MaterialRequestResponse>(
-    `/request/technician/return/${id}`,
-    {},
-  );
+  return api.patch<MaterialRequestResponse>(`/request/technician/return/${id}`, {});
+};
+
+export interface MyMaterialHistoryItem {
+  id: string;
+  solicitacaoId: string;
+  materialId: string;
+  materialNome: string;
+  categoria: string;
+  unidadeMedida: string;
+  quantidade: number;
+  status: 'APROVADA' | 'DEVOLVIDA' | 'REJEITADA';
+  finalidade: string;
+  motivoRejeicao?: string | null;
+  criadaEm: string;
+  aprovadaEm?: string | null;
+  devolvidaEm?: string | null;
+  dataEvento: string;
+}
+
+export interface MyMaterialHistoryResponse {
+  hasAnyHistory: boolean;
+  items: MyMaterialHistoryItem[];
+}
+
+export const getMyMaterialHistory = async (params?: {
+  startDate?: string;
+  endDate?: string;
+  status?: 'TODOS' | 'APROVADA' | 'DEVOLVIDA' | 'REJEITADA';
+  search?: string;
+}) => {
+  return api.get<MyMaterialHistoryResponse>('/request/my-history', { params });
 };
