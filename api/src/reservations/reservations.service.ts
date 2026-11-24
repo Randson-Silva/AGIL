@@ -10,8 +10,10 @@ import { PrismaService } from '../db/prisma/prisma.service.js';
 import {
   ObjetivoReserva,
   Perfil,
+  StatusAta,
   StatusReserva,
   TipoAvaria,
+  TipoOcorrenciaAta,
 } from '../generated/prisma/client.js';
 import { MailService } from '../mail/mail.service.js';
 import {
@@ -39,6 +41,43 @@ const RESERVATION_RELATIONS = {
       nome: true,
       email: true,
       perfil: true,
+    },
+  },
+} as const;
+
+const USAGE_LOG_RELATIONS = {
+  tecnico: {
+    select: {
+      id: true,
+      nome: true,
+      email: true,
+    },
+  },
+  avarias: {
+    include: {
+      insumo: {
+        select: {
+          id: true,
+          nome: true,
+        },
+      },
+    },
+  },
+  reserva: {
+    select: {
+      id: true,
+      local: true,
+      data_reserva: true,
+      titulo: true,
+      status: true,
+      horarios: true,
+      professor: {
+        select: {
+          id: true,
+          nome: true,
+          email: true,
+        },
+      },
     },
   },
 } as const;
@@ -358,7 +397,7 @@ export class ReservationsService {
   async approveReservation(id: string) {
     const reservation = await this.prisma.reservaEspaco.findUnique({
       where: { id },
-      include: { horarios: true},
+      include: { horarios: true },
     });
 
     if (!reservation) {
@@ -373,8 +412,11 @@ export class ReservationsService {
         'Apenas reservas pendentes podem ser aprovadas.',
       );
     }
-    
-    validateNotPastReservation(reservation.data_reserva.toISOString(), reservation.horarios);
+
+    validateNotPastReservation(
+      reservation.data_reserva.toISOString(),
+      reservation.horarios,
+    );
 
     const updatedReservation = await this.prisma.reservaEspaco.update({
       where: { id },
@@ -537,6 +579,11 @@ export class ReservationsService {
       include: {
         horarios: true,
         ataUso: true,
+        professor: {
+          select: {
+            nome: true,
+          },
+        },
       },
     });
 
@@ -594,15 +641,27 @@ export class ReservationsService {
       }
     }
 
-    // cria a ata e atualiza o status da reserva atomicamente
+    const ocorrencia =
+      dto.ocorrencia ??
+      (dto.avarias?.length
+        ? TipoOcorrenciaAta.AVARIA_MATERIAL
+        : TipoOcorrenciaAta.SEM_INTERCORRENCIAS);
+
+    const professorResponsavel =
+      dto.professorResponsavel?.trim() || reserva.professor.nome;
+
     const [ata] = await this.prisma.$transaction([
       this.prisma.ataUso.create({
         data: {
           reservaId: reserva.id,
           nomePratica: dto.nomePratica.trim(),
-          professorResponsavel: dto.professorResponsavel.trim(),
+          professorResponsavel,
           numeroAlunos: dto.numeroAlunos,
+          ocorrencia,
+          relatoAula: dto.relatoAula?.trim() || null,
+          pendenciasTecnico: dto.pendenciasTecnico?.trim() || null,
         },
+        include: USAGE_LOG_RELATIONS,
       }),
       this.prisma.reservaEspaco.update({
         where: { id: reserva.id },
@@ -624,6 +683,7 @@ export class ReservationsService {
           professorId,
           {
             insumo_id: avaria.insumo_id,
+            ata_uso_id: ata.id,
             quantidade: avaria.quantidade ?? 1,
             tipo_ocorrencia: avaria.tipo_ocorrencia ?? TipoAvaria.OUTRO,
             descricao: descricaoFormatada,
@@ -643,14 +703,17 @@ export class ReservationsService {
   async getUsageLog(reservaId: string, user: { id: string; role: Perfil }) {
     const reserva = await this.prisma.reservaEspaco.findUnique({
       where: { id: reservaId },
-      include: { ataUso: true },
+      include: {
+        ataUso: {
+          include: USAGE_LOG_RELATIONS,
+        },
+      },
     });
 
     if (!reserva) {
       throw new NotFoundException('Reserva não encontrada.');
     }
 
-    // tecnico passa direto, se for prof verifica o id correspondente
     if (user.role !== Perfil.TECNICO && reserva.professor_id !== user.id) {
       throw new ForbiddenException('Sem permissão para visualizar esta ata.');
     }
@@ -666,7 +729,6 @@ export class ReservationsService {
     dataReserva: Date,
     horarios: { hora_fim: string }[],
   ): Date {
-    // aqui pega o maior hora_fim da reserva (ex: "17:30")
     const ultimoHorario = horarios
       .map((h) => h.hora_fim)
       .sort()
@@ -694,25 +756,7 @@ export class ReservationsService {
     return this.prisma.ataUso.findMany({
       where: whereClause,
       orderBy: { criadoEm: 'desc' },
-      include: {
-        reserva: {
-          select: {
-            id: true,
-            local: true,
-            data_reserva: true,
-            titulo: true,
-            status: true,
-            horarios: true,
-            professor: {
-              select: {
-                id: true,
-                nome: true,
-                email: true,
-              },
-            },
-          },
-        },
-      },
+      include: USAGE_LOG_RELATIONS,
     });
   }
 
@@ -750,7 +794,57 @@ export class ReservationsService {
         ...(dto.numeroAlunos !== undefined && {
           numeroAlunos: dto.numeroAlunos,
         }),
+        ...(dto.ocorrencia !== undefined && {
+          ocorrencia: dto.ocorrencia,
+        }),
+        ...(dto.relatoAula !== undefined && {
+          relatoAula: dto.relatoAula?.trim() || null,
+        }),
+        ...(dto.pendenciasTecnico !== undefined && {
+          pendenciasTecnico: dto.pendenciasTecnico?.trim() || null,
+        }),
       },
+      include: USAGE_LOG_RELATIONS,
+    });
+  }
+
+  async assumeUsageLog(reservaId: string, tecnicoId: string) {
+    const ata = await this.prisma.ataUso.findUnique({
+      where: { reservaId },
+    });
+
+    if (!ata) {
+      throw new NotFoundException('Nenhuma ata registrada para esta reserva.');
+    }
+
+    return this.prisma.ataUso.update({
+      where: { reservaId },
+      data: {
+        status: StatusAta.EM_ANALISE,
+        tecnicoId,
+        analisadaEm: new Date(),
+      },
+      include: USAGE_LOG_RELATIONS,
+    });
+  }
+
+  async resolveUsageLog(reservaId: string, tecnicoId: string) {
+    const ata = await this.prisma.ataUso.findUnique({
+      where: { reservaId },
+    });
+
+    if (!ata) {
+      throw new NotFoundException('Nenhuma ata registrada para esta reserva.');
+    }
+
+    return this.prisma.ataUso.update({
+      where: { reservaId },
+      data: {
+        status: StatusAta.RESOLVIDA,
+        tecnicoId: ata.tecnicoId ?? tecnicoId,
+        resolvidaEm: new Date(),
+      },
+      include: USAGE_LOG_RELATIONS,
     });
   }
 
