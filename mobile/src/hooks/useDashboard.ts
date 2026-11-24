@@ -1,11 +1,11 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { useAuth } from './useAuth';
+import { AlertItem, QuickAccessItem, StatItem } from '../components/dashboard/types';
+import { getBreakdowns } from '../services/breakdown.service';
+import { getInventoryItems } from '../services/inventory.service';
 import { listMaterialRequests } from '../services/material-request.service';
 import { getReservations } from '../services/reservation.service';
-import { getInventoryItems } from '../services/inventory.service';
-import { getBreakdowns } from '../services/breakdown.service';
-import { AlertItem, QuickAccessItem, StatItem } from '../components/dashboard/types';
+import { useAuth } from './useAuth';
 
 const OCCURRENCE_LABELS: Record<string, string> = {
   QUEBRA: 'Quebra',
@@ -239,7 +239,7 @@ export function useDashboard() {
       id: '2',
       label: 'Atas de\naula',
       iconName: 'DocumentTextIcon',
-      onPress: () => console.log('Atas de aula pressionado'),
+      onPress: () => router.push('/(protected)/(tecnico)/(tabs)/historico-atas'),
     },
     {
       id: '3',

@@ -1,8 +1,13 @@
 import { HeaderDashboard } from '@/components/dashboard/header-dashboard';
 import { PageWrapper } from '@/components/ui/page-wrapper';
-import { useReservas } from '@/hooks/useReservas';
-import { listUsageLogs, UsageLog } from '@/services/reservation.service';
-import { formatReservationDateTime } from '@/utils/usage-log.utils';
+import { useAuth } from '@/hooks/useAuth';
+import {
+  listUsageLogs,
+  UsageLog,
+  UsageLogOccurrence,
+  UsageLogStatus,
+} from '@/services/reservation.service';
+import { formatAtaCode, formatReservationDateTime } from '@/utils/usage-log.utils';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -14,54 +19,81 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 
-type FilterType = 'TODAS' | 'CONCLUIDAS' | 'AVARIAS';
+type FilterType = 'TODAS' | 'COM_OCORRENCIA' | 'EM_ANALISE' | 'RESOLVIDAS' | 'PENDENTES';
 
-function formatAtaCode(id: string | number) {
-  const clean = String(id).replace(/[^a-zA-Z0-9]/g, '');
-  const suffix = clean.slice(-3).toUpperCase().padStart(3, '0');
-  return `A-${suffix}`;
-}
-
-function getAvariasCount(log: UsageLog) {
-  const maybeAvarias = (log as { avarias?: unknown[] }).avarias;
-  return Array.isArray(maybeAvarias) ? maybeAvarias.length : 0;
-}
-
-function getAtaStatus(log: UsageLog): {
+function getOccurrenceBadge(ocorrencia: UsageLogOccurrence): {
   label: string;
   bgClass: string;
   textClass: string;
 } {
-  const avarias = getAvariasCount(log);
-  const reservaStatus = (log.reserva as { status?: string } | undefined)?.status;
-
-  if (avarias > 0) {
-    return {
-      label: 'Com avaria',
-      bgClass: 'bg-amber-100',
-      textClass: 'text-amber-800',
-    };
+  switch (ocorrencia) {
+    case 'AVARIA_MATERIAL':
+      return {
+        label: 'Avaria de Material',
+        bgClass: 'bg-red-100',
+        textClass: 'text-red-700',
+      };
+    case 'FALTA_REAGENTE':
+      return {
+        label: 'Falta de reagente',
+        bgClass: 'bg-amber-100',
+        textClass: 'text-amber-800',
+      };
+    case 'INCIDENTE_SEGURANCA':
+      return {
+        label: 'Incidente de segurança',
+        bgClass: 'bg-red-100',
+        textClass: 'text-red-800',
+      };
+    case 'SEM_INTERCORRENCIAS':
+    default:
+      return {
+        label: 'Sem ocorrência',
+        bgClass: 'bg-emerald-100',
+        textClass: 'text-emerald-800',
+      };
   }
+}
 
-  if (reservaStatus === 'PENDENTE') {
-    return {
-      label: 'Pendente',
-      bgClass: 'bg-gray-100',
-      textClass: 'text-gray-700',
-    };
+function getStatusBadge(status: UsageLogStatus): {
+  label: string;
+  bgClass: string;
+  textClass: string;
+} {
+  switch (status) {
+    case 'RESOLVIDA':
+      return {
+        label: 'Resolvida',
+        bgClass: 'bg-[#E6F4EE]',
+        textClass: 'text-[#00623B]',
+      };
+    case 'EM_ANALISE':
+      return {
+        label: 'Em análise',
+        bgClass: 'bg-blue-100',
+        textClass: 'text-blue-800',
+      };
+    case 'PENDENTE':
+    default:
+      return {
+        label: 'Pendente',
+        bgClass: 'bg-amber-100',
+        textClass: 'text-amber-800',
+      };
   }
+}
 
-  return {
-    label: 'Concluída',
-    bgClass: 'bg-[#E6F4EE]',
-    textClass: 'text-[#00623B]',
-  };
+function formatProfessorName(name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) return 'Prof. não informado';
+  return /^prof\.?\s/i.test(trimmed) ? trimmed : `Prof. ${trimmed}`;
 }
 
 export default function HistoricoAtasScreen() {
   const router = useRouter();
-  const { firstName, initials } = useReservas();
+  const { firstName, initials } = useAuth();
 
   const [logs, setLogs] = useState<UsageLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,6 +106,13 @@ export default function HistoricoAtasScreen() {
       setLoading(true);
       const { data } = await listUsageLogs();
       setLogs(data ?? []);
+    } catch (error) {
+      console.error('Erro ao buscar histórico de atas:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Não foi possível carregar o histórico de atas.',
+      });
     } finally {
       setLoading(false);
     }
@@ -89,14 +128,21 @@ export default function HistoricoAtasScreen() {
     const query = search.trim().toLowerCase();
 
     return logs.filter((log) => {
-      const avarias = getAvariasCount(log);
+      const ocorrencias = log.ocorrencias?.length
+        ? log.ocorrencias
+        : (['SEM_INTERCORRENCIAS'] as UsageLogOccurrence[]);
 
-      if (filter === 'AVARIAS' && avarias === 0) return false;
-      if (filter === 'CONCLUIDAS' && avarias > 0) return false;
+      const hasOccurrence =
+        ocorrencias.some((o) => o !== 'SEM_INTERCORRENCIAS') || (log.avarias?.length ?? 0) > 0;
+
+      if (filter === 'COM_OCORRENCIA' && !hasOccurrence) return false;
+      if (filter === 'EM_ANALISE' && log.status !== 'EM_ANALISE') return false;
+      if (filter === 'RESOLVIDAS' && log.status !== 'RESOLVIDA') return false;
+      if (filter === 'PENDENTES' && log.status !== 'PENDENTE') return false;
 
       if (!query) return true;
 
-      const code = formatAtaCode(log.id).toLowerCase();
+      const code = formatAtaCode(log).toLowerCase();
       const local = (log.reserva?.local ?? '').toLowerCase();
       const pratica = log.nomePratica.toLowerCase();
       const professor = log.professorResponsavel.toLowerCase();
@@ -112,8 +158,10 @@ export default function HistoricoAtasScreen() {
 
   const filterOptions: { key: FilterType; label: string }[] = [
     { key: 'TODAS', label: 'Todas' },
-    { key: 'CONCLUIDAS', label: 'Concluídas' },
-    { key: 'AVARIAS', label: 'Com avarias' },
+    { key: 'COM_OCORRENCIA', label: 'Com ocorrência' },
+    { key: 'PENDENTES', label: 'Pendentes' },
+    { key: 'EM_ANALISE', label: 'Em análise' },
+    { key: 'RESOLVIDAS', label: 'Resolvidas' },
   ];
 
   return (
@@ -129,10 +177,10 @@ export default function HistoricoAtasScreen() {
       <View className="px-5 pt-4 pb-2">
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => router.back()}
-          className="flex-row items-center gap-1.5 self-start mb-3"
+          onPress={() => router.navigate('..')}
+          className="flex-row items-center gap-1.5 self-start mb-4"
         >
-          <View className="w-10 h-10 rounded-full bg-[#FFFFFF] items-center justify-center">
+          <View className="w-10 h-10 rounded-full bg-white items-center justify-center border border-gray-100">
             <Feather name="arrow-left" size={18} color="#000000" />
           </View>
           <Text className="text-sm font-bold text-[#00623B]">Voltar</Text>
@@ -145,18 +193,17 @@ export default function HistoricoAtasScreen() {
               if (searchOpen) setSearch('');
               setSearchOpen((prev) => !prev);
             }}
-            className={`w-10 h-10 rounded-full items-center justify-center border ${
+            className={`w-9 h-9 rounded-full items-center justify-center border ${
               searchOpen ? 'bg-[#00623B] border-[#00623B]' : 'bg-white border-gray-200'
             }`}
           >
             <Feather
               name={searchOpen ? 'x' : 'search'}
-              size={18}
+              size={16}
               color={searchOpen ? '#FFFFFF' : '#374151'}
             />
           </TouchableOpacity>
 
-          {/* Tipos para filtragem ao lado da lupa */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -169,7 +216,7 @@ export default function HistoricoAtasScreen() {
                   key={opt.key}
                   activeOpacity={0.7}
                   onPress={() => setFilter(opt.key)}
-                  className={`px-4 h-10 rounded-full justify-center border ${
+                  className={`px-4 h-9 rounded-full justify-center border ${
                     active ? 'bg-[#00623B] border-[#00623B]' : 'bg-white border-gray-200'
                   }`}
                 >
@@ -184,9 +231,8 @@ export default function HistoricoAtasScreen() {
           </ScrollView>
         </View>
 
-        {/* Campo de pesquisa expandido ao clicar na lupa */}
         {searchOpen && (
-          <View className="mt-3 bg-white border border-gray-200 rounded-2xl px-4 py-2.5 flex-row items-center gap-2.5">
+          <View className="mt-3 h-11 bg-white border border-gray-200 rounded-2xl px-4 flex-row items-center gap-2.5">
             <Feather name="search" size={16} color="#9CA3AF" />
             <TextInput
               value={search}
@@ -194,7 +240,10 @@ export default function HistoricoAtasScreen() {
               placeholder="Buscar por código, local, prática ou professor..."
               placeholderTextColor="#9CA3AF"
               autoFocus
-              className="flex-1 text-sm text-gray-900"
+              multiline={false}
+              numberOfLines={1}
+              returnKeyType="search"
+              className="flex-1 h-full py-0 text-sm text-gray-900"
             />
             {search.length > 0 && (
               <TouchableOpacity onPress={() => setSearch('')}>
@@ -214,6 +263,8 @@ export default function HistoricoAtasScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 110 }}
         >
+          <Text className="text-gray-900 font-bold text-base mb-3">Atas</Text>
+
           {filtered.length === 0 ? (
             <Text className="text-gray-500 text-center py-10 px-6 text-sm">
               Nenhuma ata encontrada.
@@ -221,8 +272,16 @@ export default function HistoricoAtasScreen() {
           ) : (
             <View className="gap-3.5">
               {filtered.map((item) => {
-                const ataCode = formatAtaCode(item.id);
-                const status = getAtaStatus(item);
+                const ataCode = formatAtaCode(item);
+                const occurrenceBadges = (
+                  item.ocorrencias?.length
+                    ? item.ocorrencias
+                    : (['SEM_INTERCORRENCIAS'] as UsageLogOccurrence[])
+                ).map((ocorrencia) => ({
+                  key: ocorrencia,
+                  ...getOccurrenceBadge(ocorrencia),
+                }));
+                const statusBadge = getStatusBadge(item.status);
                 const dateTime = item.reserva
                   ? formatReservationDateTime(item.reserva.data_reserva, item.reserva.horarios)
                   : new Date(item.criadoEm).toLocaleDateString('pt-BR');
@@ -240,30 +299,37 @@ export default function HistoricoAtasScreen() {
                     className="bg-white rounded-3xl p-4 border border-gray-100 shadow-sm flex-row items-center justify-between gap-3"
                   >
                     <View className="flex-1">
-                      {/* Topo: Código da Ata + Status */}
-                      <View className="flex-row items-center gap-2 mb-2">
-                        <View className="bg-gray-100 px-2.5 py-0.5 rounded-full">
-                          <Text className="text-gray-700 text-[11px] font-bold">{ataCode}</Text>
+                      <View className="flex-row items-center justify-between gap-2 mb-2.5">
+                        <View className="flex-row items-center flex-wrap gap-1.5 flex-1">
+                          {occurrenceBadges.map((badge) => (
+                            <View
+                              key={badge.key}
+                              className={`${badge.bgClass} px-2.5 py-0.5 rounded-full`}
+                            >
+                              <Text className={`${badge.textClass} text-[11px] font-semibold`}>
+                                {badge.label}
+                              </Text>
+                            </View>
+                          ))}
+
+                          <View className={`${statusBadge.bgClass} px-2.5 py-0.5 rounded-full`}>
+                            <Text className={`${statusBadge.textClass} text-[11px] font-semibold`}>
+                              {statusBadge.label}
+                            </Text>
+                          </View>
                         </View>
 
-                        <View className={`${status.bgClass} px-2.5 py-0.5 rounded-full`}>
-                          <Text className={`${status.textClass} text-[11px] font-semibold`}>
-                            {status.label}
-                          </Text>
-                        </View>
+                        <Text className="text-gray-400 text-xs font-bold">{ataCode}</Text>
                       </View>
 
-                      {/* LOCAL */}
                       <Text className="text-gray-900 font-bold text-sm" numberOfLines={1}>
                         {item.reserva?.local || 'Laboratório não informado'}
                       </Text>
 
-                      {/* DATA ⋅ HORARIO1 - HORARIO2 ⋅ NOMEPROFESSOR */}
                       <Text className="text-gray-500 text-xs mt-1" numberOfLines={1}>
-                        {dateTime} ⋅ {item.professorResponsavel}
+                        {dateTime} ⋅ {formatProfessorName(item.professorResponsavel)}
                       </Text>
 
-                      {/* TITULO */}
                       <Text
                         className="text-gray-800 font-semibold text-sm mt-1.5"
                         numberOfLines={2}
@@ -272,7 +338,6 @@ export default function HistoricoAtasScreen() {
                       </Text>
                     </View>
 
-                    {/* Ícone de seta no card */}
                     <Feather name="chevron-right" size={20} color="#9CA3AF" />
                   </TouchableOpacity>
                 );

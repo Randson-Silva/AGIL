@@ -1,4 +1,12 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min, IsUUID } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 import { TipoAvaria } from '../../generated/prisma/enums.js';
 
 export class CreateBreakdownDto {
@@ -18,4 +26,8 @@ export class CreateBreakdownDto {
   @IsOptional()
   @IsString()
   descricao?: string;
+
+  @IsOptional()
+  @IsUUID('all', { message: 'O ID da ata de uso é inválido.' })
+  ata_uso_id?: string;
 }

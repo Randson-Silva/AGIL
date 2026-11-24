@@ -1,21 +1,21 @@
-import { useState, useCallback } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import Toast from 'react-native-toast-message';
-import { getReservations } from '../services/reservation.service';
 import { FilterOption } from '../components/reservation/filter-pills';
+import { getReservations, ReservationItem } from '../services/reservation.service';
 import { useAuth } from './useAuth';
 
 export function useReservas() {
   const router = useRouter();
   const { firstName, initials } = useAuth();
 
-  const [reservations, setReservations] = useState<any[]>([]);
+  const [reservations, setReservations] = useState<ReservationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FilterOption>('Todas');
 
   // Controle de Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [reservationToCancel, setReservationToCancel] = useState<any>(null);
+  const [reservationToCancel, setReservationToCancel] = useState<ReservationItem | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -61,12 +61,16 @@ export function useReservas() {
       return res.status === 'APROVADA';
     }
     if (activeFilter === 'Encerradas') {
-      return res.status === 'CANCELADA' || res.status === 'REJEITADA';
+      return (
+        res.status === 'CANCELADA' ||
+        res.status === 'REJEITADA' ||
+        res.status === 'CONCLUIDA_COM_ATA'
+      );
     }
     return true;
   });
 
-  const handleOpenCancelModal = (item: any) => {
+  const handleOpenCancelModal = (item: ReservationItem) => {
     setReservationToCancel(item);
     setIsModalOpen(true);
   };

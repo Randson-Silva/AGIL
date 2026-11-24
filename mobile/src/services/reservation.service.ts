@@ -1,10 +1,16 @@
 import { ReservationObjective, TimeSlot } from '../utils/constants';
 import { api } from './api';
+import { BreakdownOccurrenceType } from './breakdown.service';
 
 export type ReservationStatus =
   'PENDENTE' | 'AVISO_SIMPLES' | 'APROVADA' | 'REJEITADA' | 'CANCELADA' | 'CONCLUIDA_COM_ATA';
 
-export type DamageType = 'QUEBRA' | 'DEFEITO' | 'FALTA' | 'OUTRO';
+export type DamageType = 'QUEBRA' | 'DEFEITO' | 'CONTAMINACAO' | 'EXTRAVIO' | 'OUTRO';
+
+export type UsageLogOccurrence =
+  'SEM_INTERCORRENCIAS' | 'AVARIA_MATERIAL' | 'FALTA_REAGENTE' | 'INCIDENTE_SEGURANCA';
+
+export type UsageLogStatus = 'PENDENTE' | 'EM_ANALISE' | 'RESOLVIDA';
 
 export interface ReservationUser {
   id: string;
@@ -70,19 +76,47 @@ export interface OccupiedSlotDetail {
 
 export interface DamageLogPayload {
   insumo_id: string;
+  quantidade: number;
+  tipo_ocorrencia: BreakdownOccurrenceType;
   descricao?: string;
-  quantidade?: number;
-  tipo_ocorrencia?: DamageType;
+}
+
+export interface UsageLogDamage {
+  id: string;
+  insumo_id: string;
+  ata_uso_id?: string | null;
+  quantidade: number | string;
+  tipo_ocorrencia: DamageType;
+  descricao?: string | null;
+  data_reporte: string;
+  insumo?: {
+    id: string;
+    nome: string;
+  };
 }
 
 export interface UsageLog {
   id: string;
+  codigo?: number;
   reservaId: string;
   nomePratica: string;
   professorResponsavel: string;
   numeroAlunos: number;
+  ocorrencias: UsageLogOccurrence[];
+  relatoAula?: string | null;
+  pendenciasTecnico?: string | null;
+  status: UsageLogStatus;
+  tecnicoId?: string | null;
+  tecnico?: {
+    id: string;
+    nome: string;
+    email: string;
+  } | null;
+  analisadaEm?: string | null;
+  resolvidaEm?: string | null;
   criadoEm: string;
   atualizadoEm: string;
+  avarias?: UsageLogDamage[];
   reserva?: {
     id: string;
     local: string;
@@ -100,8 +134,11 @@ export interface UsageLog {
 
 export interface CreateUsageLogPayload {
   nomePratica: string;
-  professorResponsavel: string;
+  professorResponsavel?: string;
   numeroAlunos: number;
+  ocorrencias?: UsageLogOccurrence[];
+  relatoAula?: string;
+  pendenciasTecnico?: string;
   avarias?: DamageLogPayload[];
 }
 
@@ -109,6 +146,9 @@ export interface UpdateUsageLogPayload {
   nomePratica?: string;
   professorResponsavel?: string;
   numeroAlunos?: number;
+  ocorrencias?: UsageLogOccurrence[];
+  relatoAula?: string;
+  pendenciasTecnico?: string;
 }
 
 export const getOccupiedTimeSlots = async (local: string, date: string, isRecurring?: boolean) => {
@@ -189,6 +229,14 @@ export const listUsageLogs = async () => {
 
 export const updateUsageLog = async (reservationId: string, payload: UpdateUsageLogPayload) => {
   return await api.patch<UsageLog>(`/reservations/${reservationId}/usage-log`, payload);
+};
+
+export const assumeUsageLog = async (reservationId: string) => {
+  return await api.patch<UsageLog>(`/reservations/${reservationId}/usage-log/assume`, {});
+};
+
+export const resolveUsageLog = async (reservationId: string) => {
+  return await api.patch<UsageLog>(`/reservations/${reservationId}/usage-log/resolve`, {});
 };
 
 export const deleteUsageLog = async (reservationId: string) => {
