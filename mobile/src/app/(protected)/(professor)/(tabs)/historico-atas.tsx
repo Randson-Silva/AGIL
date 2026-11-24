@@ -7,7 +7,7 @@ import {
   UsageLogOccurrence,
   UsageLogStatus,
 } from '@/services/reservation.service';
-import { formatReservationDateTime } from '@/utils/usage-log.utils';
+import { formatAtaCode, formatReservationDateTime } from '@/utils/usage-log.utils';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -22,15 +22,6 @@ import {
 import Toast from 'react-native-toast-message';
 
 type FilterType = 'TODAS' | 'COM_OCORRENCIA' | 'EM_ANALISE' | 'RESOLVIDAS' | 'PENDENTES';
-
-function formatAtaCode(log: UsageLog) {
-  if (typeof log.codigo === 'number') {
-    return `A-${String(log.codigo).padStart(3, '0')}`;
-  }
-  const clean = String(log.id).replace(/[^a-zA-Z0-9]/g, '');
-  const suffix = clean.slice(-3).toUpperCase().padStart(3, '0');
-  return `A-${suffix}`;
-}
 
 function getOccurrenceBadge(ocorrencia: UsageLogOccurrence): {
   label: string;

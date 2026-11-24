@@ -1,4 +1,4 @@
-import { ReservationItem } from '../services/reservation.service';
+import { ReservationItem, UsageLog } from '../services/reservation.service';
 
 export function canFillUsageLog(reservation: ReservationItem): boolean {
   const allowedStatuses = ['APROVADA', 'AVISO_SIMPLES'];
@@ -46,4 +46,13 @@ export function formatReservationDateTime(
   } catch {
     return dataReserva;
   }
+}
+
+export function formatAtaCode(log: UsageLog) {
+  if (typeof log.codigo === 'number') {
+    return `A-${String(log.codigo).padStart(3, '0')}`;
+  }
+  const clean = String(log.id).replace(/[^a-zA-Z0-9]/g, '');
+  const suffix = clean.slice(-3).toUpperCase().padStart(3, '0');
+  return `A-${suffix}`;
 }
