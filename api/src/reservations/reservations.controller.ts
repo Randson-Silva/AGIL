@@ -162,6 +162,26 @@ export class ReservationsController {
     return this.reservationsService.updateUsageLog(reservaId, user, dto);
   }
 
+  @Patch(':id/usage-log/assume')
+  @Roles('TECNICO')
+  assumeUsageLog(
+    @Param('id') reservaId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const tecnicoId = user.id;
+    return this.reservationsService.assumeUsageLog(reservaId, tecnicoId);
+  }
+
+  @Patch(':id/usage-log/resolve')
+  @Roles('TECNICO')
+  resolveUsageLog(
+    @Param('id') reservaId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const tecnicoId = user.id;
+    return this.reservationsService.resolveUsageLog(reservaId, tecnicoId);
+  }
+
   @Delete(':id/usage-log')
   @Roles('TECNICO')
   deleteUsageLog(@Param('id') reservaId: string) {

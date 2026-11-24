@@ -77,7 +77,7 @@ export default function ReservasScreen() {
                 onSendUsageLog={(res) => {
                   router.push({
                     pathname: '/(protected)/(professor)/(tabs)/ata-form',
-                    params: { reservation: JSON.stringify(res) },
+                    params: { reservation: JSON.stringify(res), usageLog: '' },
                   });
                 }}
                 onViewUsageLog={(res) =>

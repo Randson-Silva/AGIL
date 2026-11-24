@@ -1,11 +1,11 @@
 import { Tabs } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  ClockIcon,
-  CalendarIcon,
-  BeakerIcon,
   ArchiveBoxIcon,
+  BeakerIcon,
+  CalendarIcon,
+  ClockIcon,
 } from 'react-native-heroicons/outline';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TecnicoTabsLayout() {
   const insets = useSafeAreaInsets();
@@ -58,6 +58,18 @@ export default function TecnicoTabsLayout() {
         options={{
           title: 'Histórico',
           tabBarIcon: ({ color, size }) => <ArchiveBoxIcon size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="historico-atas"
+        options={{
+          tabBarItemStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="ata-relatorio"
+        options={{
+          tabBarItemStyle: { display: 'none' },
         }}
       />
     </Tabs>

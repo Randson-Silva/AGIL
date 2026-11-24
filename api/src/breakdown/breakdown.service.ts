@@ -1,16 +1,16 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../db/prisma/prisma.service.js';
-import { MailService } from '../mail/mail.service.js';
-import { CreateBreakdownDto } from './dto/create-breakdown.dto.js';
 import {
   Perfil,
   StatusInsumo,
   StatusSolicitacao,
 } from '../generated/prisma/enums.js';
+import { MailService } from '../mail/mail.service.js';
+import { CreateBreakdownDto } from './dto/create-breakdown.dto.js';
 
 @Injectable()
 export class BreakdownService {
@@ -131,6 +131,7 @@ export class BreakdownService {
             quantidade: breakdownQuantity,
             tipo_ocorrencia: dto.tipo_ocorrencia,
             descricao: dto.descricao,
+            ata_uso_id: dto.ata_uso_id ?? null,
           },
           include: {
             usuario: {

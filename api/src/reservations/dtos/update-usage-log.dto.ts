@@ -1,4 +1,14 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
+import { TipoOcorrenciaAta } from '../../generated/prisma/enums.js';
 
 export class UpdateUsageLogDto {
   @IsOptional()
@@ -17,4 +27,18 @@ export class UpdateUsageLogDto {
   @IsInt({ message: 'O número de alunos deve ser um número inteiro.' })
   @Min(0, { message: 'O número de alunos não pode ser negativo.' })
   numeroAlunos?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsEnum(TipoOcorrenciaAta, { each: true })
+  ocorrencias?: TipoOcorrenciaAta[];
+
+  @IsOptional()
+  @IsString()
+  relatoAula?: string;
+
+  @IsOptional()
+  @IsString()
+  pendenciasTecnico?: string;
 }

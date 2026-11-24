@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayNotEmpty,
   IsArray,
   IsEnum,
   IsInt,
@@ -11,7 +12,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { TipoAvaria } from '../../generated/prisma/enums.js';
+import { TipoAvaria, TipoOcorrenciaAta } from '../../generated/prisma/enums.js';
 
 export class DamageLogDto {
   @IsUUID('4', { message: 'O material avariado selecionado é inválido.' })
@@ -36,13 +37,30 @@ export class CreateUsageLogDto {
   @IsNotEmpty({ message: 'O nome da prática é obrigatório.' })
   nomePratica: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'O nome do professor responsável é obrigatório.' })
-  professorResponsavel: string;
+  @IsNotEmpty({
+    message: 'O nome do professor responsável não pode ser vazio.',
+  })
+  professorResponsavel?: string;
 
   @IsInt({ message: 'O número de alunos deve ser um número inteiro.' })
   @Min(0, { message: 'O número de alunos não pode ser negativo.' })
   numeroAlunos: number;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsEnum(TipoOcorrenciaAta, { each: true })
+  ocorrencias?: TipoOcorrenciaAta[];
+
+  @IsOptional()
+  @IsString()
+  relatoAula?: string;
+
+  @IsOptional()
+  @IsString()
+  pendenciasTecnico?: string;
 
   @IsOptional()
   @IsArray()

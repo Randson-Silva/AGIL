@@ -1,6 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { BreakdownOccurrenceType } from '../../services/breakdown.service';
 import { DamageLogPayload } from '../../services/reservation.service';
 
 export interface InventoryItemOption {
@@ -20,8 +21,25 @@ interface BreakdownSectionProps {
   onRemove: (index: number) => void;
 }
 
+const TIPO_OCORRENCIA_OPTIONS: { value: BreakdownOccurrenceType; label: string }[] = [
+  { value: 'QUEBRA', label: 'Quebra' },
+  { value: 'DEFEITO', label: 'Defeito' },
+  { value: 'CONTAMINACAO', label: 'Contaminação' },
+  { value: 'EXTRAVIO', label: 'Extravio' },
+  { value: 'OUTRO', label: 'Outro' },
+];
+
+const TIPO_OCORRENCIA_LABELS: Record<BreakdownOccurrenceType, string> = {
+  QUEBRA: 'Quebra',
+  DEFEITO: 'Defeito',
+  CONTAMINACAO: 'Contaminação',
+  EXTRAVIO: 'Extravio',
+  OUTRO: 'Outro',
+};
+
 export function BreakdownSection({ items, avarias, onAdd, onRemove }: BreakdownSectionProps) {
   const [selectedItem, setSelectedItem] = useState<InventoryItemOption | null>(null);
+  const [tipoOcorrencia, setTipoOcorrencia] = useState<BreakdownOccurrenceType>('QUEBRA');
   const [descricao, setDescricao] = useState('');
   const [quantidade, setQuantidade] = useState('1');
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -36,10 +54,12 @@ export function BreakdownSection({ items, avarias, onAdd, onRemove }: BreakdownS
       insumo_id: selectedItem.id,
       insumo_nome: selectedItem.nome,
       quantidade: Number(quantidade) > 0 ? Number(quantidade) : 1,
+      tipo_ocorrencia: tipoOcorrencia,
       descricao: descricao.trim() || undefined,
     });
 
     setSelectedItem(null);
+    setTipoOcorrencia('QUEBRA');
     setDescricao('');
     setQuantidade('1');
   };
@@ -47,7 +67,7 @@ export function BreakdownSection({ items, avarias, onAdd, onRemove }: BreakdownS
   return (
     <View className="bg-white rounded-[24px] p-5 border border-gray-100 shadow-sm mb-5">
       <View className="flex-row items-center justify-between mb-3">
-        <Text className="text-gray-900 font-bold text-base">Registro de avarias / ocorrências</Text>
+        <Text className="text-gray-900 font-bold text-base">Registro de avarias</Text>
         <View className="bg-gray-100 px-2.5 py-1 rounded-full">
           <Text className="text-gray-600 text-xs font-medium">Opcional</Text>
         </View>
@@ -67,6 +87,9 @@ export function BreakdownSection({ items, avarias, onAdd, onRemove }: BreakdownS
           <View className="flex-1 pr-3">
             <Text className="text-gray-900 font-semibold text-sm">
               {avaria.insumo_nome} (Qtd: {avaria.quantidade ?? 1})
+            </Text>
+            <Text className="text-amber-800 text-xs font-medium mt-0.5">
+              Tipo: {TIPO_OCORRENCIA_LABELS[avaria.tipo_ocorrencia] ?? avaria.tipo_ocorrencia}
             </Text>
             {avaria.descricao ? (
               <Text className="text-gray-600 text-xs mt-1">{avaria.descricao}</Text>
@@ -90,6 +113,30 @@ export function BreakdownSection({ items, avarias, onAdd, onRemove }: BreakdownS
         </Text>
         <Feather name="chevron-down" size={18} color="#6B7280" />
       </TouchableOpacity>
+
+      {/* Tipo de ocorrência */}
+      <Text className="text-gray-700 text-sm font-medium mb-1.5">Tipo de avaria</Text>
+      <View className="flex-row flex-wrap gap-2 mb-3">
+        {TIPO_OCORRENCIA_OPTIONS.map((option) => {
+          const selected = tipoOcorrencia === option.value;
+          return (
+            <TouchableOpacity
+              key={option.value}
+              activeOpacity={0.75}
+              onPress={() => setTipoOcorrencia(option.value)}
+              className={`px-3 py-1.5 rounded-full border ${
+                selected ? 'bg-[#00623B] border-[#00623B]' : 'bg-[#F8FAF9] border-gray-200'
+              }`}
+            >
+              <Text
+                className={`text-xs font-semibold ${selected ? 'text-white' : 'text-gray-700'}`}
+              >
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
       {/* Quantidade */}
       <Text className="text-gray-700 text-sm font-medium mb-1.5">Quantidade</Text>

@@ -86,6 +86,19 @@ enum TipoAvaria {
   OUTRO
 }
 
+enum StatusAta {
+  PENDENTE
+  EM_ANALISE
+  RESOLVIDA
+}
+
+enum TipoOcorrenciaAta {
+  SEM_INTERCORRENCIAS
+  AVARIA_MATERIAL
+  FALTA_REAGENTE
+  INCIDENTE_SEGURANCA
+}
+
 model Usuario {
   id                String    @id @default(uuid())
   nome              String
@@ -101,6 +114,7 @@ model Usuario {
   solicitacoes_tecnico SolicitacaoMaterial[]   @relation("SolicitacaoMaterial_Tecnico")
   movimentacoes        HistoricoMovimentacao[]
   avarias              AvariaReportada[]
+  atas_analisadas      AtaUso[]                @relation("AtaUso_Tecnico")
 }
 
 model ReservaEspaco {
@@ -253,6 +267,8 @@ model AvariaReportada {
   usuario    Usuario @relation(fields: [usuario_id], references: [id])
   insumo_id  String
   insumo     Insumo  @relation(fields: [insumo_id], references: [id])
+  ata_uso_id String?
+  ataUso     AtaUso? @relation(fields: [ata_uso_id], references: [id], onDelete: SetNull)
 
   quantidade      Decimal    @db.Decimal(10, 3)
   tipo_ocorrencia TipoAvaria
@@ -295,12 +311,22 @@ model AlertaEstoque {
 }
 
 model AtaUso {
-  id                   String        @id @default(uuid())
-  reservaId            String        @unique
-  reserva              ReservaEspaco @relation(fields: [reservaId], references: [id], onDelete: Cascade)
+  id                   String            @id @default(uuid())
+  codigo               Int               @unique @default(autoincrement())
+  reservaId            String            @unique
+  reserva              ReservaEspaco     @relation(fields: [reservaId], references: [id], onDelete: Cascade)
   nomePratica          String
   professorResponsavel String
   numeroAlunos         Int
-  criadoEm             DateTime      @default(now())
-  atualizadoEm         DateTime      @updatedAt
+  ocorrencias          TipoOcorrenciaAta[]   @default([SEM_INTERCORRENCIAS])
+  relatoAula           String?           @db.Text
+  pendenciasTecnico    String?           @db.Text
+  status               StatusAta         @default(PENDENTE)
+  tecnicoId            String?
+  tecnico              Usuario?          @relation("AtaUso_Tecnico", fields: [tecnicoId], references: [id])
+  analisadaEm          DateTime?
+  resolvidaEm          DateTime?
+  avarias              AvariaReportada[]
+  criadoEm             DateTime          @default(now())
+  atualizadoEm         DateTime          @updatedAt
 }

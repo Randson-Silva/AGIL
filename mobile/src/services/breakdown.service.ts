@@ -1,9 +1,12 @@
 import { api } from './api';
 
+export type BreakdownOccurrenceType = 'QUEBRA' | 'DEFEITO' | 'CONTAMINACAO' | 'EXTRAVIO' | 'OUTRO';
+
 export interface CreateBreakdownPayload {
   insumo_id: string;
+  ata_uso_id?: string;
   quantidade: number;
-  tipo_ocorrencia: 'QUEBRA' | 'DEFEITO' | 'CONTAMINACAO' | 'EXTRAVIO' | 'OUTRO';
+  tipo_ocorrencia: BreakdownOccurrenceType;
   descricao?: string;
 }
 
@@ -23,8 +26,9 @@ export interface MyBreakdownHistoryItem {
   id: string;
   usuario_id: string;
   insumo_id: string;
+  ata_uso_id?: string | null;
   quantidade: number | string;
-  tipo_ocorrencia: 'QUEBRA' | 'DEFEITO' | 'CONTAMINACAO' | 'EXTRAVIO' | 'OUTRO';
+  tipo_ocorrencia: BreakdownOccurrenceType;
   descricao?: string | null;
   foto_url?: string | null;
   data_reporte: string;
