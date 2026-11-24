@@ -5,6 +5,7 @@ import { ProfessorActionCard } from '../../../../components/dashboard/professor-
 import { NextReservationCard } from '../../../../components/dashboard/next-reservation-card';
 import { useAlunoDashboard } from '../../../../hooks/useAlunoDashboard';
 import { OBJECTIVE_LABELS } from '../../../../utils/constants';
+import { formatIsoDateToBr } from '../../../../utils/date-utils';
 
 export default function AlunoPainelScreen() {
   const { firstName, initials, nextReservation, isLoading, actions } = useAlunoDashboard();
@@ -19,21 +20,12 @@ export default function AlunoPainelScreen() {
     );
   }
 
-  const formatDateTime = (isoDate: string, firstSlot?: string) => {
-    try {
-      const d = new Date(isoDate);
-      if (isNaN(d.getTime())) return isoDate;
-      const day = String(d.getUTCDate()).padStart(2, '0');
-      const month = String(d.getUTCMonth() + 1).padStart(2, '0');
-      const year = d.getUTCFullYear();
-      return firstSlot ? `${day}/${month}/${year} · ${firstSlot}` : `${day}/${month}/${year}`;
-    } catch {
-      return isoDate;
-    }
-  };
-
   const formattedDate = nextReservation?.data_reserva
-    ? formatDateTime(nextReservation.data_reserva, nextReservation.horarios?.[0]?.hora_inicio)
+    ? (() => {
+        const dateStr = formatIsoDateToBr(nextReservation.data_reserva);
+        const firstSlot = nextReservation.horarios?.[0]?.hora_inicio;
+        return firstSlot ? `${dateStr} · ${firstSlot}` : dateStr;
+      })()
     : '';
 
   const classLabel = nextReservation?.objetivo

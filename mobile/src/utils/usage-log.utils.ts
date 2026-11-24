@@ -1,4 +1,5 @@
 import { ReservationItem } from '../services/reservation.service';
+import { extractIsoDatePart, formatIsoDateToBr } from './date-utils';
 
 export function canFillUsageLog(reservation: ReservationItem): boolean {
   const allowedStatuses = ['APROVADA', 'AVISO_SIMPLES'];
@@ -11,7 +12,13 @@ export function canFillUsageLog(reservation: ReservationItem): boolean {
     .sort()
     .pop();
 
-  const dataFim = new Date(reservation.data_reserva);
+  const datePart = extractIsoDatePart(reservation.data_reserva);
+  const dataFim = datePart
+    ? (() => {
+        const [year, month, day] = datePart.split('-').map(Number);
+        return new Date(year, month - 1, day);
+      })()
+    : new Date(reservation.data_reserva);
 
   if (!ultimoHorario) {
     dataFim.setHours(23, 59, 59, 999);
@@ -28,21 +35,18 @@ export function formatReservationDateTime(
   horarios?: { hora_inicio: string; hora_fim: string }[],
 ) {
   try {
-    const d = new Date(dataReserva);
-    if (isNaN(d.getTime())) return dataReserva;
-
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
+    const formattedDate = formatIsoDateToBr(dataReserva);
+    if (!formattedDate) return dataReserva;
 
     let timeString = '';
     if (horarios && horarios.length > 0) {
-      const start = horarios[0].hora_inicio;
-      const end = horarios[horarios.length - 1].hora_fim;
+      const sorted = [...horarios].sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio));
+      const start = sorted[0].hora_inicio;
+      const end = sorted[sorted.length - 1].hora_fim;
       timeString = ` · ${start} — ${end}`;
     }
 
-    return `${day}/${month}/${year}${timeString}`;
+    return `${formattedDate}${timeString}`;
   } catch {
     return dataReserva;
   }

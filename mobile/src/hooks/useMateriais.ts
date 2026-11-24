@@ -5,6 +5,7 @@ import axios from 'axios';
 import { getInventoryItems } from '../services/inventory.service';
 import { listMaterialRequests, createMaterialRequest } from '../services/material-request.service';
 import { useAuth } from './useAuth';
+import { getLocalTodayIso } from '../utils/date-utils';
 
 const PAGE_SIZE = 5; // itens por página
 
@@ -187,8 +188,8 @@ export function useMateriais() {
       return false;
     }
 
-    // Obter apenas a data sem as horas locais (YYYY-MM-DD)
-    const todayStr = new Date().toISOString().split('T')[0];
+    // Obter apenas a data local (YYYY-MM-DD)
+    const todayStr = getLocalTodayIso();
 
     if (withdrawalDateIso < todayStr) {
       Toast.show({

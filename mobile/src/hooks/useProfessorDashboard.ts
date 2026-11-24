@@ -2,7 +2,10 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ProfessorActionItem } from '../components/dashboard/professor-action-card';
 import { getReservations } from '../services/reservation.service';
+import { extractIsoDatePart, getLocalTodayIso } from '../utils/date-utils';
 import { useAuth } from './useAuth';
+
+const ACTIVE_RESERVATION_STATUSES = ['PENDENTE', 'AVISO_SIMPLES', 'APROVADA'];
 
 export function useProfessorDashboard() {
   const { firstName, initials } = useAuth();
@@ -25,10 +28,15 @@ export function useProfessorDashboard() {
           if (!isActive) return;
 
           if (reservations && reservations.length > 0) {
-            // Filtrar a próxima reserva no futuro
-            const now = new Date();
+            const todayIso = getLocalTodayIso();
             const upcoming = reservations
-              .filter((r: any) => new Date(r.data_reserva) >= now)
+              .filter((r: any) => {
+                const datePart = extractIsoDatePart(r.data_reserva);
+                return (
+                  ACTIVE_RESERVATION_STATUSES.includes(r.status) &&
+                  Boolean(datePart && datePart >= todayIso)
+                );
+              })
               .sort(
                 (a: any, b: any) =>
                   new Date(a.data_reserva).getTime() - new Date(b.data_reserva).getTime(),

@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { useAuth } from './useAuth';
 import { getReservations, ReservationItem } from '../services/reservation.service';
 import { ProfessorActionItem } from '../components/dashboard/professor-action-card';
+import { extractIsoDatePart, getLocalTodayIso } from '../utils/date-utils';
 
 const ACTIVE_RESERVATION_STATUSES = ['PENDENTE', 'AVISO_SIMPLES', 'APROVADA'];
 
@@ -26,13 +27,15 @@ export function useAlunoDashboard() {
           if (!isActive) return;
 
           if (reservations && reservations.length > 0) {
-            const todayIso = new Date().toISOString().split('T')[0];
+            const todayIso = getLocalTodayIso();
             const upcoming = reservations
-              .filter(
-                (r) =>
+              .filter((r) => {
+                const datePart = extractIsoDatePart(r.data_reserva);
+                return (
                   ACTIVE_RESERVATION_STATUSES.includes(r.status) &&
-                  r.data_reserva.split('T')[0] >= todayIso,
-              )
+                  Boolean(datePart && datePart >= todayIso)
+                );
+              })
               .sort(
                 (a, b) =>
                   new Date(a.data_reserva).getTime() - new Date(b.data_reserva).getTime(),

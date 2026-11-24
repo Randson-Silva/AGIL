@@ -8,6 +8,7 @@ import {
   formatMaterialProtocol,
   formatReservationProtocol,
 } from '../utils/protocol.utils';
+import { formatIsoDateToBr } from '../utils/date-utils';
 
 interface InternalNotificationItem extends HistoryNotificationItem {
   sortTime: number;
@@ -42,17 +43,7 @@ function formatTimestamp(dateString?: string | null): string {
 }
 
 function formatDateBr(dateString?: string | null): string {
-  if (!dateString) return '';
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString;
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  } catch {
-    return dateString || '';
-  }
+  return formatIsoDateToBr(dateString);
 }
 
 function formatReservationDetails(res: any): string {
@@ -60,18 +51,14 @@ function formatReservationDetails(res: any): string {
   if (res.local) parts.push(res.local);
 
   if (res.data_reserva) {
-    try {
-      const d = new Date(res.data_reserva);
-      if (!isNaN(d.getTime())) {
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        let slotStr = `${day}/${month}`;
-        if (res.horarios && res.horarios.length > 0) {
-          slotStr += ` às ${res.horarios[0].hora_inicio}`;
-        }
-        parts.push(slotStr);
+    const shortDate = formatIsoDateToBr(res.data_reserva, false);
+    if (shortDate) {
+      let slotStr = shortDate;
+      if (res.horarios && res.horarios.length > 0) {
+        slotStr += ` às ${res.horarios[0].hora_inicio}`;
       }
-    } catch {}
+      parts.push(slotStr);
+    }
   }
 
   return parts.length > 0 ? ` · ${parts.join(' · ')}` : '';
