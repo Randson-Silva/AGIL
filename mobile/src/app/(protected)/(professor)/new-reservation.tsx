@@ -93,40 +93,43 @@ export default function NewReservationScreen() {
     return `${day}/${month}/${year}`;
   };
 
-  const fetchOccupiedSlots = useCallback(async (lab: string, date: string, recurring: boolean) => {
-    if (!lab || !date) return;
+  const fetchOccupiedSlots = useCallback(
+    async (lab: string, date: string, recurring: boolean, obj: ReservationObjective) => {
+      if (!lab || !date) return;
 
-    try {
-      setIsLoadingSlots(true);
-      const response = await getOccupiedTimeSlots(lab, date, recurring);
-      const occupied = response.data || [];
-      setOccupiedSlots(occupied);
+      try {
+        setIsLoadingSlots(true);
+        const response = await getOccupiedTimeSlots(lab, date, recurring, obj);
+        const occupied = response.data || [];
+        setOccupiedSlots(occupied);
 
-      setSelectedSlots((prev) =>
-        prev.filter(
-          (sel) =>
-            !isTimeSlotInPast(sel, date) &&
-            !occupied.some(
-              (occ) => occ.hora_inicio === sel.hora_inicio && occ.hora_fim === sel.hora_fim,
-            ),
-        ),
-      );
-    } catch {
-      Toast.show({
-        type: 'error',
-        text1: 'Aviso',
-        text2: 'Não foi possível carregar os horários ocupados para esta data.',
-      });
-    } finally {
-      setIsLoadingSlots(false);
-    }
-  }, []);
+        setSelectedSlots((prev) =>
+          prev.filter(
+            (sel) =>
+              !isTimeSlotInPast(sel, date) &&
+              !occupied.some(
+                (occ) => occ.hora_inicio === sel.hora_inicio && occ.hora_fim === sel.hora_fim,
+              ),
+          ),
+        );
+      } catch {
+        Toast.show({
+          type: 'error',
+          text1: 'Aviso',
+          text2: 'Não foi possível carregar os horários ocupados para esta data.',
+        });
+      } finally {
+        setIsLoadingSlots(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     if (selectedLab && selectedDate) {
-      fetchOccupiedSlots(selectedLab, selectedDate, isRecurring);
+      fetchOccupiedSlots(selectedLab, selectedDate, isRecurring, objective);
     }
-  }, [selectedLab, selectedDate, isRecurring, fetchOccupiedSlots]);
+  }, [selectedLab, selectedDate, isRecurring, objective, fetchOccupiedSlots]);
 
   const handleConfirmSlots = (slots: TimeSlot[]) => {
     setSelectedSlots(slots);
