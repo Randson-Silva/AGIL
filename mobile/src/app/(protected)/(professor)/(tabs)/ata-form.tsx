@@ -7,7 +7,6 @@ import {
 } from '@/components/usage-log/breakdown-section';
 import { ConfirmAtaModal } from '@/components/usage-log/confirm-ata-modal';
 import { useAuth } from '@/hooks/useAuth';
-import { getEligibleBreakdownMaterials } from '@/services/breakdown.service';
 import { getInventoryItems } from '@/services/inventory.service';
 import {
   createUsageLog,
@@ -58,7 +57,7 @@ function safeJsonParse<T>(value?: string): T | null {
 
 export default function AtaFormScreen() {
   const router = useRouter();
-  const { firstName, initials } = useAuth();
+  const { firstName, initials, user } = useAuth();
   const params = useLocalSearchParams<{
     reservation?: string;
     usageLog?: string;
@@ -81,7 +80,6 @@ export default function AtaFormScreen() {
   const [loadingReservations, setLoadingReservations] = useState(!isEditing && !initialReservation);
 
   const [nomePratica, setNomePratica] = useState('');
-  const [professorResponsavel, setProfessorResponsavel] = useState('');
   const [numeroAlunos, setNumeroAlunos] = useState('');
   const [ocorrencias, setOcorrencias] = useState<UsageLogOccurrence[]>(['SEM_INTERCORRENCIAS']);
   const [relatoAula, setRelatoAula] = useState('');
@@ -91,6 +89,8 @@ export default function AtaFormScreen() {
   const [avarias, setAvarias] = useState<DraftBreakdown[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+
+  const professorResponsavel = user ? user.name.trim() : '';
 
   const hasAvarias = isEditing ? Boolean(existingLog?.avarias?.length) : avarias.length > 0;
 
@@ -104,7 +104,6 @@ export default function AtaFormScreen() {
       setEligibleReservations([]);
       setLoadingReservations(false);
       setNomePratica(existingLog.nomePratica ?? '');
-      setProfessorResponsavel(existingLog.professorResponsavel ?? firstName ?? '');
       setNumeroAlunos(String(existingLog.numeroAlunos ?? ''));
       setOcorrencias(
         existingLog.ocorrencias?.length ? existingLog.ocorrencias : ['SEM_INTERCORRENCIAS'],
@@ -119,7 +118,6 @@ export default function AtaFormScreen() {
       setSelectedReservation(initialReservation);
       setLoadingReservations(false);
       setNomePratica(initialReservation.titulo ?? '');
-      setProfessorResponsavel(initialReservation.professor?.nome ?? firstName ?? '');
       setNumeroAlunos(
         initialReservation.quantidade_alunos ? String(initialReservation.quantidade_alunos) : '',
       );
@@ -133,24 +131,19 @@ export default function AtaFormScreen() {
     setSelectedReservation(null);
     setEligibleReservations([]);
     setNomePratica('');
-    setProfessorResponsavel(firstName ?? '');
     setNumeroAlunos('');
     setOcorrencias(['SEM_INTERCORRENCIAS']);
     setRelatoAula('');
     setPendenciasTecnico('');
-  }, [existingLog, initialReservation, firstName]);
+  }, [existingLog, initialReservation]);
 
   // Carrega materiais elegíveis para avaria (fallback para inventário geral)
   useEffect(() => {
     if (isEditing) return;
 
-    getEligibleBreakdownMaterials()
+    getInventoryItems()
       .then((res) => setInventoryItems(res.data ?? []))
-      .catch(() => {
-        getInventoryItems()
-          .then((res) => setInventoryItems(res.data ?? []))
-          .catch(() => setInventoryItems([]));
-      });
+      .catch(() => setInventoryItems([]));
   }, [isEditing]);
 
   // Se abriu sem reserva pré-selecionada, busca reservas aprovadas sem ata
@@ -169,7 +162,6 @@ export default function AtaFormScreen() {
           const first = pendentesDeAta[0];
           setSelectedReservation(first);
           setNomePratica(first.titulo || '');
-          setProfessorResponsavel(first.professor?.nome || firstName || '');
           setNumeroAlunos(first.quantidade_alunos ? String(first.quantidade_alunos) : '');
         }
       })
@@ -189,12 +181,11 @@ export default function AtaFormScreen() {
     return () => {
       active = false;
     };
-  }, [isEditing, initialReservation, firstName]);
+  }, [isEditing, initialReservation]);
 
   const handleSelectReservation = (item: ReservationItem) => {
     setSelectedReservation(item);
     setNomePratica(item.titulo ?? '');
-    setProfessorResponsavel(item.professor?.nome ?? firstName ?? '');
     setNumeroAlunos(item.quantidade_alunos ? String(item.quantidade_alunos) : '');
   };
 
@@ -258,10 +249,10 @@ export default function AtaFormScreen() {
     }
 
     const praticaTrim = nomePratica.trim();
-    const profTrim = professorResponsavel.trim();
+    const profTrim = professorResponsavel;
     const alunosNum = Number(numeroAlunos);
 
-    if (!praticaTrim || !profTrim || numeroAlunos.trim() === '') {
+    if (!praticaTrim || numeroAlunos.trim() === '') {
       Toast.show({
         type: 'error',
         text1: 'Campos obrigatórios',
@@ -487,18 +478,6 @@ export default function AtaFormScreen() {
               value={nomePratica}
               onChangeText={setNomePratica}
               placeholder="Ex: Titulação ácido-base"
-              placeholderTextColor="#9CA3AF"
-              className="bg-[#F8FAF9] border border-gray-200 rounded-2xl px-4 py-3 text-gray-900 text-sm mb-4"
-            />
-
-            {/* Professor responsável */}
-            <Text className="text-gray-700 text-xs font-semibold mb-1.5">
-              Professor responsável
-            </Text>
-            <TextInput
-              value={professorResponsavel}
-              onChangeText={setProfessorResponsavel}
-              placeholder="Nome do docente"
               placeholderTextColor="#9CA3AF"
               className="bg-[#F8FAF9] border border-gray-200 rounded-2xl px-4 py-3 text-gray-900 text-sm mb-4"
             />
