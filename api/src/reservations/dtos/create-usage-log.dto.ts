@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayNotEmpty,
   IsArray,
   IsEnum,
   IsInt,
@@ -41,15 +42,17 @@ export class CreateUsageLogDto {
   @IsNotEmpty({
     message: 'O nome do professor responsável não pode ser vazio.',
   })
-  professorResponsavel: string;
+  professorResponsavel?: string;
 
   @IsInt({ message: 'O número de alunos deve ser um número inteiro.' })
   @Min(0, { message: 'O número de alunos não pode ser negativo.' })
   numeroAlunos: number;
 
   @IsOptional()
-  @IsEnum(TipoOcorrenciaAta, { message: 'Tipo de ocorrência inválido.' })
-  ocorrencia?: TipoOcorrenciaAta;
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsEnum(TipoOcorrenciaAta, { each: true })
+  ocorrencias?: TipoOcorrenciaAta[];
 
   @IsOptional()
   @IsString()

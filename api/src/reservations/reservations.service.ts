@@ -641,12 +641,6 @@ export class ReservationsService {
       }
     }
 
-    const ocorrencia =
-      dto.ocorrencia ??
-      (dto.avarias?.length
-        ? TipoOcorrenciaAta.AVARIA_MATERIAL
-        : TipoOcorrenciaAta.SEM_INTERCORRENCIAS);
-
     const professorResponsavel =
       dto.professorResponsavel?.trim() || reserva.professor.nome;
 
@@ -657,7 +651,10 @@ export class ReservationsService {
           nomePratica: dto.nomePratica.trim(),
           professorResponsavel,
           numeroAlunos: dto.numeroAlunos,
-          ocorrencia,
+          ocorrencias: this.normalizeOcorrencias(
+            dto.ocorrencias,
+            Boolean(dto.avarias?.length),
+          ),
           relatoAula: dto.relatoAula?.trim() || null,
           pendenciasTecnico: dto.pendenciasTecnico?.trim() || null,
         },
@@ -767,7 +764,11 @@ export class ReservationsService {
   ) {
     const reserva = await this.prisma.reservaEspaco.findUnique({
       where: { id: reservaId },
-      include: { ataUso: true },
+      include: {
+        ataUso: {
+          include: { avarias: true },
+        },
+      },
     });
 
     if (!reserva) {
@@ -794,8 +795,11 @@ export class ReservationsService {
         ...(dto.numeroAlunos !== undefined && {
           numeroAlunos: dto.numeroAlunos,
         }),
-        ...(dto.ocorrencia !== undefined && {
-          ocorrencia: dto.ocorrencia,
+        ...(dto.ocorrencias !== undefined && {
+          ocorrencias: this.normalizeOcorrencias(
+            dto.ocorrencias,
+            Boolean(reserva.ataUso.avarias?.length),
+          ),
         }),
         ...(dto.relatoAula !== undefined && {
           relatoAula: dto.relatoAula?.trim() || null,
@@ -873,5 +877,26 @@ export class ReservationsService {
     ]);
 
     return { message: 'Ata removida com sucesso.' };
+  }
+
+  private normalizeOcorrencias(
+    ocorrencias?: TipoOcorrenciaAta[],
+    hasAvarias = false,
+  ): TipoOcorrenciaAta[] {
+    const unique = Array.from(new Set(ocorrencias ?? []));
+    const withoutNone = unique.filter(
+      (o) => o !== TipoOcorrenciaAta.SEM_INTERCORRENCIAS,
+    );
+
+    if (
+      hasAvarias &&
+      !withoutNone.includes(TipoOcorrenciaAta.AVARIA_MATERIAL)
+    ) {
+      withoutNone.push(TipoOcorrenciaAta.AVARIA_MATERIAL);
+    }
+
+    return withoutNone.length > 0
+      ? withoutNone
+      : [TipoOcorrenciaAta.SEM_INTERCORRENCIAS];
   }
 }

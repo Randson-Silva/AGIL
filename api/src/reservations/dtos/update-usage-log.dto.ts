@@ -1,4 +1,6 @@
 import {
+  ArrayNotEmpty,
+  IsArray,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -27,8 +29,10 @@ export class UpdateUsageLogDto {
   numeroAlunos?: number;
 
   @IsOptional()
-  @IsEnum(TipoOcorrenciaAta, { message: 'Tipo de ocorrência inválido.' })
-  ocorrencia?: TipoOcorrenciaAta;
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsEnum(TipoOcorrenciaAta, { each: true })
+  ocorrencias?: TipoOcorrenciaAta[];
 
   @IsOptional()
   @IsString()

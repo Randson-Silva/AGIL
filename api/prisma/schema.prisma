@@ -317,7 +317,7 @@ model AtaUso {
   nomePratica          String
   professorResponsavel String
   numeroAlunos         Int
-  ocorrencia           TipoOcorrenciaAta @default(SEM_INTERCORRENCIAS)
+  ocorrencias          TipoOcorrenciaAta[]   @default([SEM_INTERCORRENCIAS])
   relatoAula           String?           @db.Text
   pendenciasTecnico    String?           @db.Text
   status               StatusAta         @default(PENDENTE)
