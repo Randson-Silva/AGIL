@@ -21,7 +21,7 @@ import {
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-type FilterType = 'TODAS' | 'COM_OCORRENCIA' | 'NOVAS' | 'RESOLVIDAS';
+type FilterType = 'TODAS' | 'COM_OCORRENCIA' | 'EM_ANALISE' | 'RESOLVIDAS' | 'PENDENTES';
 
 function formatAtaCode(log: UsageLog) {
   if (typeof log.codigo === 'number') {
@@ -145,8 +145,9 @@ export default function HistoricoAtasScreen() {
         ocorrencias.some((o) => o !== 'SEM_INTERCORRENCIAS') || (log.avarias?.length ?? 0) > 0;
 
       if (filter === 'COM_OCORRENCIA' && !hasOccurrence) return false;
-      if (filter === 'NOVAS' && log.status !== 'PENDENTE') return false;
+      if (filter === 'EM_ANALISE' && log.status !== 'EM_ANALISE') return false;
       if (filter === 'RESOLVIDAS' && log.status !== 'RESOLVIDA') return false;
+      if (filter === 'PENDENTES' && log.status !== 'PENDENTE') return false;
 
       if (!query) return true;
 
@@ -167,7 +168,8 @@ export default function HistoricoAtasScreen() {
   const filterOptions: { key: FilterType; label: string }[] = [
     { key: 'TODAS', label: 'Todas' },
     { key: 'COM_OCORRENCIA', label: 'Com ocorrência' },
-    { key: 'NOVAS', label: 'Novas' },
+    { key: 'PENDENTES', label: 'Pendentes' },
+    { key: 'EM_ANALISE', label: 'Em análise' },
     { key: 'RESOLVIDAS', label: 'Resolvidas' },
   ];
 
