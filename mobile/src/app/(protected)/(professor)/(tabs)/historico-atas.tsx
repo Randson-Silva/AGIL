@@ -137,8 +137,12 @@ export default function HistoricoAtasScreen() {
     const query = search.trim().toLowerCase();
 
     return logs.filter((log) => {
+      const ocorrencias = log.ocorrencias?.length
+        ? log.ocorrencias
+        : (['SEM_INTERCORRENCIAS'] as UsageLogOccurrence[]);
+
       const hasOccurrence =
-        log.ocorrencia !== 'SEM_INTERCORRENCIAS' || (log.avarias?.length ?? 0) > 0;
+        ocorrencias.some((o) => o !== 'SEM_INTERCORRENCIAS') || (log.avarias?.length ?? 0) > 0;
 
       if (filter === 'COM_OCORRENCIA' && !hasOccurrence) return false;
       if (filter === 'NOVAS' && log.status !== 'PENDENTE') return false;
@@ -172,7 +176,7 @@ export default function HistoricoAtasScreen() {
       <HeaderDashboard
         userName={firstName}
         initials={initials}
-        title="Histórico de atas"
+        title="Histórico de Atas"
         icon={<Feather name="file-text" size={20} color="#FFF" />}
         hasBorder
       />
@@ -180,7 +184,7 @@ export default function HistoricoAtasScreen() {
       <View className="px-5 pt-4 pb-2">
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => router.back()}
+          onPress={() => router.navigate('..')}
           className="flex-row items-center gap-1.5 self-start mb-4"
         >
           <View className="w-10 h-10 rounded-full bg-white items-center justify-center border border-gray-100">
@@ -276,7 +280,14 @@ export default function HistoricoAtasScreen() {
             <View className="gap-3.5">
               {filtered.map((item) => {
                 const ataCode = formatAtaCode(item);
-                const occurrenceBadge = getOccurrenceBadge(item.ocorrencia);
+                const occurrenceBadges = (
+                  item.ocorrencias?.length
+                    ? item.ocorrencias
+                    : (['SEM_INTERCORRENCIAS'] as UsageLogOccurrence[])
+                ).map((ocorrencia) => ({
+                  key: ocorrencia,
+                  ...getOccurrenceBadge(ocorrencia),
+                }));
                 const statusBadge = getStatusBadge(item.status);
                 const dateTime = item.reserva
                   ? formatReservationDateTime(item.reserva.data_reserva, item.reserva.horarios)
@@ -297,13 +308,16 @@ export default function HistoricoAtasScreen() {
                     <View className="flex-1">
                       <View className="flex-row items-center justify-between gap-2 mb-2.5">
                         <View className="flex-row items-center flex-wrap gap-1.5 flex-1">
-                          <View className={`${occurrenceBadge.bgClass} px-2.5 py-0.5 rounded-full`}>
-                            <Text
-                              className={`${occurrenceBadge.textClass} text-[11px] font-semibold`}
+                          {occurrenceBadges.map((badge) => (
+                            <View
+                              key={badge.key}
+                              className={`${badge.bgClass} px-2.5 py-0.5 rounded-full`}
                             >
-                              {occurrenceBadge.label}
-                            </Text>
-                          </View>
+                              <Text className={`${badge.textClass} text-[11px] font-semibold`}>
+                                {badge.label}
+                              </Text>
+                            </View>
+                          ))}
 
                           <View className={`${statusBadge.bgClass} px-2.5 py-0.5 rounded-full`}>
                             <Text className={`${statusBadge.textClass} text-[11px] font-semibold`}>

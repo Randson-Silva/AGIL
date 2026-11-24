@@ -146,15 +146,20 @@ export default function AtaRelatorioScreen() {
     }, [loadLog]),
   );
 
-  const occurrenceBadge = log ? getOccurrenceBadge(log.ocorrencia) : null;
+  const occurrenceBadges = log
+    ? (log.ocorrencias?.length
+        ? log.ocorrencias
+        : (['SEM_INTERCORRENCIAS'] as UsageLogOccurrence[])
+      ).map((ocorrencia) => ({
+        key: ocorrencia,
+        ...getOccurrenceBadge(ocorrencia),
+      }))
+    : [];
   const statusBadge = log ? getStatusBadge(log.status) : null;
   const avarias = log?.avarias ?? [];
 
   const formattedDate = formatDateBR(log?.reserva?.data_reserva ?? log?.criadoEm);
   const formattedTime = formatTimeRange(log?.reserva?.horarios);
-  // const turmaEPresenca = log?.reserva?.titulo
-  //   ? `${log.reserva.titulo} - ${log.numeroAlunos} alunos`
-  //   : `${log?.numeroAlunos ?? 0} alunos`;
   const quantidadeAlunos = `${log?.numeroAlunos ?? 0} alunos`;
 
   return (
@@ -184,7 +189,7 @@ export default function AtaRelatorioScreen() {
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#00623B" />
         </View>
-      ) : !log || !occurrenceBadge || !statusBadge ? (
+      ) : !log || !statusBadge ? (
         <View className="flex-1 justify-center items-center px-6">
           <Text className="text-gray-500 text-sm text-center">
             Relatório da ata não encontrado.
@@ -196,11 +201,11 @@ export default function AtaRelatorioScreen() {
           contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 110 }}
         >
           <View className="flex-row items-center flex-wrap gap-2 mb-4">
-            <View className={`${occurrenceBadge.bgClass} px-3 py-1 rounded-full`}>
-              <Text className={`${occurrenceBadge.textClass} text-xs font-semibold`}>
-                {occurrenceBadge.label}
-              </Text>
-            </View>
+            {occurrenceBadges.map((badge) => (
+              <View key={badge.key} className={`${badge.bgClass} px-3 py-1 rounded-full`}>
+                <Text className={`${badge.textClass} text-xs font-semibold`}>{badge.label}</Text>
+              </View>
+            ))}
 
             <View className={`${statusBadge.bgClass} px-3 py-1 rounded-full`}>
               <Text className={`${statusBadge.textClass} text-xs font-semibold`}>
@@ -304,7 +309,7 @@ export default function AtaRelatorioScreen() {
               onPress={() =>
                 router.push({
                   pathname: '/(protected)/(professor)/(tabs)/ata-form',
-                  params: { usageLog: JSON.stringify(log) },
+                  params: { usageLog: JSON.stringify(log), reservation: '' },
                 })
               }
               icon={<Feather name="edit-2" size={16} color="#FFF" className="m-2" />}

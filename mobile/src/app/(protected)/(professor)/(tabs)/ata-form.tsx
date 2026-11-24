@@ -80,29 +80,65 @@ export default function AtaFormScreen() {
   );
   const [loadingReservations, setLoadingReservations] = useState(!isEditing && !initialReservation);
 
-  const [nomePratica, setNomePratica] = useState(
-    existingLog?.nomePratica ?? initialReservation?.titulo ?? '',
-  );
-  const [professorResponsavel, setProfessorResponsavel] = useState(
-    existingLog?.professorResponsavel ?? initialReservation?.professor?.nome ?? firstName ?? '',
-  );
-  const [numeroAlunos, setNumeroAlunos] = useState(
-    existingLog
-      ? String(existingLog.numeroAlunos)
-      : initialReservation?.quantidade_alunos
-        ? String(initialReservation.quantidade_alunos)
-        : '',
-  );
-  const [ocorrencias, setOcorrencias] = useState<UsageLogOccurrence[]>(
-    existingLog?.ocorrencias?.length ? existingLog.ocorrencias : ['SEM_INTERCORRENCIAS'],
-  );
-  const [relatoAula, setRelatoAula] = useState(existingLog?.relatoAula ?? '');
-  const [pendenciasTecnico, setPendenciasTecnico] = useState(existingLog?.pendenciasTecnico ?? '');
+  const [nomePratica, setNomePratica] = useState('');
+  const [professorResponsavel, setProfessorResponsavel] = useState('');
+  const [numeroAlunos, setNumeroAlunos] = useState('');
+  const [ocorrencias, setOcorrencias] = useState<UsageLogOccurrence[]>(['SEM_INTERCORRENCIAS']);
+  const [relatoAula, setRelatoAula] = useState('');
+  const [pendenciasTecnico, setPendenciasTecnico] = useState('');
 
   const [inventoryItems, setInventoryItems] = useState<InventoryItemOption[]>([]);
   const [avarias, setAvarias] = useState<DraftBreakdown[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+
+  const hasAvarias = isEditing ? Boolean(existingLog?.avarias?.length) : avarias.length > 0;
+
+  // Sincroniza e limpa o formulário sempre que os params da rota mudarem
+  useEffect(() => {
+    setConfirmModalVisible(false);
+    setAvarias([]);
+
+    if (existingLog) {
+      setSelectedReservation(null);
+      setEligibleReservations([]);
+      setLoadingReservations(false);
+      setNomePratica(existingLog.nomePratica ?? '');
+      setProfessorResponsavel(existingLog.professorResponsavel ?? firstName ?? '');
+      setNumeroAlunos(String(existingLog.numeroAlunos ?? ''));
+      setOcorrencias(
+        existingLog.ocorrencias?.length ? existingLog.ocorrencias : ['SEM_INTERCORRENCIAS'],
+      );
+      setRelatoAula(existingLog.relatoAula ?? '');
+      setPendenciasTecnico(existingLog.pendenciasTecnico ?? '');
+      return;
+    }
+
+    if (initialReservation) {
+      setEligibleReservations([initialReservation]);
+      setSelectedReservation(initialReservation);
+      setLoadingReservations(false);
+      setNomePratica(initialReservation.titulo ?? '');
+      setProfessorResponsavel(initialReservation.professor?.nome ?? firstName ?? '');
+      setNumeroAlunos(
+        initialReservation.quantidade_alunos ? String(initialReservation.quantidade_alunos) : '',
+      );
+      setOcorrencias(['SEM_INTERCORRENCIAS']);
+      setRelatoAula('');
+      setPendenciasTecnico('');
+      return;
+    }
+
+    // Modo criar sem reserva pré-selecionada
+    setSelectedReservation(null);
+    setEligibleReservations([]);
+    setNomePratica('');
+    setProfessorResponsavel(firstName ?? '');
+    setNumeroAlunos('');
+    setOcorrencias(['SEM_INTERCORRENCIAS']);
+    setRelatoAula('');
+    setPendenciasTecnico('');
+  }, [existingLog, initialReservation, firstName]);
 
   // Carrega materiais elegíveis para avaria (fallback para inventário geral)
   useEffect(() => {
@@ -132,11 +168,9 @@ export default function AtaFormScreen() {
         if (pendentesDeAta.length > 0) {
           const first = pendentesDeAta[0];
           setSelectedReservation(first);
-          setNomePratica((prev) => prev || first.titulo || '');
-          setProfessorResponsavel((prev) => prev || first.professor?.nome || firstName || '');
-          setNumeroAlunos(
-            (prev) => prev || (first.quantidade_alunos ? String(first.quantidade_alunos) : ''),
-          );
+          setNomePratica(first.titulo || '');
+          setProfessorResponsavel(first.professor?.nome || firstName || '');
+          setNumeroAlunos(first.quantidade_alunos ? String(first.quantidade_alunos) : '');
         }
       })
       .catch(() => {
@@ -166,8 +200,42 @@ export default function AtaFormScreen() {
 
   const handleToggleOcorrencia = (value: UsageLogOccurrence) => {
     if (value === 'SEM_INTERCORRENCIAS') {
+      if (hasAvarias) {
+        Toast.show({
+          type: 'info',
+          text1: 'Avarias registradas',
+          text2: isEditing
+            ? 'Esta ata possui avarias vinculadas e não pode ser marcada sem intercorrências.'
+            : 'Remova as avarias cadastradas antes de marcar "Sem intercorrências".',
+        });
+        return;
+      }
       setOcorrencias(['SEM_INTERCORRENCIAS']);
       return;
+    }
+
+    if (value === 'AVARIA_MATERIAL') {
+      if (!hasAvarias) {
+        Toast.show({
+          type: 'info',
+          text1: 'Nenhuma avaria registrada',
+          text2: isEditing
+            ? 'Esta ata não possui avarias de material vinculadas.'
+            : 'Registre pelo menos uma avaria na seção abaixo para marcar esta opção.',
+        });
+        return;
+      }
+
+      if (ocorrencias.includes('AVARIA_MATERIAL')) {
+        Toast.show({
+          type: 'info',
+          text1: 'Avaria vinculada',
+          text2: isEditing
+            ? 'Não é possível desmarcar enquanto houver avarias vinculadas à ata.'
+            : 'Remova as avarias cadastradas para desmarcar esta ocorrência.',
+        });
+        return;
+      }
     }
 
     setOcorrencias((prev) => {
@@ -197,7 +265,7 @@ export default function AtaFormScreen() {
       Toast.show({
         type: 'error',
         text1: 'Campos obrigatórios',
-        text2: 'Preencha o conteúdo trabalhado, o professor responsável e o número de alunos.',
+        text2: `Preencha os campos obrigatórios para enviar`,
       });
       return null;
     }
@@ -207,6 +275,15 @@ export default function AtaFormScreen() {
         type: 'error',
         text1: 'Número inválido',
         text2: 'Informe um número inteiro válido de alunos presentes.',
+      });
+      return null;
+    }
+
+    if (ocorrencias.includes('AVARIA_MATERIAL') && !hasAvarias) {
+      Toast.show({
+        type: 'error',
+        text1: 'Avaria obrigatória',
+        text2: 'Registre pelo menos uma avaria de material ou desmarque essa ocorrência.',
       });
       return null;
     }
@@ -260,7 +337,7 @@ export default function AtaFormScreen() {
         Toast.show({
           type: 'success',
           text1: 'Ata enviada',
-          text2: 'A reserva foi concluída e registrada no histórico.',
+          text2: 'A ata foi concluída e registrada no histórico.',
         });
       }
 
@@ -442,6 +519,8 @@ export default function AtaFormScreen() {
             <View className="flex-row flex-wrap gap-2 mb-4">
               {OCORRENCIAS_OPTIONS.map((option) => {
                 const selected = ocorrencias.includes(option.value);
+                const isBlockedAvaria = option.value === 'AVARIA_MATERIAL' && !hasAvarias;
+
                 return (
                   <TouchableOpacity
                     key={option.value}
@@ -449,7 +528,7 @@ export default function AtaFormScreen() {
                     onPress={() => handleToggleOcorrencia(option.value)}
                     className={`px-3.5 py-2 rounded-full border ${
                       selected ? 'bg-[#00623B] border-[#00623B]' : 'bg-[#F8FAF9] border-gray-200'
-                    }`}
+                    } ${isBlockedAvaria ? 'opacity-50' : ''}`}
                   >
                     <Text
                       className={`text-xs font-semibold ${
@@ -504,7 +583,18 @@ export default function AtaFormScreen() {
                       : [...withoutNone, 'AVARIA_MATERIAL'];
                   });
                 }}
-                onRemove={(idx) => setAvarias((prev) => prev.filter((_, i) => i !== idx))}
+                onRemove={(idx) => {
+                  setAvarias((prev) => {
+                    const nextAvarias = prev.filter((_, i) => i !== idx);
+                    if (nextAvarias.length === 0) {
+                      setOcorrencias((curr) => {
+                        const filtered = curr.filter((o) => o !== 'AVARIA_MATERIAL');
+                        return filtered.length > 0 ? filtered : ['SEM_INTERCORRENCIAS'];
+                      });
+                    }
+                    return nextAvarias;
+                  });
+                }}
               />
             </View>
           )}
