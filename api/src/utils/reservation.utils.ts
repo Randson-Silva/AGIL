@@ -213,3 +213,14 @@ export function canPreemptReservation(
 
   return requesterPriority > oldPriority;
 }
+
+export function formatProtocolCode(
+  id: string | number | null | undefined,
+  prefix: 'R' | 'S' | 'A',
+): string {
+  if (!id) return `${prefix}-0000`;
+  const clean = String(id).replace(/[^a-zA-Z0-9]/g, '');
+  if (!clean) return `${prefix}-0000`;
+  const suffix = clean.slice(-4).toUpperCase().padStart(4, '0');
+  return `${prefix}-${suffix}`;
+}

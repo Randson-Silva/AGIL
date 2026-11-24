@@ -388,6 +388,7 @@ export class ReservationsService {
     for (const preempted of preemptedList) {
       await this.mailService.sendReservationStatusEmail({
         to: preempted.professor.email,
+        reservaId: preempted.id,
         professorNome: preempted.professor.nome,
         local: preempted.local,
         titulo: preempted.titulo,
@@ -507,6 +508,7 @@ export class ReservationsService {
 
     await this.mailService.sendReservationStatusEmail({
       to: updatedReservation.professor.email,
+      reservaId: updatedReservation.id,
       professorNome: updatedReservation.professor.nome,
       local: updatedReservation.local,
       titulo: updatedReservation.titulo,
@@ -548,6 +550,7 @@ export class ReservationsService {
 
     await this.mailService.sendReservationStatusEmail({
       to: updatedReservation.professor.email,
+      reservaId: updatedReservation.id,
       professorNome: updatedReservation.professor.nome,
       local: updatedReservation.local,
       titulo: updatedReservation.titulo,
