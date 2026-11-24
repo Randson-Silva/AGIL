@@ -1,7 +1,16 @@
+import { BreakdownOccurrenceType } from '@/services/breakdown.service';
 import { Feather } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { DamageLogPayload } from '../../services/reservation.service';
+
+const TIPO_OCORRENCIA_OPTIONS: { value: BreakdownOccurrenceType; label: string }[] = [
+  { value: 'QUEBRA', label: 'Quebra' },
+  { value: 'DEFEITO', label: 'Defeito' },
+  { value: 'CONTAMINACAO', label: 'Contaminação' },
+  { value: 'EXTRAVIO', label: 'Extravio' },
+  { value: 'OUTRO', label: 'Outro' },
+];
 
 export interface InventoryItemOption {
   id: string;
@@ -26,18 +35,29 @@ export function BreakdownSection({ items, avarias, onAdd, onRemove }: BreakdownS
   const [quantidade, setQuantidade] = useState('1');
   const [pickerOpen, setPickerOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [tipoOcorrencia, setTipoOcorrencia] = useState<BreakdownOccurrenceType>('QUEBRA');
 
   const filteredItems = items.filter((i) => i.nome.toLowerCase().includes(search.toLowerCase()));
 
   const handleAdd = () => {
     if (!selectedItem) return;
 
-    onAdd({
-      insumo_id: selectedItem.id,
-      insumo_nome: selectedItem.nome,
-      quantidade: Number(quantidade) > 0 ? Number(quantidade) : 1,
-      descricao: descricao.trim() || undefined,
-    });
+    const handleAdd = () => {
+      if (!selectedItem) return;
+
+      onAdd({
+        insumo_id: selectedItem.id,
+        insumo_nome: selectedItem.nome,
+        quantidade: Number(quantidade) > 0 ? Number(quantidade) : 1,
+        tipo_ocorrencia: tipoOcorrencia,
+        descricao: descricao.trim() || undefined,
+      });
+
+      setSelectedItem(null);
+      setTipoOcorrencia('QUEBRA');
+      setDescricao('');
+      setQuantidade('1');
+    };
 
     setSelectedItem(null);
     setDescricao('');
@@ -47,7 +67,7 @@ export function BreakdownSection({ items, avarias, onAdd, onRemove }: BreakdownS
   return (
     <View className="bg-white rounded-[24px] p-5 border border-gray-100 shadow-sm mb-5">
       <View className="flex-row items-center justify-between mb-3">
-        <Text className="text-gray-900 font-bold text-base">Registro de avarias / ocorrências</Text>
+        <Text className="text-gray-900 font-bold text-base">Registro de avarias</Text>
         <View className="bg-gray-100 px-2.5 py-1 rounded-full">
           <Text className="text-gray-600 text-xs font-medium">Opcional</Text>
         </View>
@@ -100,6 +120,29 @@ export function BreakdownSection({ items, avarias, onAdd, onRemove }: BreakdownS
         placeholder="1"
         className="bg-[#F8FAF9] border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm mb-3"
       />
+
+      <Text className="text-gray-700 text-sm font-medium mb-1.5">Tipo de avaria</Text>
+      <View className="flex-row flex-wrap gap-2 mb-3">
+        {TIPO_OCORRENCIA_OPTIONS.map((option) => {
+          const selected = tipoOcorrencia === option.value;
+          return (
+            <TouchableOpacity
+              key={option.value}
+              activeOpacity={0.75}
+              onPress={() => setTipoOcorrencia(option.value)}
+              className={`px-3 py-1.5 rounded-full border ${
+                selected ? 'bg-[#00623B] border-[#00623B]' : 'bg-[#F8FAF9] border-gray-200'
+              }`}
+            >
+              <Text
+                className={`text-xs font-semibold ${selected ? 'text-white' : 'text-gray-700'}`}
+              >
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
       {/* Descrição do problema */}
       <Text className="text-gray-700 text-sm font-medium mb-1.5">Descrição do problema</Text>
