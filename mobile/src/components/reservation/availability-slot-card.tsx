@@ -55,7 +55,7 @@ export const AvailabilitySlotCard: React.FC<AvailabilitySlotCardProps> = ({
 
         {occupation && (
           <Text className="text-xs font-medium text-gray-600 mt-1.5">
-            {OBJECTIVE_LABELS[occupation.objetivo] || occupation.objetivo} · Prof.{' '}
+            {OBJECTIVE_LABELS[occupation.objetivo] || occupation.objetivo} · Solicitante ·{' '}
             {occupation.professor_nome}
           </Text>
         )}
