@@ -2,6 +2,7 @@ import React from 'react';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { ReservationItem } from '../../services/reservation.service';
 import { OBJECTIVE_LABELS } from '../../utils/constants';
+import { formatReservationProtocol } from '../../utils/protocol.utils';
 
 interface TodayConfirmedReservationCardProps {
   item: ReservationItem;
@@ -22,7 +23,7 @@ export function TodayConfirmedReservationCard({
   isProcessing = false,
   onRegisterAbsence,
 }: TodayConfirmedReservationCardProps) {
-  const protocol = `R-${item.id.substring(0, 4).toUpperCase()}`;
+  const protocol = formatReservationProtocol(item.id);
   const objectiveLabel = OBJECTIVE_LABELS[item.objetivo] || item.objetivo;
   const timeRange = formatTimeRange(item.horarios);
 

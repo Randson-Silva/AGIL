@@ -5,6 +5,7 @@ import {
   MaterialRequestResponse,
 } from '../../services/material-request.service';
 import { OBJECTIVE_LABELS, ReservationObjective } from '../../utils/constants';
+import { formatMaterialProtocol } from '../../utils/protocol.utils';
 import { PriorityBadge } from './priority-badge';
 
 interface MaterialRequestApprovalCardProps {
@@ -58,7 +59,7 @@ export function MaterialRequestApprovalCard({
 }: MaterialRequestApprovalCardProps) {
   const roleLabel =
     item.solicitante?.perfil === 'ALUNO' ? 'Aluno' : 'Professor';
-  const protocol = `S-${item.id.substring(0, 4).toUpperCase()}`;
+  const protocol = formatMaterialProtocol(item.id);
   const finalidadeLabel = formatFinalidade(item.finalidade);
   const isHighPriority =
     item.solicitante?.perfil === 'PROFESSOR' ||

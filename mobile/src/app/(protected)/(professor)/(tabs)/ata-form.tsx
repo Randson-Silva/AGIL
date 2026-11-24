@@ -28,6 +28,7 @@ import {
   updateUsageLog,
   UsageLog,
 } from '../../../../services/reservation.service';
+import { formatReservationProtocol } from '../../../../utils/protocol.utils';
 import { formatReservationDateTime } from '../../../../utils/usage-log.utils';
 
 const OCORRENCIAS_OPTIONS = [
@@ -37,13 +38,6 @@ const OCORRENCIAS_OPTIONS = [
 ] as const;
 
 type OcorrenciaOption = (typeof OCORRENCIAS_OPTIONS)[number];
-
-function formatReservationCode(id?: string | number) {
-  if (!id) return 'R-0000';
-  const clean = String(id).replace(/[^a-zA-Z0-9]/g, '');
-  const suffix = clean.slice(-4).toUpperCase().padStart(4, '0');
-  return `R-${suffix}`;
-}
 
 export default function AtaFormScreen() {
   const router = useRouter();
@@ -187,7 +181,7 @@ export default function AtaFormScreen() {
   };
 
   const reservaId = existingLog?.reservaId ?? reservation?.id;
-  const reservationCode = formatReservationCode(reservaId);
+  const reservationCode = formatReservationProtocol(reservaId);
   const localLabel =
     existingLog?.reserva?.local ?? reservation?.local ?? 'Laboratório não informado';
   const disciplinaLabel = existingLog?.nomePratica ?? reservation?.titulo ?? '';

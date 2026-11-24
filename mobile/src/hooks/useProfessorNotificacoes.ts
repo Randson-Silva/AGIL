@@ -4,6 +4,10 @@ import { useAuth } from './useAuth';
 import { getReservations } from '../services/reservation.service';
 import { listMaterialRequests } from '../services/material-request.service';
 import { HistoryNotificationItem } from '../components/notifications/types';
+import {
+  formatMaterialProtocol,
+  formatReservationProtocol,
+} from '../utils/protocol.utils';
 
 interface InternalNotificationItem extends HistoryNotificationItem {
   sortTime: number;
@@ -101,7 +105,7 @@ export function useProfessorNotificacoes() {
         Array.isArray(reservationsRes.value.data)
       ) {
         reservationsRes.value.data.forEach((r: any) => {
-          const code = `R-${r.id ? r.id.substring(0, 4).toUpperCase() : '1000'}`;
+          const code = formatReservationProtocol(r.id);
           const isAbsence = r.motivo_rejeicao?.includes('Ausência');
           const time = new Date(r.created_at || r.data_reserva).getTime() || Date.now();
 
@@ -158,7 +162,7 @@ export function useProfessorNotificacoes() {
         Array.isArray(requestsRes.value.data)
       ) {
         requestsRes.value.data.forEach((req: any) => {
-          const code = `S-${req.id ? req.id.substring(0, 4).toUpperCase() : '300'}`;
+          const code = formatMaterialProtocol(req.id);
           const time = new Date(req.criada_em || req.aprovada_em).getTime() || Date.now();
 
           if (req.status === 'PENDENTE') {

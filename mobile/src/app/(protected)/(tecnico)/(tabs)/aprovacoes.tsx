@@ -18,6 +18,10 @@ import { ApprovedReservationCard } from '../../../../components/approvals/approv
 import { MaterialRequestApprovalCard } from '../../../../components/approvals/material-request-approval-card';
 import { RejectModal } from '../../../../components/approvals/reject-modal';
 import { useAprovacoes } from '../../../../hooks/useAprovacoes';
+import {
+  formatMaterialProtocol,
+  formatReservationProtocol,
+} from '../../../../utils/protocol.utils';
 
 export default function AprovacoesScreen() {
   const router = useRouter();
@@ -106,7 +110,7 @@ export default function AprovacoesScreen() {
                     openRejectModal(
                       res.id,
                       'RESERVA',
-                      `R-${res.id.substring(0, 4).toUpperCase()}`,
+                      formatReservationProtocol(res.id),
                     )
                   }
                 />
@@ -190,7 +194,7 @@ export default function AprovacoesScreen() {
                     openRejectModal(
                       req.id,
                       'MATERIAL',
-                      `S-${req.id.substring(0, 4).toUpperCase()}`,
+                      formatMaterialProtocol(req.id),
                     )
                   }
                 />
