@@ -1,4 +1,5 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { ObjetivoReserva } from '../generated/prisma/client.js';
 
 export interface TimeSlotInput {
   hora_inicio: string;
@@ -156,4 +157,59 @@ export function normalizeDateRange(dateString: string): {
     endOfDay,
     dayOfWeek: startOfDay.getUTCDay(),
   };
+}
+
+export function validateRoleObjective(
+  role: string,
+  objetivo: ObjetivoReserva,
+): void {
+
+
+  if (role === 'ALUNO') {
+    if (
+      objetivo !== ObjetivoReserva.TCC &&
+      objetivo !== ObjetivoReserva.PESQUISA
+    ) {
+      throw new ForbiddenException(
+        'Alunos só podem solicitar reservas para Pesquisa ou TCC.',
+      );
+    }
+    return;
+  }
+
+  if (role !== 'PROFESSOR') {
+    throw new ForbiddenException(
+      'Perfil sem permissão para solicitar reservas de laboratório.',
+    );
+  }
+}
+
+export function getReservationPriority(
+  role: string,
+  objetivo: ObjetivoReserva,
+): number {
+
+  if (role === 'ALUNO') {
+    if (objetivo === ObjetivoReserva.PESQUISA) return 1;
+    if (objetivo === ObjetivoReserva.TCC) return 2;
+    return 0;
+  }
+
+  if (role === 'PROFESSOR') {
+    return 3;
+  }
+
+  return 0;
+}
+
+export function canPreemptReservation(
+  requesterRole: string,
+  requesterObjective: ObjetivoReserva,
+  existingRole: string,
+  existingObjective: ObjetivoReserva,
+): boolean {
+  const requesterPriority = getReservationPriority(requesterRole, requesterObjective);
+  const oldPriority = getReservationPriority(existingRole, existingObjective);
+
+  return requesterPriority > oldPriority;
 }

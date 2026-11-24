@@ -251,7 +251,7 @@ export class RequestModuleService {
       const insumo = insumos.find((i) => i.id === item.insumo_id);
       if (!insumo) continue;
 
-      const currentBalance = Number(insumo.quantidade_saldo);
+      const currentBalance = Number(insumo.quantidade_saldo); // aqui veridica a quantidade daquele insumo
       const requestTeacher = allRequestTeacher.get(item.insumo_id) || 0; // aqui ele pega a quantidade total do insumo_id
       const availableBalance = currentBalance - requestTeacher;
 

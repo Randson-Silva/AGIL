@@ -18,7 +18,7 @@ export class BreakdownController {
   }
 
   @Get('eligible-materials')
-  @Roles('PROFESSOR', 'TECNICO')
+  @Roles('PROFESSOR', 'TECNICO', 'ALUNO')
   async listEligibleMaterials(
     @CurrentUser() user: { id: string; sub?: string },
   ) {
@@ -27,7 +27,7 @@ export class BreakdownController {
   }
 
   @Post()
-  @Roles('PROFESSOR', 'TECNICO')
+  @Roles('PROFESSOR', 'TECNICO', 'ALUNO')
   async createBreakdown(
     @CurrentUser() user: { id: string; sub?: string },
     @Body() data: CreateBreakdownDto,

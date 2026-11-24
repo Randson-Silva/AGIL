@@ -29,3 +29,5 @@ expo-env.d.ts
 
 # TypeScript
 *.tsbuildinfo
+
+Telas/

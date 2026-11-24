@@ -14,6 +14,7 @@ import { CurrentUser } from '../authz/current-user.decorator.js';
 import { Roles } from '../authz/roles.decorator.js';
 import { RolesGuard } from '../authz/roles.guard.js';
 import { Perfil } from '../generated/prisma/enums.js';
+import { ObjetivoReserva } from '../generated/prisma/client.js';
 import { CreateReservationDto } from './dtos/create-reservation.dto.js';
 import { CreateUsageLogDto } from './dtos/create-usage-log.dto.js';
 import { RejectReservationDto } from './dtos/reject-reservation.dto.js';
@@ -26,16 +27,20 @@ export class ReservationsController {
   constructor(private readonly reservationsService: ReservationsService) {}
 
   @Get('occupied-slots')
-  @Roles('PROFESSOR', 'TECNICO')
+  @Roles('PROFESSOR', 'TECNICO', 'ALUNO')
   async getOccupiedSlots(
+    @CurrentUser() user: { id: string; sub?: string; role?: string },
     @Query('local') local: string,
     @Query('date') date: string,
     @Query('isRecurring') isRecurring?: string,
+    @Query('objetivo') objetivo?: ObjetivoReserva,
   ) {
     return this.reservationsService.getOccupiedSlots(
       local,
       date,
       isRecurring === 'true',
+      user?.role,
+      objetivo,
     );
   }
 
@@ -49,17 +54,18 @@ export class ReservationsController {
   }
 
   @Post()
-  @Roles('PROFESSOR')
+  @Roles('PROFESSOR', 'ALUNO')
   async createReservation(
-    @CurrentUser() user: { id: string; sub?: string },
+    @CurrentUser() user: { id: string; sub?: string; role: string },
     @Body() data: CreateReservationDto,
   ) {
-    const professorId = user.id || user.sub!;
-    return this.reservationsService.createReservation(professorId, data);
+    const userId = user.id || user.sub!;
+    const userRole = user.role;
+    return this.reservationsService.createReservation(userId, data, userRole);
   }
 
   @Get()
-  @Roles('PROFESSOR', 'TECNICO')
+  @Roles('PROFESSOR', 'TECNICO', 'ALUNO')
   async listReservations(
     @CurrentUser()
     user: {

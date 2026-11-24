@@ -113,6 +113,7 @@ model ReservaEspaco {
   dia_semana         Int // 0 (Dom) a 6 (Sáb)
   objetivo           ObjetivoReserva
   titulo             String
+  professor_responsavel String?
   quantidade_alunos  Int             @default(0)
   quantidade_grupos  Int             @default(0)
   observacoes        String?
