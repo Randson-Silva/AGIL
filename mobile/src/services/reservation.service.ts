@@ -1,5 +1,6 @@
 import { ReservationObjective, TimeSlot } from '../utils/constants';
 import { api } from './api';
+import { BreakdownOccurrenceType } from './breakdown.service';
 
 export type ReservationStatus =
   'PENDENTE' | 'AVISO_SIMPLES' | 'APROVADA' | 'REJEITADA' | 'CANCELADA' | 'CONCLUIDA_COM_ATA';
@@ -75,9 +76,9 @@ export interface OccupiedSlotDetail {
 
 export interface DamageLogPayload {
   insumo_id: string;
+  quantidade: number;
+  tipo_ocorrencia: BreakdownOccurrenceType;
   descricao?: string;
-  quantidade?: number;
-  tipo_ocorrencia?: DamageType;
 }
 
 export interface UsageLogDamage {
@@ -101,7 +102,7 @@ export interface UsageLog {
   nomePratica: string;
   professorResponsavel: string;
   numeroAlunos: number;
-  ocorrencia: UsageLogOccurrence;
+  ocorrencias: UsageLogOccurrence[];
   relatoAula?: string | null;
   pendenciasTecnico?: string | null;
   status: UsageLogStatus;
@@ -135,7 +136,7 @@ export interface CreateUsageLogPayload {
   nomePratica: string;
   professorResponsavel?: string;
   numeroAlunos: number;
-  ocorrencia?: UsageLogOccurrence;
+  ocorrencias?: UsageLogOccurrence[];
   relatoAula?: string;
   pendenciasTecnico?: string;
   avarias?: DamageLogPayload[];
@@ -145,7 +146,7 @@ export interface UpdateUsageLogPayload {
   nomePratica?: string;
   professorResponsavel?: string;
   numeroAlunos?: number;
-  ocorrencia?: UsageLogOccurrence;
+  ocorrencias?: UsageLogOccurrence[];
   relatoAula?: string;
   pendenciasTecnico?: string;
 }

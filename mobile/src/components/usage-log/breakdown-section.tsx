@@ -1,16 +1,8 @@
-import { BreakdownOccurrenceType } from '@/services/breakdown.service';
 import { Feather } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { BreakdownOccurrenceType } from '../../services/breakdown.service';
 import { DamageLogPayload } from '../../services/reservation.service';
-
-const TIPO_OCORRENCIA_OPTIONS: { value: BreakdownOccurrenceType; label: string }[] = [
-  { value: 'QUEBRA', label: 'Quebra' },
-  { value: 'DEFEITO', label: 'Defeito' },
-  { value: 'CONTAMINACAO', label: 'Contaminação' },
-  { value: 'EXTRAVIO', label: 'Extravio' },
-  { value: 'OUTRO', label: 'Outro' },
-];
 
 export interface InventoryItemOption {
   id: string;
@@ -29,37 +21,45 @@ interface BreakdownSectionProps {
   onRemove: (index: number) => void;
 }
 
+const TIPO_OCORRENCIA_OPTIONS: { value: BreakdownOccurrenceType; label: string }[] = [
+  { value: 'QUEBRA', label: 'Quebra' },
+  { value: 'DEFEITO', label: 'Defeito' },
+  { value: 'CONTAMINACAO', label: 'Contaminação' },
+  { value: 'EXTRAVIO', label: 'Extravio' },
+  { value: 'OUTRO', label: 'Outro' },
+];
+
+const TIPO_OCORRENCIA_LABELS: Record<BreakdownOccurrenceType, string> = {
+  QUEBRA: 'Quebra',
+  DEFEITO: 'Defeito',
+  CONTAMINACAO: 'Contaminação',
+  EXTRAVIO: 'Extravio',
+  OUTRO: 'Outro',
+};
+
 export function BreakdownSection({ items, avarias, onAdd, onRemove }: BreakdownSectionProps) {
   const [selectedItem, setSelectedItem] = useState<InventoryItemOption | null>(null);
+  const [tipoOcorrencia, setTipoOcorrencia] = useState<BreakdownOccurrenceType>('QUEBRA');
   const [descricao, setDescricao] = useState('');
   const [quantidade, setQuantidade] = useState('1');
   const [pickerOpen, setPickerOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [tipoOcorrencia, setTipoOcorrencia] = useState<BreakdownOccurrenceType>('QUEBRA');
 
   const filteredItems = items.filter((i) => i.nome.toLowerCase().includes(search.toLowerCase()));
 
   const handleAdd = () => {
     if (!selectedItem) return;
 
-    const handleAdd = () => {
-      if (!selectedItem) return;
-
-      onAdd({
-        insumo_id: selectedItem.id,
-        insumo_nome: selectedItem.nome,
-        quantidade: Number(quantidade) > 0 ? Number(quantidade) : 1,
-        tipo_ocorrencia: tipoOcorrencia,
-        descricao: descricao.trim() || undefined,
-      });
-
-      setSelectedItem(null);
-      setTipoOcorrencia('QUEBRA');
-      setDescricao('');
-      setQuantidade('1');
-    };
+    onAdd({
+      insumo_id: selectedItem.id,
+      insumo_nome: selectedItem.nome,
+      quantidade: Number(quantidade) > 0 ? Number(quantidade) : 1,
+      tipo_ocorrencia: tipoOcorrencia,
+      descricao: descricao.trim() || undefined,
+    });
 
     setSelectedItem(null);
+    setTipoOcorrencia('QUEBRA');
     setDescricao('');
     setQuantidade('1');
   };
@@ -88,6 +88,9 @@ export function BreakdownSection({ items, avarias, onAdd, onRemove }: BreakdownS
             <Text className="text-gray-900 font-semibold text-sm">
               {avaria.insumo_nome} (Qtd: {avaria.quantidade ?? 1})
             </Text>
+            <Text className="text-amber-800 text-xs font-medium mt-0.5">
+              Tipo: {TIPO_OCORRENCIA_LABELS[avaria.tipo_ocorrencia] ?? avaria.tipo_ocorrencia}
+            </Text>
             {avaria.descricao ? (
               <Text className="text-gray-600 text-xs mt-1">{avaria.descricao}</Text>
             ) : null}
@@ -111,16 +114,7 @@ export function BreakdownSection({ items, avarias, onAdd, onRemove }: BreakdownS
         <Feather name="chevron-down" size={18} color="#6B7280" />
       </TouchableOpacity>
 
-      {/* Quantidade */}
-      <Text className="text-gray-700 text-sm font-medium mb-1.5">Quantidade</Text>
-      <TextInput
-        value={quantidade}
-        onChangeText={(t) => setQuantidade(t.replace(/[^0-9.]/g, ''))}
-        keyboardType="numeric"
-        placeholder="1"
-        className="bg-[#F8FAF9] border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm mb-3"
-      />
-
+      {/* Tipo de ocorrência */}
       <Text className="text-gray-700 text-sm font-medium mb-1.5">Tipo de avaria</Text>
       <View className="flex-row flex-wrap gap-2 mb-3">
         {TIPO_OCORRENCIA_OPTIONS.map((option) => {
@@ -143,6 +137,16 @@ export function BreakdownSection({ items, avarias, onAdd, onRemove }: BreakdownS
           );
         })}
       </View>
+
+      {/* Quantidade */}
+      <Text className="text-gray-700 text-sm font-medium mb-1.5">Quantidade</Text>
+      <TextInput
+        value={quantidade}
+        onChangeText={(t) => setQuantidade(t.replace(/[^0-9.]/g, ''))}
+        keyboardType="numeric"
+        placeholder="1"
+        className="bg-[#F8FAF9] border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm mb-3"
+      />
 
       {/* Descrição do problema */}
       <Text className="text-gray-700 text-sm font-medium mb-1.5">Descrição do problema</Text>

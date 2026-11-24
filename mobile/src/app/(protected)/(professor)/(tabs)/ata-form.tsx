@@ -8,6 +8,7 @@ import {
 import { ConfirmAtaModal } from '@/components/usage-log/confirm-ata-modal';
 import { useAuth } from '@/hooks/useAuth';
 import { getEligibleBreakdownMaterials } from '@/services/breakdown.service';
+import { getInventoryItems } from '@/services/inventory.service';
 import {
   createUsageLog,
   getReservations,
@@ -82,6 +83,9 @@ export default function AtaFormScreen() {
   const [nomePratica, setNomePratica] = useState(
     existingLog?.nomePratica ?? initialReservation?.titulo ?? '',
   );
+  const [professorResponsavel, setProfessorResponsavel] = useState(
+    existingLog?.professorResponsavel ?? initialReservation?.professor?.nome ?? firstName ?? '',
+  );
   const [numeroAlunos, setNumeroAlunos] = useState(
     existingLog
       ? String(existingLog.numeroAlunos)
@@ -89,8 +93,8 @@ export default function AtaFormScreen() {
         ? String(initialReservation.quantidade_alunos)
         : '',
   );
-  const [ocorrencia, setOcorrencia] = useState<UsageLogOccurrence>(
-    existingLog?.ocorrencia ?? 'SEM_INTERCORRENCIAS',
+  const [ocorrencias, setOcorrencias] = useState<UsageLogOccurrence[]>(
+    existingLog?.ocorrencias?.length ? existingLog.ocorrencias : ['SEM_INTERCORRENCIAS'],
   );
   const [relatoAula, setRelatoAula] = useState(existingLog?.relatoAula ?? '');
   const [pendenciasTecnico, setPendenciasTecnico] = useState(existingLog?.pendenciasTecnico ?? '');
@@ -100,13 +104,17 @@ export default function AtaFormScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
 
-  // Carrega inventário pelo service (apenas na criação)
+  // Carrega materiais elegíveis para avaria (fallback para inventário geral)
   useEffect(() => {
     if (isEditing) return;
 
     getEligibleBreakdownMaterials()
       .then((res) => setInventoryItems(res.data ?? []))
-      .catch(() => setInventoryItems([]));
+      .catch(() => {
+        getInventoryItems()
+          .then((res) => setInventoryItems(res.data ?? []))
+          .catch(() => setInventoryItems([]));
+      });
   }, [isEditing]);
 
   // Se abriu sem reserva pré-selecionada, busca reservas aprovadas sem ata
@@ -125,6 +133,7 @@ export default function AtaFormScreen() {
           const first = pendentesDeAta[0];
           setSelectedReservation(first);
           setNomePratica((prev) => prev || first.titulo || '');
+          setProfessorResponsavel((prev) => prev || first.professor?.nome || firstName || '');
           setNumeroAlunos(
             (prev) => prev || (first.quantidade_alunos ? String(first.quantidade_alunos) : ''),
           );
@@ -146,12 +155,27 @@ export default function AtaFormScreen() {
     return () => {
       active = false;
     };
-  }, [isEditing, initialReservation]);
+  }, [isEditing, initialReservation, firstName]);
 
   const handleSelectReservation = (item: ReservationItem) => {
     setSelectedReservation(item);
     setNomePratica(item.titulo ?? '');
+    setProfessorResponsavel(item.professor?.nome ?? firstName ?? '');
     setNumeroAlunos(item.quantidade_alunos ? String(item.quantidade_alunos) : '');
+  };
+
+  const handleToggleOcorrencia = (value: UsageLogOccurrence) => {
+    if (value === 'SEM_INTERCORRENCIAS') {
+      setOcorrencias(['SEM_INTERCORRENCIAS']);
+      return;
+    }
+
+    setOcorrencias((prev) => {
+      const withoutNone = prev.filter((item) => item !== 'SEM_INTERCORRENCIAS');
+      const exists = withoutNone.includes(value);
+      const next = exists ? withoutNone.filter((item) => item !== value) : [...withoutNone, value];
+      return next.length > 0 ? next : ['SEM_INTERCORRENCIAS'];
+    });
   };
 
   const validateForm = () => {
@@ -166,13 +190,14 @@ export default function AtaFormScreen() {
     }
 
     const praticaTrim = nomePratica.trim();
+    const profTrim = professorResponsavel.trim();
     const alunosNum = Number(numeroAlunos);
 
-    if (!praticaTrim || numeroAlunos.trim() === '') {
+    if (!praticaTrim || !profTrim || numeroAlunos.trim() === '') {
       Toast.show({
         type: 'error',
         text1: 'Campos obrigatórios',
-        text2: 'Preencha o conteúdo trabalhado e o número de alunos presentes.',
+        text2: 'Preencha o conteúdo trabalhado, o professor responsável e o número de alunos.',
       });
       return null;
     }
@@ -185,13 +210,6 @@ export default function AtaFormScreen() {
       });
       return null;
     }
-
-    const profTrim = (
-      existingLog?.professorResponsavel ??
-      selectedReservation?.professor?.nome ??
-      firstName ??
-      ''
-    ).trim();
 
     return {
       reservaId,
@@ -218,9 +236,9 @@ export default function AtaFormScreen() {
       if (isEditing) {
         await updateUsageLog(validated.reservaId, {
           nomePratica: validated.praticaTrim,
-          professorResponsavel: validated.profTrim || undefined,
+          professorResponsavel: validated.profTrim,
           numeroAlunos: validated.alunosNum,
-          ocorrencia,
+          ocorrencias,
           relatoAula: validated.relatoTrim,
           pendenciasTecnico: validated.pendenciasTrim,
         });
@@ -232,9 +250,9 @@ export default function AtaFormScreen() {
       } else {
         await createUsageLog(validated.reservaId, {
           nomePratica: validated.praticaTrim,
-          professorResponsavel: validated.profTrim || undefined,
+          professorResponsavel: validated.profTrim,
           numeroAlunos: validated.alunosNum,
-          ocorrencia,
+          ocorrencias,
           relatoAula: validated.relatoTrim,
           pendenciasTecnico: validated.pendenciasTrim,
           avarias: avarias.length > 0 ? avarias.map(({ insumo_nome, ...rest }) => rest) : undefined,
@@ -396,6 +414,18 @@ export default function AtaFormScreen() {
               className="bg-[#F8FAF9] border border-gray-200 rounded-2xl px-4 py-3 text-gray-900 text-sm mb-4"
             />
 
+            {/* Professor responsável */}
+            <Text className="text-gray-700 text-xs font-semibold mb-1.5">
+              Professor responsável
+            </Text>
+            <TextInput
+              value={professorResponsavel}
+              onChangeText={setProfessorResponsavel}
+              placeholder="Nome do docente"
+              placeholderTextColor="#9CA3AF"
+              className="bg-[#F8FAF9] border border-gray-200 rounded-2xl px-4 py-3 text-gray-900 text-sm mb-4"
+            />
+
             {/* Alunos presentes */}
             <Text className="text-gray-700 text-xs font-semibold mb-1.5">Alunos presentes</Text>
             <TextInput
@@ -407,16 +437,16 @@ export default function AtaFormScreen() {
               className="bg-[#F8FAF9] border border-gray-200 rounded-2xl px-4 py-3 text-gray-900 text-sm mb-4"
             />
 
-            {/* Ocorrências */}
+            {/* Ocorrências (múltipla seleção) */}
             <Text className="text-gray-700 text-xs font-semibold mb-2">Ocorrências</Text>
             <View className="flex-row flex-wrap gap-2 mb-4">
               {OCORRENCIAS_OPTIONS.map((option) => {
-                const selected = ocorrencia === option.value;
+                const selected = ocorrencias.includes(option.value);
                 return (
                   <TouchableOpacity
                     key={option.value}
                     activeOpacity={0.75}
-                    onPress={() => setOcorrencia(option.value)}
+                    onPress={() => handleToggleOcorrencia(option.value)}
                     className={`px-3.5 py-2 rounded-full border ${
                       selected ? 'bg-[#00623B] border-[#00623B]' : 'bg-[#F8FAF9] border-gray-200'
                     }`}
@@ -467,9 +497,12 @@ export default function AtaFormScreen() {
                 avarias={avarias}
                 onAdd={(nova) => {
                   setAvarias((prev) => [...prev, nova]);
-                  if (ocorrencia === 'SEM_INTERCORRENCIAS') {
-                    setOcorrencia('AVARIA_MATERIAL');
-                  }
+                  setOcorrencias((prev) => {
+                    const withoutNone = prev.filter((o) => o !== 'SEM_INTERCORRENCIAS');
+                    return withoutNone.includes('AVARIA_MATERIAL')
+                      ? withoutNone
+                      : [...withoutNone, 'AVARIA_MATERIAL'];
+                  });
                 }}
                 onRemove={(idx) => setAvarias((prev) => prev.filter((_, i) => i !== idx))}
               />
