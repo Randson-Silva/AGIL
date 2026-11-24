@@ -92,7 +92,9 @@ export default function AtaFormScreen() {
 
   const professorResponsavel = user ? user.name.trim() : '';
 
-  const hasAvarias = isEditing ? Boolean(existingLog?.avarias?.length) : avarias.length > 0;
+  const hasAvarias = isEditing
+    ? Boolean(existingLog?.avarias?.length || existingLog?.ocorrencias?.includes('AVARIA_MATERIAL'))
+    : avarias.length > 0;
 
   // Sincroniza e limpa o formulário sempre que os params da rota mudarem
   useEffect(() => {
