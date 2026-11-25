@@ -117,6 +117,15 @@ model Usuario {
   atas_analisadas      AtaUso[]                @relation("AtaUso_Tecnico")
 }
 
+model Laboratorio {
+  id          String   @id @default(uuid())
+  nome        String   @unique
+  localizacao String?
+  capacidade  Int      @default(0)
+  ativo       Boolean  @default(true)
+  created_at  DateTime @default(now())
+}
+
 model ReservaEspaco {
   id           String  @id @default(uuid())
   professor_id String
@@ -139,7 +148,8 @@ model ReservaEspaco {
   horarios   HorarioReserva[]
   created_at DateTime         @default(now())
 
-  ataUso AtaUso?
+  ataUso              AtaUso?
+  solicitacaoMaterial SolicitacaoMaterial?
 }
 
 model HorarioReserva {
@@ -228,11 +238,15 @@ model Vidraria {
 }
 
 model SolicitacaoMaterial {
-  id             String  @id @default(uuid())
-  solicitante_id String
-  solicitante    Usuario @relation("solicitante", fields: [solicitante_id], references: [id])
-  finalidade     String
-  descricao      String?
+  id                     String           @id @default(uuid())
+  solicitante_id         String
+  solicitante            Usuario          @relation("solicitante", fields: [solicitante_id], references: [id])
+  reserva_id             String?          @unique
+  reserva                ReservaEspaco?   @relation(fields: [reserva_id], references: [id], onDelete: SetNull)
+  objetivo               ObjetivoReserva?
+  finalidade             String
+  descricao              String?
+  devolucao_informada_em DateTime?
 
   status StatusSolicitacao @default(PENDENTE)
 
@@ -258,7 +272,8 @@ model ItemSolicitacaoMaterial {
   insumo_id String
   insumo    Insumo @relation(fields: [insumo_id], references: [id])
 
-  quantidade Decimal @db.Decimal(10, 3)
+  quantidade           Decimal  @db.Decimal(10, 3)
+  quantidade_devolvida Decimal? @db.Decimal(10, 3)
 }
 
 model AvariaReportada {
