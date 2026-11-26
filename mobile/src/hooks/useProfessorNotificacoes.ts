@@ -4,6 +4,11 @@ import { useAuth } from './useAuth';
 import { getReservations } from '../services/reservation.service';
 import { listMaterialRequests } from '../services/material-request.service';
 import { HistoryNotificationItem } from '../components/notifications/types';
+import {
+  formatMaterialProtocol,
+  formatReservationProtocol,
+} from '../utils/protocol.utils';
+import { formatIsoDateToBr } from '../utils/date-utils';
 
 interface InternalNotificationItem extends HistoryNotificationItem {
   sortTime: number;
@@ -43,17 +48,7 @@ function formatTimestamp(dateString?: string | null): string {
 }
 
 function formatDateBr(dateString?: string | null): string {
-  if (!dateString) return '';
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString;
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  } catch {
-    return dateString || '';
-  }
+  return formatIsoDateToBr(dateString);
 }
 
 function formatReservationDetails(res: any): string {
@@ -61,18 +56,14 @@ function formatReservationDetails(res: any): string {
   if (res.local) parts.push(res.local);
 
   if (res.data_reserva) {
-    try {
-      const d = new Date(res.data_reserva);
-      if (!isNaN(d.getTime())) {
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        let slotStr = `${day}/${month}`;
-        if (res.horarios && res.horarios.length > 0) {
-          slotStr += ` às ${res.horarios[0].hora_inicio}`;
-        }
-        parts.push(slotStr);
+    const shortDate = formatIsoDateToBr(res.data_reserva, false);
+    if (shortDate) {
+      let slotStr = shortDate;
+      if (res.horarios && res.horarios.length > 0) {
+        slotStr += ` às ${res.horarios[0].hora_inicio}`;
       }
-    } catch {}
+      parts.push(slotStr);
+    }
   }
 
   return parts.length > 0 ? ` · ${parts.join(' · ')}` : '';
@@ -101,7 +92,7 @@ export function useProfessorNotificacoes() {
         Array.isArray(reservationsRes.value.data)
       ) {
         reservationsRes.value.data.forEach((r: any) => {
-          const code = `R-${r.id ? r.id.substring(0, 4).toUpperCase() : '1000'}`;
+          const code = formatReservationProtocol(r.id);
           const isAbsence = r.motivo_rejeicao?.includes('Ausência');
           const time = new Date(r.created_at || r.data_reserva).getTime() || Date.now();
 
@@ -158,7 +149,7 @@ export function useProfessorNotificacoes() {
         Array.isArray(requestsRes.value.data)
       ) {
         requestsRes.value.data.forEach((req: any) => {
-          const code = `S-${req.id ? req.id.substring(0, 4).toUpperCase() : '300'}`;
+          const code = formatMaterialProtocol(req.id);
           const time = new Date(req.criada_em || req.aprovada_em).getTime() || Date.now();
 
           if (req.status === 'PENDENTE') {

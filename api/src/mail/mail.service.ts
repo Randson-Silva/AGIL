@@ -1,9 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import { formatProtocolCode } from '../utils/reservation.utils.js';
 
 export interface ReservationEmailPayload {
   to: string;
+  reservaId?: string;
   professorNome: string;
   local: string;
   titulo: string;
@@ -87,6 +89,7 @@ export class MailService {
   async sendReservationStatusEmail(payload: ReservationEmailPayload) {
     const {
       to,
+      reservaId,
       professorNome,
       local,
       titulo,
@@ -97,6 +100,8 @@ export class MailService {
     } = payload;
 
     if (!to) return;
+
+    const protocolCode = reservaId ? formatProtocolCode(reservaId, 'R') : null;
 
     const isApproved = status === 'APROVADA';
     const statusLabel = isApproved ? 'Aprovada' : 'Rejeitada';
@@ -130,8 +135,8 @@ export class MailService {
       await this.transporter.sendMail({
         from: `"AGIL - Reservas" <${this.configService.get<string>('SMTP_USER')}>`,
         to,
-        subject: `Reserva de Laboratório ${statusLabel} - ${local}`,
-        text: `Olá, ${professorNome}.\n\nSua solicitação de reserva para a prática "${titulo}" foi ${statusLabel.toUpperCase()}.\n\nDados da reserva:\n- Laboratório: ${local}\n- Data: ${formattedDate}\n- Horário(s): ${formattedSlots}${reasonText}`,
+        subject: `Reserva de Laboratório ${statusLabel}${protocolCode ? ` (${protocolCode})` : ''} - ${local}`,
+        text: `Olá, ${professorNome}.\n\nSua solicitação de reserva para a prática "${titulo}" foi ${statusLabel.toUpperCase()}.\n\nDados da reserva:${protocolCode ? `\n- Protocolo: ${protocolCode}` : ''}\n- Laboratório: ${local}\n- Data: ${formattedDate}\n- Horário(s): ${formattedSlots}${reasonText}`,
         html: `
           <div style="font-family: Arial, sans-serif; color: #1F2937; line-height: 1.5;">
             <h2 style="color: ${statusColor};">Solicitação de Reserva ${statusLabel}</h2>
@@ -139,6 +144,7 @@ export class MailService {
             <p>Sua solicitação de reserva de laboratório foi analisada pela equipe técnica e teve o status atualizado para <strong style="color: ${statusColor};">${statusLabel.toUpperCase()}</strong>.</p>
 
             <div style="background-color: #F8FAF9; padding: 16px; border-radius: 8px; border: 1px solid #E5E7EB;">
+              ${protocolCode ? `<p style="margin: 4px 0;"><strong>Protocolo:</strong> ${protocolCode}</p>` : ''}
               <p style="margin: 4px 0;"><strong>Atividade:</strong> ${titulo}</p>
               <p style="margin: 4px 0;"><strong>Laboratório:</strong> ${local}</p>
               <p style="margin: 4px 0;"><strong>Data:</strong> ${formattedDate}</p>

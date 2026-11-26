@@ -30,6 +30,8 @@ export function HeaderDashboard({ userName, initials, title, icon, hasBorder }: 
     if (isNotificationScreen) return;
     if (user?.profile === 'PROFESSOR') {
       router.navigate('/(protected)/(professor)/notificacoes');
+    } else if (user?.profile === 'ALUNO') {
+      router.navigate('/(protected)/(aluno)/notificacoes');
     } else {
       router.navigate('/(protected)/(tecnico)/notificacoes');
     }

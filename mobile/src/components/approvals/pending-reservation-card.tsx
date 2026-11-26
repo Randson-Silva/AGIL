@@ -2,6 +2,7 @@ import React from 'react';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { ReservationItem } from '../../services/reservation.service';
 import { OBJECTIVE_LABELS } from '../../utils/constants';
+import { formatReservationProtocol } from '../../utils/protocol.utils';
 import { PriorityBadge } from './priority-badge';
 
 interface PendingReservationCardProps {
@@ -37,7 +38,7 @@ export function PendingReservationCard({
     item.prioridade_maxima ?? item.objetivo === 'AULA_PRATICA';
   const roleLabel =
     item.professor?.perfil === 'ALUNO' ? 'Aluno' : 'Professor';
-  const protocol = `R-${item.id.substring(0, 4).toUpperCase()}`;
+  const protocol = formatReservationProtocol(item.id);
   const objectiveLabel = OBJECTIVE_LABELS[item.objetivo] || item.objetivo;
   const dateFormatted = formatDateBr(item.data_reserva);
   const timeRange = formatTimeRange(item.horarios);
@@ -86,6 +87,17 @@ export function PendingReservationCard({
             {objectiveLabel}
           </Text>
         </View>
+
+        {Boolean(item.professor_responsavel) && (
+          <View className="mt-3">
+            <Text className="text-[11px] font-semibold text-gray-500 uppercase mb-1">
+              PROF. RESPONSÁVEL
+            </Text>
+            <Text className="text-xs font-medium text-gray-900">
+              {item.professor_responsavel}
+            </Text>
+          </View>
+        )}
       </View>
 
       <View className="flex-row gap-3">

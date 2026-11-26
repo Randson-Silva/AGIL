@@ -3,13 +3,17 @@ import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 export type FilterOption = 'Todas' | 'Pendente' | 'Aprovada' | 'Encerradas';
 
-interface FilterPillsProps {
-  options: FilterOption[];
-  activeFilter: FilterOption;
-  onChangeFilter: (filter: FilterOption) => void;
+interface FilterPillsProps<T extends string = FilterOption> {
+  options: T[];
+  activeFilter: T;
+  onChangeFilter: (filter: T) => void;
 }
 
-export function FilterPills({ options, activeFilter, onChangeFilter }: FilterPillsProps) {
+export function FilterPills<T extends string = FilterOption>({
+  options,
+  activeFilter,
+  onChangeFilter,
+}: FilterPillsProps<T>) {
   return (
     <View>
       <ScrollView

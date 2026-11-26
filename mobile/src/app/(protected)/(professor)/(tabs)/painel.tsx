@@ -4,6 +4,7 @@ import { HeaderDashboard } from '../../../../components/dashboard/header-dashboa
 import { ProfessorActionCard } from '../../../../components/dashboard/professor-action-card';
 import { NextReservationCard } from '../../../../components/dashboard/next-reservation-card';
 import { useProfessorDashboard } from '../../../../hooks/useProfessorDashboard';
+import { formatIsoDateToBr } from '../../../../utils/date-utils';
 
 export default function ProfessorPainelScreen() {
   const { firstName, initials, nextReservation, isLoading, actions } = useProfessorDashboard();
@@ -18,25 +19,12 @@ export default function ProfessorPainelScreen() {
     );
   }
 
-  // Formatador simples para mock e UI
-  const formatDateTime = (isoDate: string) => {
-    try {
-      const d = new Date(isoDate);
-      if (isNaN(d.getTime())) return isoDate;
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = d.getFullYear();
-      const hours = String(d.getHours()).padStart(2, '0');
-      const mins = String(d.getMinutes()).padStart(2, '0');
-
-      return `${day}/${month}/${year} · ${hours}:${mins}`;
-    } catch {
-      return isoDate;
-    }
-  };
-
   const formattedDate = nextReservation?.data_reserva
-    ? formatDateTime(nextReservation.data_reserva)
+    ? (() => {
+        const dateStr = formatIsoDateToBr(nextReservation.data_reserva);
+        const firstSlot = nextReservation.horarios?.[0]?.hora_inicio;
+        return firstSlot ? `${dateStr} · ${firstSlot}` : dateStr;
+      })()
     : '';
 
   return (

@@ -17,20 +17,18 @@ import {
 } from '../generated/prisma/client.js';
 import { MailService } from '../mail/mail.service.js';
 import {
+  canPreemptReservation,
+  getReservationPriority,
   hasTimeOverlap,
   normalizeDateRange,
   validateLabCapacity,
   validateNotPastReservation,
+  validateRoleObjective,
   validateTimeSlots,
 } from '../utils/reservation.utils.js';
 import { CreateReservationDto } from './dtos/create-reservation.dto.js';
 import { CreateUsageLogDto } from './dtos/create-usage-log.dto.js';
 import { UpdateUsageLogDto } from './dtos/update-usage-log.dto.js';
-
-const LOWER_PRIORITY_OBJECTIVES: ObjetivoReserva[] = [
-  ObjetivoReserva.PESQUISA,
-  ObjetivoReserva.TCC,
-];
 
 const RESERVATION_RELATIONS = {
   horarios: true,
@@ -90,11 +88,29 @@ export class ReservationsService {
     private readonly breakdownService: BreakdownService,
   ) {}
 
-  async getOccupiedSlots(local: string, date: string, isRecurring = false) {
+  async getOccupiedSlots(
+    local: string,
+    date: string,
+    isRecurring = false,
+    userRole?: string,
+    objetivo?: ObjetivoReserva,
+  ) {
     if (!local || !date) {
       throw new BadRequestException(
         'O laboratório e a data são obrigatórios para consultar horários.',
       );
+    }
+
+    if (objetivo && !Object.values(ObjetivoReserva).includes(objetivo)) {
+      throw new BadRequestException('Objetivo de reserva inválido.');
+    }
+
+    const shouldFilterByPriority = Boolean(
+      objetivo && (userRole === 'PROFESSOR' || userRole === 'ALUNO'),
+    );
+
+    if (shouldFilterByPriority && userRole && objetivo) {
+      validateRoleObjective(userRole, objetivo);
     }
 
     const { startOfDay, endOfDay, dayOfWeek } = normalizeDateRange(date);
@@ -134,6 +150,11 @@ export class ReservationsService {
       },
       include: {
         horarios: true,
+        professor: {
+          select: {
+            perfil: true,
+          },
+        },
       },
     });
 
@@ -143,6 +164,21 @@ export class ReservationsService {
     >();
 
     for (const reservation of activeReservations) {
+      if (
+        shouldFilterByPriority &&
+        userRole &&
+        objetivo &&
+        reservation.professor?.perfil && // era pra ser usuario mas cadastrei professor no banco. Se for ajeitar vai demorar um tiquin. Refatoração aqui.
+        canPreemptReservation(
+          userRole,
+          objetivo,
+          reservation.professor.perfil,
+          reservation.objetivo,
+        )
+      ) {
+        continue;
+      }
+
       for (const slot of reservation.horarios) {
         const key = `${slot.hora_inicio}-${slot.hora_fim}`;
         occupiedMap.set(key, {
@@ -228,7 +264,13 @@ export class ReservationsService {
     return occupiedDetails;
   }
 
-  async createReservation(professorId: string, data: CreateReservationDto) {
+  async createReservation(
+    userId: string,
+    data: CreateReservationDto,
+    userRole: string,
+  ) {
+    validateRoleObjective(userRole, data.objetivo);
+
     const isRecurring = Boolean(data.pratica_recorrente);
     const isPracticalClass = data.objetivo === ObjetivoReserva.AULA_PRATICA;
 
@@ -253,90 +295,155 @@ export class ReservationsService {
       data.data_reserva,
     );
 
-    return this.prisma.$transaction(async (tx) => {
-      const conflictingReservations = await tx.reservaEspaco.findMany({
-        where: {
-          local: data.local,
-          status: {
-            notIn: [StatusReserva.REJEITADA, StatusReserva.CANCELADA],
-          },
-          OR: isRecurring
-            ? [
-                {
-                  dia_semana: dayOfWeek,
-                  data_reserva: { gte: startOfDay },
-                },
-                {
-                  pratica_recorrente: true,
-                  dia_semana: dayOfWeek,
-                },
-              ]
-            : [
-                {
-                  data_reserva: {
-                    gte: startOfDay,
-                    lte: endOfDay,
+    const preemptionReason =
+      'Horário realocado devido à prioridade da nova solicitação para ' + data.objetivo + ' .';
+
+    const { createdReservation, preemptedList } =
+      await this.prisma.$transaction(async (tx) => {
+        const conflictingReservations = await tx.reservaEspaco.findMany({
+          where: {
+            local: data.local,
+            status: {
+              notIn: [StatusReserva.REJEITADA, StatusReserva.CANCELADA],
+            },
+            OR: isRecurring
+              ? [
+                  {
+                    dia_semana: dayOfWeek,
+                    data_reserva: { gte: startOfDay },
                   },
-                },
-                {
-                  pratica_recorrente: true,
-                  dia_semana: dayOfWeek,
-                  data_reserva: { lte: endOfDay },
-                },
-              ],
-        },
-        include: {
-          horarios: true,
-        },
-      });
+                  {
+                    pratica_recorrente: true,
+                    dia_semana: dayOfWeek,
+                  },
+                ]
+              : [
+                  {
+                    data_reserva: {
+                      gte: startOfDay,
+                      lte: endOfDay,
+                    },
+                  },
+                  {
+                    pratica_recorrente: true,
+                    dia_semana: dayOfWeek,
+                    data_reserva: { lte: endOfDay },
+                  },
+                ],
+          },
+          include: {
+            horarios: true,
+            professor: { // era pra ser usuario mas cadastrei professor no banco. Se for ajeitar vai demorar um tiquin. Refatoração aqui.
+              select: {
+                id: true,
+                nome: true,
+                email: true,
+                perfil: true,
+              },
+            },
+          },
+        });
 
-      for (const requestedSlot of data.horarios) {
-        for (const existing of conflictingReservations) {
-          const conflict = existing.horarios.find((existingSlot) =>
-            hasTimeOverlap(
-              requestedSlot.hora_inicio,
-              requestedSlot.hora_fim,
-              existingSlot.hora_inicio,
-              existingSlot.hora_fim,
-            ),
-          );
+        const preemptedMap = new Map<
+          string,
+          (typeof conflictingReservations)[number]
+        >();
 
-          if (conflict) {
-            throw new BadRequestException(
-              `O horário ${requestedSlot.hora_inicio} — ${requestedSlot.hora_fim} já está reservado para este laboratório.`,
+        for (const requestedSlot of data.horarios) {
+          for (const existing of conflictingReservations) {
+            const conflict = existing.horarios.find((existingSlot) =>
+              hasTimeOverlap(
+                requestedSlot.hora_inicio,
+                requestedSlot.hora_fim,
+                existingSlot.hora_inicio,
+                existingSlot.hora_fim,
+              ),
             );
+
+            if (!conflict) {
+              continue;
+            }
+
+            if (
+              !canPreemptReservation(
+                userRole,
+                data.objetivo,
+                existing.professor.perfil,
+                existing.objetivo,
+              )
+            ) {
+              throw new BadRequestException(
+                `O horário ${requestedSlot.hora_inicio} — ${requestedSlot.hora_fim} já está reservado para este laboratório.`,
+              );
+            }
+
+            preemptedMap.set(existing.id, existing);
           }
         }
-      }
 
-      return tx.reservaEspaco.create({
-        data: {
-          professor_id: professorId,
-          local: data.local,
-          data_reserva: startOfDay,
-          dia_semana: dayOfWeek,
-          objetivo: data.objetivo,
-          titulo: data.titulo,
-          quantidade_alunos: isPracticalClass ? data.quantidade_alunos! : 0,
-          quantidade_grupos: isPracticalClass ? data.quantidade_grupos! : 0,
-          observacoes: data.observacoes || null,
-          pratica_recorrente: isRecurring,
-          status: StatusReserva.PENDENTE,
-          horarios: {
-            create: data.horarios.map((slot) => ({
-              hora_inicio: slot.hora_inicio,
-              hora_fim: slot.hora_fim,
-            })),
+        const preempted = Array.from(preemptedMap.values());
+
+        for (const existing of preempted) {
+          await tx.reservaEspaco.update({
+            where: { id: existing.id },
+            data: {
+              status: StatusReserva.REJEITADA,
+              motivo_rejeicao: preemptionReason,
+              analisada_em: new Date(),
+            },
+          });
+        }
+
+        const created = await tx.reservaEspaco.create({
+          data: {
+            professor_id: userId,
+            local: data.local,
+            data_reserva: startOfDay,
+            dia_semana: dayOfWeek,
+            objetivo: data.objetivo,
+            titulo: data.titulo,
+            professor_responsavel: data.professor_responsavel || null,
+            quantidade_alunos: isPracticalClass ? data.quantidade_alunos! : 0,
+            quantidade_grupos: isPracticalClass ? data.quantidade_grupos! : 0,
+            observacoes: data.observacoes || null,
+            pratica_recorrente: isRecurring,
+            status: StatusReserva.PENDENTE,
+            horarios: {
+              create: data.horarios.map((slot) => ({
+                hora_inicio: slot.hora_inicio,
+                hora_fim: slot.hora_fim,
+              })),
+            },
           },
-        },
-        include: RESERVATION_RELATIONS,
+          include: RESERVATION_RELATIONS,
+        });
+
+        return {
+          createdReservation: created,
+          preemptedList: preempted,
+        };
       });
-    });
+
+    for (const preempted of preemptedList) {
+      await this.mailService.sendReservationStatusEmail({
+        to: preempted.professor.email,
+        reservaId: preempted.id,
+        professorNome: preempted.professor.nome,
+        local: preempted.local,
+        titulo: preempted.titulo,
+        dataReserva: preempted.data_reserva,
+        horarios: preempted.horarios,
+        status: 'REJEITADA',
+        motivoRejeicao: preemptionReason,
+      });
+    }
+
+    return createdReservation;
   }
 
-  async listReservations(userId: string, userProfile: string) {
+  async listReservations(userId: string, userRole: string) {
     const whereClause =
-      userProfile === 'PROFESSOR' ? { professor_id: userId } : {};
+      userRole === 'TECNICO' ? {} : { professor_id: userId };
 
     const reservations = await this.prisma.reservaEspaco.findMany({
       where: whereClause,
@@ -345,18 +452,29 @@ export class ReservationsService {
     });
 
     const enriched = reservations.map((res) => {
-      const isHighPriority = res.objetivo === ObjetivoReserva.AULA_PRATICA;
+      const priorityRank = getReservationPriority(
+        res.professor.perfil,
+        res.objetivo,
+      );
+      const isHighPriority = priorityRank >= 3;
 
       const hasPriorityConflict =
-        isHighPriority &&
+        priorityRank > 1 &&
         reservations.some((other) => {
           if (
             other.id === res.id ||
             other.local !== res.local ||
             other.status === StatusReserva.REJEITADA ||
-            other.status === StatusReserva.CANCELADA ||
-            !LOWER_PRIORITY_OBJECTIVES.includes(other.objetivo)
+            other.status === StatusReserva.CANCELADA
           ) {
+            return false;
+          }
+
+          const otherPriority = getReservationPriority(
+            other.professor.perfil,
+            other.objetivo,
+          );
+          if (otherPriority >= priorityRank) {
             return false;
           }
 
@@ -429,6 +547,7 @@ export class ReservationsService {
 
     await this.mailService.sendReservationStatusEmail({
       to: updatedReservation.professor.email,
+      reservaId: updatedReservation.id,
       professorNome: updatedReservation.professor.nome,
       local: updatedReservation.local,
       titulo: updatedReservation.titulo,
@@ -470,6 +589,7 @@ export class ReservationsService {
 
     await this.mailService.sendReservationStatusEmail({
       to: updatedReservation.professor.email,
+      reservaId: updatedReservation.id,
       professorNome: updatedReservation.professor.nome,
       local: updatedReservation.local,
       titulo: updatedReservation.titulo,

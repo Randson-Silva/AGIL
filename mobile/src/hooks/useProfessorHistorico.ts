@@ -19,7 +19,7 @@ function toIsoDateOnly(date: Date): string {
 
 export { formatBrDate, formatRelativeDateTime };
 
-export function useProfessorHistorico() {
+export function useProfessorHistorico(initialMode: ProfessorHistoryMode = 'MATERIAIS') {
   const { firstName, initials, user } = useAuth();
 
   const getDefaultStartDate = () => {
@@ -28,7 +28,7 @@ export function useProfessorHistorico() {
     return d;
   };
 
-  const [mode, setMode] = useState<ProfessorHistoryMode>('MATERIAIS');
+  const [mode, setMode] = useState<ProfessorHistoryMode>(initialMode);
   const [startDate, setStartDate] = useState<Date>(getDefaultStartDate);
   const [endDate, setEndDate] = useState<Date>(() => new Date());
 
@@ -142,7 +142,8 @@ export function useProfessorHistorico() {
     try {
       setIsExportingPdf(true);
       const periodLabel = `${formatBrDate(startDate)} até ${formatBrDate(endDate)}`;
-      const responsibleName = user?.name || firstName || 'Professor';
+      const responsibleName =
+        user?.name || firstName || (user?.profile === 'ALUNO' ? 'Aluno' : 'Professor');
 
       if (mode === 'MATERIAIS') {
         const labelMap: Record<MaterialHistoryFilterStatus, string> = {

@@ -75,6 +75,10 @@ export class CreateReservationDto {
   observacoes?: string;
 
   @IsOptional()
+  @IsString()
+  professor_responsavel?: string;
+
+  @IsOptional()
   @IsBoolean()
   pratica_recorrente?: boolean;
 

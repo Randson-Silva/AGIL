@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Feather,
   FontAwesome5,
@@ -19,10 +19,12 @@ import { PageWrapper } from '../../../components/ui/page-wrapper';
 import { HeaderDashboard } from '../../../components/dashboard/header-dashboard';
 import { BackButton } from '../../../components/ui/Back-button';
 import { CalendarModal } from '../../../components/reservation/calendar-modal';
+import { useAuth } from '../../../hooks/useAuth';
 import {
   formatBrDate,
   formatRelativeDateTime,
   MaterialHistoryFilterStatus,
+  ProfessorHistoryMode,
   useProfessorHistorico,
 } from '../../../hooks/useProfessorHistorico';
 
@@ -76,6 +78,11 @@ function formatDateShort(dateStr: string): string {
 
 export default function ProfessorHistoricoScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { initialMode } = useLocalSearchParams<{ initialMode?: ProfessorHistoryMode }>();
+  const resolvedInitialMode: ProfessorHistoryMode =
+    initialMode === 'AVARIAS' ? 'AVARIAS' : 'MATERIAIS';
+
   const {
     firstName,
     initials,
@@ -101,7 +108,7 @@ export default function ProfessorHistoricoScreen() {
     handleRefresh,
     handleClearFilters,
     handleExportPdf,
-  } = useProfessorHistorico();
+  } = useProfessorHistorico(resolvedInitialMode);
 
   const [activeDatePicker, setActiveDatePicker] = useState<
     'start' | 'end' | null
@@ -462,7 +469,10 @@ export default function ProfessorHistoricoScreen() {
                   activeOpacity={0.7}
                   onPress={() =>
                     router.push({
-                      pathname: '/(protected)/(professor)/breakdown-details',
+                      pathname:
+                        user?.profile === 'ALUNO'
+                          ? '/(protected)/(aluno)/breakdown-details'
+                          : '/(protected)/(professor)/breakdown-details',
                       params: { breakdownData: JSON.stringify(item) },
                     })
                   }

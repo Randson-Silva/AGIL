@@ -1,6 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { ReservationItem } from '../../services/reservation.service';
+import { formatReservationProtocol } from '../../utils/protocol.utils';
 import { canFillUsageLog, formatReservationDateTime } from '../../utils/usage-log.utils';
 
 interface ReservationCardProps {
@@ -25,12 +26,17 @@ export function ReservationCard({
   } else if (item.status === 'PENDENTE' || item.status === 'AVISO_SIMPLES') {
     badgeConfig = { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Pendente' };
   } else if (item.status === 'REJEITADA') {
-    badgeConfig = { bg: 'bg-red-100', text: 'text-red-800', label: 'Ausente/Rejeitada' };
+    const isAbsence = item.motivo_rejeicao?.includes('Ausência');
+    badgeConfig = {
+      bg: 'bg-red-100',
+      text: 'text-red-800',
+      label: isAbsence ? 'Ausente/Rejeitada' : 'Rejeitada',
+    };
   } else if (item.status === 'CANCELADA') {
     badgeConfig = { bg: 'bg-gray-200', text: 'text-gray-600', label: 'Cancelada' };
   }
 
-  const protocolo = item.id ? `R-${item.id.substring(0, 4).toUpperCase()}` : 'R-1000';
+  const protocolo = formatReservationProtocol(item.id);
   const showSendUsageLog = canFillUsageLog(item);
   const showCancelButton =
     !showSendUsageLog &&

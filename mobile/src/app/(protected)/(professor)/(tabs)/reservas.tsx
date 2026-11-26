@@ -8,6 +8,7 @@ import { ReservationCard } from '../../../../components/reservation/reservation-
 import { Button } from '../../../../components/ui/Button';
 import { PageWrapper } from '../../../../components/ui/page-wrapper';
 import { useReservas } from '../../../../hooks/useReservas';
+import { formatReservationProtocol } from '../../../../utils/protocol.utils';
 
 export default function ReservasScreen() {
   const {
@@ -29,9 +30,7 @@ export default function ReservasScreen() {
 
   const FILTER_OPTIONS: FilterOption[] = ['Todas', 'Pendente', 'Aprovada', 'Encerradas'];
 
-  const protocoloModal = reservationToCancel?.id
-    ? `R-${reservationToCancel.id.substring(0, 4).toUpperCase()}`
-    : 'R-XXXX';
+  const protocoloModal = formatReservationProtocol(reservationToCancel?.id);
 
   return (
     <PageWrapper className="bg-[#F8FAF9]">

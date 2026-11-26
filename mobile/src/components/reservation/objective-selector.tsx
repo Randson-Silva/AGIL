@@ -1,20 +1,26 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { RESERVATION_OBJECTIVES, ReservationObjective } from '../../utils/constants';
+import {
+  ObjectiveOption,
+  RESERVATION_OBJECTIVES,
+  ReservationObjective,
+} from '../../utils/constants';
 
 interface ObjectiveSelectorProps {
   selectedObjective: ReservationObjective;
   onSelectObjective: (objective: ReservationObjective) => void;
+  options?: ObjectiveOption[];
 }
 
 export const ObjectiveSelector: React.FC<ObjectiveSelectorProps> = ({
   selectedObjective,
   onSelectObjective,
+  options = RESERVATION_OBJECTIVES,
 }) => {
   return (
     <View className="mb-5">
       <View className="flex-row flex-wrap gap-2">
-        {RESERVATION_OBJECTIVES.map((option) => {
+        {options.map((option) => {
           const isSelected = selectedObjective === option.value;
 
           return (

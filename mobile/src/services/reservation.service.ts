@@ -33,6 +33,7 @@ export interface ReservationItem {
   dia_semana: number;
   objetivo: ReservationObjective;
   titulo: string;
+  professor_responsavel?: string | null;
   quantidade_alunos: number;
   quantidade_grupos: number;
   observacoes?: string | null;
@@ -51,6 +52,7 @@ export interface CreateReservationPayload {
   data_reserva: string;
   objetivo: ReservationObjective;
   titulo: string;
+  professor_responsavel?: string;
   quantidade_alunos?: number;
   quantidade_grupos?: number;
   observacoes?: string;
@@ -69,6 +71,7 @@ export interface OccupiedSlotDetail {
   status: ReservationStatus;
   objetivo: ReservationObjective;
   titulo: string;
+  professor_responsavel?: string | null;
   quantidade_alunos: number;
   quantidade_grupos: number;
   professor_nome: string;
@@ -151,9 +154,19 @@ export interface UpdateUsageLogPayload {
   pendenciasTecnico?: string;
 }
 
-export const getOccupiedTimeSlots = async (local: string, date: string, isRecurring?: boolean) => {
+export const getOccupiedTimeSlots = async (
+  local: string,
+  date: string,
+  isRecurring?: boolean,
+  objetivo?: ReservationObjective,
+) => {
   return api.get<TimeSlot[]>('/reservations/occupied-slots', {
-    params: { local, date, isRecurring },
+    params: {
+      local,
+      date,
+      isRecurring,
+      ...(objetivo ? { objetivo } : {}),
+    },
   });
 };
 
