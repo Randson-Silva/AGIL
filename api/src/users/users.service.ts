@@ -70,4 +70,29 @@ export class UsersService {
       },
     });
   }
+
+  async searchProfessors(search?: string) {
+    const term = search?.trim();
+
+    return this.prisma.usuario.findMany({
+      where: {
+        perfil: 'PROFESSOR',
+        ...(term
+          ? {
+              OR: [
+                { nome: { contains: term, mode: 'insensitive' } },
+                { email: { contains: term, mode: 'insensitive' } },
+              ],
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+        nome: true,
+        email: true,
+      },
+      orderBy: { nome: 'asc' },
+      take: 20,
+    });
+  }
 }

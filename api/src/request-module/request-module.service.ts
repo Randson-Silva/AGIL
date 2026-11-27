@@ -1,16 +1,24 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
-import { CreateRequestDto } from './dto/create-request-module.dto.js';
-import { UpdateRequestDto } from './dto/update-request-module.dto.js';
-import { ListRequestDto } from './dto/list-request-module.dto.js';
 import { PrismaService } from '../db/prisma/prisma.service.js';
 import { InventoryService } from '../inventory/inventory.service.js';
+import { CreateRequestDto } from './dto/create-request-module.dto.js';
+import { ListRequestDto } from './dto/list-request-module.dto.js';
+import { UpdateRequestDto } from './dto/update-request-module.dto.js';
 
 const REQUEST_RELATIONS = {
   solicitante: {
+    select: {
+      id: true,
+      nome: true,
+      email: true,
+      perfil: true,
+    },
+  },
+  professor: {
     select: {
       id: true,
       nome: true,
@@ -80,12 +88,46 @@ export class RequestModuleService {
     }
   }
 
+  private async validateProfessor(professorId: string): Promise<void> {
+    const professor = await this.prisma.usuario.findFirst({
+      where: {
+        id: professorId,
+        perfil: 'PROFESSOR',
+      },
+      select: { id: true },
+    });
+
+    if (!professor) {
+      throw new BadRequestException(
+        'Professor responsável não encontrado ou não possui perfil de professor.',
+      );
+    }
+  }
+
   async create(solicitanteId: string, dto: CreateRequestDto, role: string) {
     await this.validateRequestItems(dto.itens);
+
+    const isPesquisaOuTcc =
+      dto.objetivo === 'PESQUISA' || dto.objetivo === 'TCC';
+    const requiresProfessor = role === 'ALUNO' && isPesquisaOuTcc;
+
+    if (requiresProfessor && !dto.professor_id) {
+      throw new BadRequestException(
+        'É obrigatório selecionar um professor responsável para solicitações de Pesquisa ou TCC.',
+      );
+    }
+
+    if (dto.professor_id) {
+      await this.validateProfessor(dto.professor_id);
+    }
 
     return this.prisma.solicitacaoMaterial.create({
       data: {
         solicitante_id: solicitanteId,
+        objetivo: dto.objetivo ?? null,
+        professor_id: dto.professor_id ?? null,
+        finalidade: dto.finalidade ?? null,
+        descricao: dto.descricao,
         data_retirada: dto.data_retirada
           ? new Date(dto.data_retirada)
           : undefined,
@@ -149,9 +191,39 @@ export class RequestModuleService {
       await this.validateRequestItems(dto.itens);
     }
 
+    const nextObjetivo =
+      dto.objetivo !== undefined ? dto.objetivo : solicitacao.objetivo;
+    const nextProfessorId =
+      dto.professor_id !== undefined
+        ? dto.professor_id
+        : solicitacao.professor_id;
+
+    const isPesquisaOuTcc =
+      nextObjetivo === 'PESQUISA' || nextObjetivo === 'TCC';
+
+    if (
+      solicitacao.solicitante.perfil === 'ALUNO' &&
+      isPesquisaOuTcc &&
+      !nextProfessorId
+    ) {
+      throw new BadRequestException(
+        'É obrigatório selecionar um professor responsável para solicitações de Pesquisa ou TCC.',
+      );
+    }
+
+    if (dto.professor_id) {
+      await this.validateProfessor(dto.professor_id);
+    }
+
     return this.prisma.solicitacaoMaterial.update({
       where: { id },
       data: {
+        ...(dto.objetivo !== undefined && { objetivo: dto.objetivo }),
+        ...(dto.professor_id !== undefined && {
+          professor_id: dto.professor_id || null,
+        }),
+        finalidade: dto.finalidade,
+        descricao: dto.descricao,
         ...(dto.data_retirada !== undefined && {
           data_retirada: dto.data_retirada ? new Date(dto.data_retirada) : null,
         }),
@@ -239,16 +311,16 @@ export class RequestModuleService {
 
     const allRequestTeacher = new Map<string, number>();
     for (const item of requestTeacher) {
-      const current = allRequestTeacher.get(item.insumo_id) || 0; // ele pega a quantidade daquele insumo_id, se não tiver ele pega 0
-      allRequestTeacher.set(item.insumo_id, current + Number(item.quantidade)); //ele soma todas as quantidades diante das solicitacoes daquele insumo_id e coloca no map, com a chave sendo o insumo_id e o valor sendo a quantidade total
+      const current = allRequestTeacher.get(item.insumo_id) || 0;
+      allRequestTeacher.set(item.insumo_id, current + Number(item.quantidade));
     }
 
     for (const item of itensRequestStudent) {
       const insumo = insumos.find((i) => i.id === item.insumo_id);
       if (!insumo) continue;
 
-      const currentBalance = Number(insumo.quantidade_saldo); // aqui veridica a quantidade daquele insumo
-      const requestTeacher = allRequestTeacher.get(item.insumo_id) || 0; // aqui ele pega a quantidade total do insumo_id
+      const currentBalance = Number(insumo.quantidade_saldo);
+      const requestTeacher = allRequestTeacher.get(item.insumo_id) || 0;
       const availableBalance = currentBalance - requestTeacher;
 
       if (item.quantidade > availableBalance) {

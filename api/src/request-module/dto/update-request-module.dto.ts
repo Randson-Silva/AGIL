@@ -4,8 +4,11 @@ import {
   IsDateString,
   IsEnum,
   IsOptional,
+  IsString,
+  IsUUID,
   ValidateNested,
 } from 'class-validator';
+import { ObjetivoReserva } from '../../generated/prisma/enums.js';
 import { ItemSolicitacaoDto } from './item-solicitacao.dto.js';
 
 export enum StatusSolicitacaoEnum {
@@ -18,10 +21,19 @@ export enum StatusSolicitacaoEnum {
 
 export class UpdateRequestDto {
   @IsOptional()
-  @IsDateString(
-    {},
-    { message: 'A data de retirada deve ser uma data válida.' },
-  )
+  @IsEnum(ObjetivoReserva, { message: 'Objetivo inválido.' })
+  objetivo?: ObjetivoReserva;
+
+  @IsOptional()
+  @IsString()
+  finalidade?: string;
+
+  @IsOptional()
+  @IsString()
+  descricao?: string;
+
+  @IsOptional()
+  @IsDateString({}, { message: 'A data de retirada deve ser uma data válida.' })
   data_retirada?: string;
 
   @IsOptional()
@@ -36,4 +48,8 @@ export class UpdateRequestDto {
   @ValidateNested({ each: true })
   @Type(() => ItemSolicitacaoDto)
   itens?: ItemSolicitacaoDto[];
+
+  @IsOptional()
+  @IsUUID('all', { message: 'Professor responsável inválido.' })
+  professor_id?: string | null;
 }
