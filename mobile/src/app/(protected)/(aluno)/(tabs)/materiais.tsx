@@ -1,15 +1,23 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import {
+  Keyboard,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { CubeIcon } from 'react-native-heroicons/outline';
-import { PageWrapper } from '../../../../components/ui/page-wrapper';
 import { HeaderDashboard } from '../../../../components/dashboard/header-dashboard';
-import { BackButton } from '../../../../components/ui/Back-button';
-import { Input } from '../../../../components/ui/Input';
-import { Button } from '../../../../components/ui/Button';
+import { CalendarModal } from '../../../../components/reservation/calendar-modal';
 import { CatalogItemCard } from '../../../../components/reservation/catalog-item-card';
 import { RequestHistoryCard } from '../../../../components/reservation/request-history-card';
-import { CalendarModal } from '../../../../components/reservation/calendar-modal';
+import { ProfessorSelect } from '../../../../components/student/ProfessorSelect';
+import { BackButton } from '../../../../components/ui/Back-button';
+import { Button } from '../../../../components/ui/Button';
+import { Input } from '../../../../components/ui/Input';
+import { PageWrapper } from '../../../../components/ui/page-wrapper';
 import { useMateriais } from '../../../../hooks/useMateriais';
 
 export default function AlunoMateriaisScreen() {
@@ -22,6 +30,16 @@ export default function AlunoMateriaisScreen() {
     cart,
     handleIncrement,
     handleDecrement,
+    isPesquisaOuTcc,
+    handleTogglePesquisaOuTcc,
+    professorQuery,
+    selectedProfessor,
+    filteredProfessors,
+    isProfessorListVisible,
+    setIsProfessorListVisible,
+    handleProfessorQueryChange,
+    handleSelectProfessor,
+    handleClearProfessor,
     paginatedCatalog,
     catalogPage,
     setCatalogPage,
@@ -41,6 +59,11 @@ export default function AlunoMateriaisScreen() {
     handleSubmit,
   } = useMateriais();
 
+  const handleCloseProfessorSelect = () => {
+    setIsProfessorListVisible(false);
+    Keyboard.dismiss();
+  };
+
   return (
     <PageWrapper className="bg-[#F8FAF9]">
       <HeaderDashboard
@@ -53,9 +76,27 @@ export default function AlunoMateriaisScreen() {
 
       <ScrollView
         className="flex-1"
+        scrollEnabled={!isProfessorListVisible}
+        nestedScrollEnabled
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: 100 }}
       >
+        {/* Backdrop invisível para fechar e tirar o foco ao tocar fora */}
+        {isProfessorListVisible && (
+          <Pressable
+            onPress={handleCloseProfessorSelect}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 10,
+            }}
+          />
+        )}
+
         <View className="px-6 pt-3 mb-2">
           <BackButton />
         </View>
@@ -108,8 +149,53 @@ export default function AlunoMateriaisScreen() {
           )}
         </View>
 
-        <View className="px-6 mb-8 mt-4">
-          <Text className="text-lg font-bold text-gray-900 mb-4">Prazo de Retirada e Devolução</Text>
+        {/* Chave Pesquisa / TCC + Professor Responsável condicional */}
+        <View
+          className="px-6 mb-6 mt-2"
+          style={{
+            zIndex: isProfessorListVisible ? 20 : 1,
+            elevation: isProfessorListVisible ? 20 : 0,
+          }}
+        >
+          <View className="flex-row items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3 mb-4">
+            <View className="flex-1 pr-3">
+              <Text className="text-sm font-semibold text-gray-900">
+                Solicitação para Pesquisa / TCC?
+              </Text>
+              <Text className="text-xs text-gray-500 mt-0.5">
+                Clique e informe o professor responsável
+              </Text>
+            </View>
+            <Switch
+              value={isPesquisaOuTcc}
+              onValueChange={handleTogglePesquisaOuTcc}
+              trackColor={{ false: '#D1D5DB', true: '#00623B' }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
+          {isPesquisaOuTcc && (
+            <ProfessorSelect
+              query={professorQuery}
+              selectedProfessor={selectedProfessor}
+              professors={filteredProfessors}
+              isListVisible={isProfessorListVisible}
+              onQueryChange={handleProfessorQueryChange}
+              onSelect={(prof) => {
+                handleSelectProfessor(prof);
+                Keyboard.dismiss();
+              }}
+              onClear={handleClearProfessor}
+              onToggleList={() => setIsProfessorListVisible((prev) => !prev)}
+              onFocus={() => setIsProfessorListVisible(true)}
+            />
+          )}
+        </View>
+
+        <View className="px-6 mb-8 mt-2">
+          <Text className="text-lg font-bold text-gray-900 mb-4">
+            Prazo de Retirada e Devolução
+          </Text>
           <View className="mb-2">
             <Input
               label="Data de Retirada"
