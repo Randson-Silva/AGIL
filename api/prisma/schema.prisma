@@ -244,7 +244,7 @@ model SolicitacaoMaterial {
   reserva_id             String?          @unique
   reserva                ReservaEspaco?   @relation(fields: [reserva_id], references: [id], onDelete: SetNull)
   objetivo               ObjetivoReserva?
-  finalidade             String
+  finalidade             String?
   descricao              String?
   devolucao_informada_em DateTime?
 

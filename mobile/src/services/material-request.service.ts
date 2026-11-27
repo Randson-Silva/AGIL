@@ -35,8 +35,6 @@ export interface MaterialRequestResponse {
   id: string;
   solicitante_id: string;
   solicitante?: MaterialRequestSolicitante;
-  finalidade: string;
-  descricao?: string | null;
   status: MaterialRequestStatus;
   tecnico_id?: string | null;
   criada_em: string;
@@ -49,16 +47,12 @@ export interface MaterialRequestResponse {
 }
 
 export interface CreateMaterialRequestPayload {
-  finalidade: string;
-  descricao?: string;
   data_retirada?: string;
   data_devolucao?: string;
   itens: ItemSolicitacao[];
 }
 
 export interface UpdateMaterialRequestPayload {
-  finalidade?: string;
-  descricao?: string;
   data_retirada?: string;
   data_devolucao?: string;
   itens?: ItemSolicitacao[];
@@ -137,7 +131,6 @@ export interface MyMaterialHistoryItem {
   unidadeMedida: string;
   quantidade: number;
   status: 'APROVADA' | 'DEVOLVIDA' | 'REJEITADA';
-  finalidade: string;
   motivoRejeicao?: string | null;
   criadaEm: string;
   aprovadaEm?: string | null;

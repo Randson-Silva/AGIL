@@ -4,7 +4,6 @@ import {
   IsDateString,
   IsEnum,
   IsOptional,
-  IsString,
   ValidateNested,
 } from 'class-validator';
 import { ItemSolicitacaoDto } from './item-solicitacao.dto.js';
@@ -18,14 +17,6 @@ export enum StatusSolicitacaoEnum {
 }
 
 export class UpdateRequestDto {
-  @IsOptional()
-  @IsString()
-  finalidade?: string;
-
-  @IsOptional()
-  @IsString()
-  descricao?: string;
-
   @IsOptional()
   @IsDateString(
     {},

@@ -1,6 +1,5 @@
 import {
   IsNotEmpty,
-  IsString,
   IsArray,
   ValidateNested,
   IsOptional,
@@ -10,17 +9,6 @@ import { Type } from 'class-transformer';
 import { ItemSolicitacaoDto } from './item-solicitacao.dto.js';
 
 export class CreateRequestDto {
-  @IsNotEmpty({
-    message:
-      'A finalidade da solicitação é obrigatória (ex: nome da disciplina)',
-  })
-  @IsString()
-  finalidade: string;
-
-  @IsOptional()
-  @IsString()
-  descricao?: string;
-
   @IsOptional()
   @IsDateString(
     {},

@@ -86,8 +86,6 @@ export class RequestModuleService {
     return this.prisma.solicitacaoMaterial.create({
       data: {
         solicitante_id: solicitanteId,
-        finalidade: dto.finalidade,
-        descricao: dto.descricao,
         data_retirada: dto.data_retirada
           ? new Date(dto.data_retirada)
           : undefined,
@@ -154,8 +152,6 @@ export class RequestModuleService {
     return this.prisma.solicitacaoMaterial.update({
       where: { id },
       data: {
-        finalidade: dto.finalidade,
-        descricao: dto.descricao,
         ...(dto.data_retirada !== undefined && {
           data_retirada: dto.data_retirada ? new Date(dto.data_retirada) : null,
         }),
@@ -399,7 +395,6 @@ export class RequestModuleService {
         unidadeMedida: item.insumo.tipo_medida,
         quantidade: Number(item.quantidade),
         status: req.status as 'APROVADA' | 'DEVOLVIDA' | 'REJEITADA',
-        finalidade: req.finalidade,
         motivoRejeicao: req.motivo_rejeicao,
         criadaEm: req.criada_em,
         aprovadaEm: req.aprovada_em,
@@ -419,10 +414,8 @@ export class RequestModuleService {
 
     if (search && search.trim()) {
       const term = search.trim().toLowerCase();
-      items = items.filter(
-        (item) =>
-          item.materialNome.toLowerCase().includes(term) ||
-          item.finalidade.toLowerCase().includes(term),
+      items = items.filter((item) =>
+        item.materialNome.toLowerCase().includes(term),
       );
     }
 

@@ -4,7 +4,6 @@ import {
   MaterialRequestItemDetail,
   MaterialRequestResponse,
 } from '../../services/material-request.service';
-import { OBJECTIVE_LABELS, ReservationObjective } from '../../utils/constants';
 import { formatMaterialProtocol } from '../../utils/protocol.utils';
 import { PriorityBadge } from './priority-badge';
 
@@ -42,13 +41,6 @@ function formatQuantity(detail: MaterialRequestItemDetail): string {
   return `${formattedNum}${suffix}`;
 }
 
-function formatFinalidade(finalidade: string): string {
-  if (finalidade in OBJECTIVE_LABELS) {
-    return OBJECTIVE_LABELS[finalidade as ReservationObjective];
-  }
-  return finalidade;
-}
-
 export function MaterialRequestApprovalCard({
   item,
   mode,
@@ -60,10 +52,7 @@ export function MaterialRequestApprovalCard({
   const roleLabel =
     item.solicitante?.perfil === 'ALUNO' ? 'Aluno' : 'Professor';
   const protocol = formatMaterialProtocol(item.id);
-  const finalidadeLabel = formatFinalidade(item.finalidade);
-  const isHighPriority =
-    item.solicitante?.perfil === 'PROFESSOR' ||
-    item.finalidade.toUpperCase().includes('AULA');
+  const isHighPriority = item.solicitante?.perfil === 'PROFESSOR';
 
   return (
     <View className="bg-white rounded-[24px] p-5 mb-4 border border-gray-200/80 shadow-sm">
@@ -73,7 +62,7 @@ export function MaterialRequestApprovalCard({
             {item.solicitante?.nome || 'Solicitante'}
           </Text>
           <Text className="text-xs text-gray-500 mt-0.5">
-            {roleLabel} · {finalidadeLabel} · {protocol}
+            {roleLabel} · {protocol}
           </Text>
         </View>
         {mode === 'PENDING' && (

@@ -255,7 +255,6 @@ export async function generateMyMaterialHistoryPdf(params: {
         <tr>
           <td>
             <strong>${escapeHtml(item.materialNome)}</strong>
-            <div class="sub">${escapeHtml(item.finalidade)}</div>
           </td>
           <td>${formatDateTimeBr(item.criadaEm)}</td>
           <td><strong>${item.quantidade} ${unit}</strong></td>
@@ -305,7 +304,7 @@ export async function generateMyMaterialHistoryPdf(params: {
         <table>
           <thead>
             <tr>
-              <th>Material / Finalidade</th>
+              <th>Material</th>
               <th>Solicitado em</th>
               <th>Quantidade</th>
               <th>Status final</th>
