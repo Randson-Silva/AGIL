@@ -243,9 +243,7 @@ export function useMateriais() {
     try {
       setIsSubmitting(true);
       await createMaterialRequest({
-        finalidade: `Solicitação para ${withdrawalDateIso} até ${returnDateIso}`,
-        descricao: `Retirada: ${withdrawalDateIso} | Devolução: ${returnDateIso}`,
-        data_retirada : withdrawalDateIso,
+        data_retirada: withdrawalDateIso,
         data_devolucao: returnDateIso,
         itens: itemsSelected,
       });

@@ -349,7 +349,7 @@ export default function ProfessorHistoricoScreen() {
             <TextInput
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholder="Buscar por material ou finalidade..."
+              placeholder="Buscar por material..."
               placeholderTextColor="#9CA3AF"
               className="flex-1 text-xs text-gray-900 ml-2.5"
               autoFocus
@@ -399,7 +399,6 @@ export default function ProfessorHistoricoScreen() {
                         {item.materialNome}
                       </Text>
                       <Text numberOfLines={1} className="text-xs text-gray-500">
-                        {item.finalidade} ·{' '}
                         {formatRelativeDateTime(item.dataEvento)}
                       </Text>
                       <Text
