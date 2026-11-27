@@ -1,22 +1,24 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Body,
-  Patch,
   Param,
+  Patch,
+  Post,
   Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { RequestModuleService } from './request-module.service.js';
-import { CreateRequestDto } from './dto/create-request-module.dto.js';
-import { UpdateRequestDto } from './dto/update-request-module.dto.js';
-import { ListRequestDto } from './dto/list-request-module.dto.js';
-import { DeleteRequestDto } from './dto/delete-request-module.dto.js';
-import { RolesGuard } from '../authz/roles.guard.js';
-import { Roles } from '../authz/roles.decorator.js';
 import { AuthGuard } from '@nestjs/passport';
+import { CurrentUser } from '../authz/current-user.decorator.js';
+import { Roles } from '../authz/roles.decorator.js';
+import { RolesGuard } from '../authz/roles.guard.js';
+import { Perfil } from '../generated/prisma/enums.js';
+import { CreateRequestDto } from './dto/create-request-module.dto.js';
+import { DeleteRequestDto } from './dto/delete-request-module.dto.js';
+import { ListRequestDto } from './dto/list-request-module.dto.js';
+import { UpdateRequestDto } from './dto/update-request-module.dto.js';
+import { RequestModuleService } from './request-module.service.js';
 
 @Controller('request')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -26,9 +28,12 @@ export class RequestModuleController {
 
   @Post()
   @Roles('PROFESSOR', 'ALUNO')
-  create(@Body() createRequestDto: CreateRequestDto, @Req() req: any) {
-    const solicitanteId = req.user.id || req.user.sub;
-    const role = req.user.role;
+  create(
+    @CurrentUser() user: { id: string; role: Perfil },
+    @Body() createRequestDto: CreateRequestDto,
+  ) {
+    const solicitanteId = user.id;
+    const role = user.role;
     return this.requestModuleService.create(
       solicitanteId,
       createRequestDto,

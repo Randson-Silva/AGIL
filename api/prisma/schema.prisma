@@ -108,13 +108,14 @@ model Usuario {
   codigoRedefinicao String?
   codigoExpiracao   DateTime?
 
-  created_at           DateTime                @default(now())
-  reservas             ReservaEspaco[]
-  solicitacoes         SolicitacaoMaterial[]   @relation("solicitante")
-  solicitacoes_tecnico SolicitacaoMaterial[]   @relation("SolicitacaoMaterial_Tecnico")
-  movimentacoes        HistoricoMovimentacao[]
-  avarias              AvariaReportada[]
-  atas_analisadas      AtaUso[]                @relation("AtaUso_Tecnico")
+  created_at             DateTime                @default(now())
+  reservas               ReservaEspaco[]
+  solicitacoes           SolicitacaoMaterial[]   @relation("solicitante")
+  solicitacoes_tecnico   SolicitacaoMaterial[]   @relation("SolicitacaoMaterial_Tecnico")
+  solicitacoes_professor SolicitacaoMaterial[]   @relation("SolicitacaoMaterial_Professor")
+  movimentacoes          HistoricoMovimentacao[]
+  avarias                AvariaReportada[]
+  atas_analisadas        AtaUso[]                @relation("AtaUso_Tecnico")
 }
 
 model Laboratorio {
@@ -131,19 +132,19 @@ model ReservaEspaco {
   professor_id String
   professor    Usuario @relation(fields: [professor_id], references: [id])
 
-  local              String
-  data_reserva       DateTime
-  dia_semana         Int // 0 (Dom) a 6 (Sáb)
-  objetivo           ObjetivoReserva
-  titulo             String
+  local                 String
+  data_reserva          DateTime
+  dia_semana            Int // 0 (Dom) a 6 (Sáb)
+  objetivo              ObjetivoReserva
+  titulo                String
   professor_responsavel String?
-  quantidade_alunos  Int             @default(0)
-  quantidade_grupos  Int             @default(0)
-  observacoes        String?
-  pratica_recorrente Boolean         @default(false)
-  status             StatusReserva   @default(PENDENTE)
-  motivo_rejeicao    String?
-  analisada_em       DateTime?
+  quantidade_alunos     Int             @default(0)
+  quantidade_grupos     Int             @default(0)
+  observacoes           String?
+  pratica_recorrente    Boolean         @default(false)
+  status                StatusReserva   @default(PENDENTE)
+  motivo_rejeicao       String?
+  analisada_em          DateTime?
 
   horarios   HorarioReserva[]
   created_at DateTime         @default(now())
@@ -261,6 +262,8 @@ model SolicitacaoMaterial {
   historicos     HistoricoMovimentacao[]
 
   motivo_rejeicao String?
+  professor_id    String?
+  professor       Usuario? @relation("SolicitacaoMaterial_Professor", fields: [professor_id], references: [id])
 }
 
 model ItemSolicitacaoMaterial {
@@ -326,22 +329,22 @@ model AlertaEstoque {
 }
 
 model AtaUso {
-  id                   String            @id @default(uuid())
-  codigo               Int               @unique @default(autoincrement())
-  reservaId            String            @unique
-  reserva              ReservaEspaco     @relation(fields: [reservaId], references: [id], onDelete: Cascade)
+  id                   String              @id @default(uuid())
+  codigo               Int                 @unique @default(autoincrement())
+  reservaId            String              @unique
+  reserva              ReservaEspaco       @relation(fields: [reservaId], references: [id], onDelete: Cascade)
   nomePratica          String
   professorResponsavel String
   numeroAlunos         Int
-  ocorrencias          TipoOcorrenciaAta[]   @default([SEM_INTERCORRENCIAS])
-  relatoAula           String?           @db.Text
-  pendenciasTecnico    String?           @db.Text
-  status               StatusAta         @default(PENDENTE)
+  ocorrencias          TipoOcorrenciaAta[] @default([SEM_INTERCORRENCIAS])
+  relatoAula           String?             @db.Text
+  pendenciasTecnico    String?             @db.Text
+  status               StatusAta           @default(PENDENTE)
   tecnicoId            String?
-  tecnico              Usuario?          @relation("AtaUso_Tecnico", fields: [tecnicoId], references: [id])
+  tecnico              Usuario?            @relation("AtaUso_Tecnico", fields: [tecnicoId], references: [id])
   analisadaEm          DateTime?
   resolvidaEm          DateTime?
   avarias              AvariaReportada[]
-  criadoEm             DateTime          @default(now())
-  atualizadoEm         DateTime          @updatedAt
+  criadoEm             DateTime            @default(now())
+  atualizadoEm         DateTime            @updatedAt
 }

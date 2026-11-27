@@ -1,11 +1,13 @@
-import { useState, useCallback, useMemo } from 'react';
-import { useFocusEffect } from 'expo-router';
-import Toast from 'react-native-toast-message';
+import { ProfessorOption } from '@/components/student/ProfessorSelect';
+import { getProfessors } from '@/services/user.service';
 import axios from 'axios';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Toast from 'react-native-toast-message';
 import { getInventoryItems } from '../services/inventory.service';
-import { listMaterialRequests, createMaterialRequest } from '../services/material-request.service';
-import { useAuth } from './useAuth';
+import { createMaterialRequest, listMaterialRequests } from '../services/material-request.service';
 import { getLocalTodayIso } from '../utils/date-utils';
+import { useAuth } from './useAuth';
 
 const PAGE_SIZE = 5; // itens por página
 
@@ -43,11 +45,18 @@ export function useMateriais() {
 
   const [catalog, setCatalog] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
+  const [professors, setProfessors] = useState<ProfessorOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // States de Formulário
   const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState<Record<string, number>>({});
+
+  // Chave Pesquisa/TCC + busca obrigatória de Professor Responsável
+  const [isPesquisaOuTcc, setIsPesquisaOuTcc] = useState(false);
+  const [professorQuery, setProfessorQuery] = useState('');
+  const [selectedProfessor, setSelectedProfessor] = useState<ProfessorOption | null>(null);
+  const [isProfessorListVisible, setIsProfessorListVisible] = useState(false);
 
   // Datas exibidas com máscara DD-MM-YYYY no Input
   const [withdrawalDate, setWithdrawalDateState] = useState('');
@@ -81,14 +90,16 @@ export function useMateriais() {
       const fetchData = async () => {
         try {
           setIsLoading(true);
-          const [inventoryRes, historyRes] = await Promise.all([
+          const [inventoryRes, historyRes, professorsData] = await Promise.all([
             getInventoryItems(),
             listMaterialRequests(),
+            getProfessors(),
           ]);
 
           if (isActive) {
             setCatalog(inventoryRes.data || []);
             setHistory(historyRes.data || []);
+            setProfessors(professorsData || []);
           }
         } catch (error) {
           console.error('Erro ao buscar dados de materiais:', error);
@@ -113,6 +124,57 @@ export function useMateriais() {
       };
     }, []),
   );
+
+  // Busca de professores no backend com debounce (GET /users/professors?search=)
+  useEffect(() => {
+    if (!isPesquisaOuTcc || !isProfessorListVisible) return;
+
+    let isActive = true;
+    const timeout = setTimeout(async () => {
+      try {
+        const data = await getProfessors(professorQuery);
+        if (isActive) {
+          setProfessors(data || []);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar professores:', error);
+      }
+    }, 300);
+
+    return () => {
+      isActive = false;
+      clearTimeout(timeout);
+    };
+  }, [professorQuery, isProfessorListVisible, isPesquisaOuTcc]);
+
+  const handleTogglePesquisaOuTcc = (value: boolean) => {
+    setIsPesquisaOuTcc(value);
+    if (!value) {
+      setSelectedProfessor(null);
+      setProfessorQuery('');
+      setIsProfessorListVisible(false);
+    }
+  };
+
+  const handleProfessorQueryChange = (text: string) => {
+    setProfessorQuery(text);
+    if (selectedProfessor && text !== selectedProfessor.nome) {
+      setSelectedProfessor(null);
+    }
+    setIsProfessorListVisible(true);
+  };
+
+  const handleSelectProfessor = (professor: ProfessorOption) => {
+    setSelectedProfessor(professor);
+    setProfessorQuery(professor.nome);
+    setIsProfessorListVisible(false);
+  };
+
+  const handleClearProfessor = () => {
+    setSelectedProfessor(null);
+    setProfessorQuery('');
+    setIsProfessorListVisible(true);
+  };
 
   // Filtro de Catálogo
   const filteredCatalog = useMemo(() => {
@@ -238,15 +300,32 @@ export function useMateriais() {
       return;
     }
 
+    if (isPesquisaOuTcc && !selectedProfessor) {
+      Toast.show({
+        type: 'error',
+        text1: 'Atenção',
+        text2: 'Selecione um professor responsável na lista.',
+      });
+      return;
+    }
+
     if (!validateDates() || !withdrawalDateIso || !returnDateIso) return;
+
+    const payload = {
+      ...(isPesquisaOuTcc
+        ? {
+            objetivo: 'PESQUISA' as const,
+            professor_id: selectedProfessor!.id,
+          }
+        : {}),
+      data_retirada: withdrawalDateIso,
+      data_devolucao: returnDateIso,
+      itens: itemsSelected,
+    };
 
     try {
       setIsSubmitting(true);
-      await createMaterialRequest({
-        data_retirada: withdrawalDateIso,
-        data_devolucao: returnDateIso,
-        itens: itemsSelected,
-      });
+      await createMaterialRequest(payload);
 
       Toast.show({
         type: 'success',
@@ -256,6 +335,10 @@ export function useMateriais() {
 
       // Limpar formulário
       setCart({});
+      setIsPesquisaOuTcc(false);
+      setSelectedProfessor(null);
+      setProfessorQuery('');
+      setIsProfessorListVisible(false);
       setWithdrawalDateState('');
       setReturnDateState('');
       setSearchQuery('');
@@ -309,6 +392,17 @@ export function useMateriais() {
     cart,
     handleIncrement,
     handleDecrement,
+
+    isPesquisaOuTcc,
+    handleTogglePesquisaOuTcc,
+    professorQuery,
+    selectedProfessor,
+    filteredProfessors: professors,
+    isProfessorListVisible,
+    setIsProfessorListVisible,
+    handleProfessorQueryChange,
+    handleSelectProfessor,
+    handleClearProfessor,
 
     paginatedCatalog,
     catalogPage,

@@ -4,6 +4,8 @@ import { api } from './api';
 export type MaterialRequestStatus =
   'PENDENTE' | 'APROVADA' | 'REJEITADA' | 'CANCELADA' | 'DEVOLVIDA';
 
+export type ObjetivoReserva = 'AULA_PRATICA' | 'PROJETO_EXTENSAO' | 'TCC' | 'PESQUISA';
+
 export interface ItemSolicitacao {
   insumo_id: string;
   quantidade: number;
@@ -35,6 +37,11 @@ export interface MaterialRequestResponse {
   id: string;
   solicitante_id: string;
   solicitante?: MaterialRequestSolicitante;
+  professor_id?: string | null;
+  professor?: MaterialRequestSolicitante | null;
+  objetivo?: ObjetivoReserva | null;
+  finalidade?: string | null;
+  descricao?: string | null;
   status: MaterialRequestStatus;
   tecnico_id?: string | null;
   criada_em: string;
@@ -47,12 +54,20 @@ export interface MaterialRequestResponse {
 }
 
 export interface CreateMaterialRequestPayload {
+  objetivo?: ObjetivoReserva;
+  finalidade?: string;
+  descricao?: string;
+  professor_id?: string;
   data_retirada?: string;
   data_devolucao?: string;
   itens: ItemSolicitacao[];
 }
 
 export interface UpdateMaterialRequestPayload {
+  objetivo?: ObjetivoReserva;
+  finalidade?: string;
+  descricao?: string;
+  professor_id?: string | null;
   data_retirada?: string;
   data_devolucao?: string;
   itens?: ItemSolicitacao[];
