@@ -88,11 +88,14 @@ export default function NewItemScreen() {
       nome: name,
       categoria: category,
       tipo_medida: measurementUnit,
-      data_validade: finalExpirationDate,
       quantidade_saldo: parsedCurrentQuantity,
       quantidade_minima: parsedMinQuantity,
       localizacao: location || null,
     };
+
+    if (!isEquipmentOrGlassware && finalExpirationDate) {
+      payload.data_validade = finalExpirationDate;
+    }
 
     if (minQuantity) payload.quantidade_minima = Number(minQuantity);
     if (location) payload.localizacao = location;

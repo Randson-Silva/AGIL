@@ -94,10 +94,13 @@ export default function EditItemScreen() {
     const payload: any = {
       nome: name,
       tipo_medida: measurementUnit,
-      data_validade: finalExpirationDate,
       quantidade_minima: parsedMinQuantity,
       localizacao: location || null,
     };
+
+    if (!isEquipmentOrGlassware && finalExpirationDate) {
+      payload.data_validade = finalExpirationDate;
+    }
 
     if (category === 'REAGENTE') {
       payload.marca = brand || null;
